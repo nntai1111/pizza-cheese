@@ -1,0 +1,13 @@
+<div class="welcome-page">
+  <div class="welcome-card">
+    <span class="welcome-icon">{{ welcomeInfo().icon }}</span>
+    <h1>{{ welcomeInfo().title }}</h1>
+    <p class="role-badge">{{ roleLabel() }}</p>
+    <p class="description">{{ welcomeInfo().description }}</p>
+    <p class="user-info">
+      Đăng nhập với tài khoản: <strong>{{ user()?.email }}</strong>
+    </p>
+
+    <a routerLink="/dashboard" class="btn-back">← Quay lại chọn vai trò</a>
+  </div>
+</div>
