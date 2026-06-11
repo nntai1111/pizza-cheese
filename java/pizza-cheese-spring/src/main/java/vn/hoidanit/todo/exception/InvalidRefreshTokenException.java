@@ -1,0 +1,8 @@
+package vn.hoidanit.todo.exception;
+
+public class InvalidRefreshTokenException extends RuntimeException {
+
+    public InvalidRefreshTokenException(String message) {
+        super(message);
+    }
+}
