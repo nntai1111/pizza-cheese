@@ -18,7 +18,11 @@ interface RoleOption {
   templateUrl: './role-select.component.html',
   styleUrl: './role-select.component.scss',
 })
+
+
 export class RoleSelectComponent {
+  //   ActivatedRoute: lấy thông tin route hiện tại (param, query param, data...)
+  // Router: điều hướng trang
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
