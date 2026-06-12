@@ -32,8 +32,11 @@ import vn.hoidanit.todo.handler.CustomAuthenticationEntryPoint;
 import vn.hoidanit.todo.service.CustomUserDetailsService;
 import vn.hoidanit.todo.util.SecurityUtil;
 
+// Đánh dấu 1 class chuyên để cấu hình (config)
 @Configuration
+// dùng để bật Spring Security cho web app
 @EnableWebSecurity
+// 👉 Dùng để bật phân quyền ở cấp method (hàm)
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
@@ -53,11 +56,14 @@ public class SecurityConfiguration {
         this.customAccessDeniedHandler = customAccessDeniedHandler;
     }
 
+    // hóa mật khẩu trước khi lưu vào database.
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // Cấu hình authentication provider để Spring Security biết cách lấy user và so
+    // sánh mật khẩu
     @Bean
     public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -66,16 +72,19 @@ public class SecurityConfiguration {
         return provider;
     }
 
+    // Cấu hình AuthenticationManager để có thể inject vào AuthController
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
+    // Cấu hình JwtEncoder để tạo JWT token
     @Bean
     public JwtEncoder jwtEncoder() {
         return new NimbusJwtEncoder(new ImmutableSecret<>(securityUtil.getSecretKey()));
     }
 
+    // Cấu hình JwtDecoder để giải mã và xác thực JWT token
     @Bean
     public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withSecretKey(securityUtil.getSecretKey())
@@ -83,6 +92,8 @@ public class SecurityConfiguration {
                 .build();
     }
 
+    // Cấu hình converter để Spring Security biết cách lấy thông tin role từ JWT
+    // token
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter scopeConverter = new JwtGrantedAuthoritiesConverter();
@@ -116,11 +127,12 @@ public class SecurityConfiguration {
         return source;
     }
 
+    // Cấu hình security filter chain để định nghĩa cách bảo vệ các endpoint
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter)
             throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // CSRF = bảo vệ khi dùng session, vì dùng JWT (stateless) → không cần
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()

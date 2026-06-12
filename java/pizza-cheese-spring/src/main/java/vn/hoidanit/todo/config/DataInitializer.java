@@ -14,7 +14,7 @@ import vn.hoidanit.todo.repository.UserRepository;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
-
+    // CommandLineRunner: code trong run() sẽ chạy ngay khi app khởi động
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
     private final UserRepository userRepository;
