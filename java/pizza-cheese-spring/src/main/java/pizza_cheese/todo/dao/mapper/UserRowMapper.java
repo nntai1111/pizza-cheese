@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import org.springframework.jdbc.core.RowMapper;
 
@@ -14,10 +15,11 @@ public class UserRowMapper implements RowMapper<User> {
     @Override
     public User mapRow(ResultSet rs, int rowNum) throws SQLException {
         User user = new User();
-        user.setId(rs.getLong("id"));
+        user.setId(rs.getObject("id", UUID.class));
+        user.setUsername(rs.getString("username"));
         user.setEmail(rs.getString("email"));
-        user.setPassword(rs.getString("password"));
-        user.setName(rs.getString("name"));
+        user.setPasswordHash(rs.getString("password_hash"));
+        user.setFullName(rs.getString("full_name"));
         user.setCreatedAt(toInstant(rs.getObject("created_at", OffsetDateTime.class)));
         user.setUpdatedAt(toInstant(rs.getObject("updated_at", OffsetDateTime.class)));
         return user;

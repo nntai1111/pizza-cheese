@@ -14,7 +14,7 @@ import pizza_cheese.todo.dao.UserDao;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
-    // CommandLineRunner: code trong run() sẽ chạy ngay khi app khởi động
+
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
     private final UserDao userDao;
@@ -28,17 +28,18 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (userDao.count() == 0) {
-            seedUser("admin@hoidanit.vn", "Admin User", "123456", Set.of(Role.ADMIN, Role.USER));
-            seedUser("user@hoidanit.vn", "Normal User", "123456", Set.of(Role.USER));
+            seedUser("admin", "admin@hoidanit.vn", "Admin User", "123456", Set.of(Role.ADMIN));
+            seedUser("user", "user@hoidanit.vn", "Normal User", "123456", Set.of(Role.CUSTOMER));
             log.info("Seeded default users into database");
         }
     }
 
-    private void seedUser(String email, String name, String rawPassword, Set<Role> roles) {
+    private void seedUser(String username, String email, String fullName, String rawPassword, Set<Role> roles) {
         User user = new User();
+        user.setUsername(username);
         user.setEmail(email);
-        user.setName(name);
-        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setFullName(fullName);
+        user.setPasswordHash(passwordEncoder.encode(rawPassword));
         user.setRoles(roles);
         userDao.save(user);
     }

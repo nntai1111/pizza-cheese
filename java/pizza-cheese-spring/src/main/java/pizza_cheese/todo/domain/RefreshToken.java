@@ -1,21 +1,22 @@
 package pizza_cheese.todo.domain;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public class RefreshToken {
 
-    private Long id;
+    private UUID id;
     private String token;
-    private Long userId;
+    private UUID userId;
     private User user;
     private Instant expiresAt;
     private Instant createdAt;
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -27,11 +28,11 @@ public class RefreshToken {
         this.token = token;
     }
 
-    public Long getUserId() {
+    public UUID getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(UUID userId) {
         this.userId = userId;
     }
 

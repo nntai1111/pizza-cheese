@@ -72,9 +72,10 @@ public class AuthService {
 
         User user = new User();
         user.setEmail(request.getEmail());
-        user.setName(request.getName());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRoles(Set.of(Role.USER));
+        user.setUsername(resolveUniqueUsername(request.getEmail()));
+        user.setFullName(request.getName());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setRoles(Set.of(Role.CUSTOMER));
         userDao.save(user);
 
         LoginRequest loginRequest = new LoginRequest();
@@ -168,6 +169,16 @@ public class AuthService {
         byte[] bytes = new byte[64];
         SECURE_RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String resolveUniqueUsername(String email) {
+        String base = email.contains("@") ? email.substring(0, email.indexOf('@')) : email;
+        String username = base;
+        int suffix = 1;
+        while (userDao.existsByUsername(username)) {
+            username = base + suffix++;
+        }
+        return username;
     }
 
     private String generateAccessToken(Authentication authentication, Instant issuedAt, Instant expiresAt) {

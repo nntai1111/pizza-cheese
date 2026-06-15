@@ -3,23 +3,33 @@ package pizza_cheese.todo.domain;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public class User {
 
-    private Long id;
+    private UUID id;
+    private String username;
     private String email;
-    private String password;
-    private String name;
+    private String passwordHash;
+    private String fullName;
     private Set<Role> roles = new HashSet<>();
     private Instant createdAt;
     private Instant updatedAt;
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getEmail() {
@@ -30,20 +40,20 @@ public class User {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
-    public String getName() {
-        return name;
+    public String getFullName() {
+        return fullName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
     public Set<Role> getRoles() {

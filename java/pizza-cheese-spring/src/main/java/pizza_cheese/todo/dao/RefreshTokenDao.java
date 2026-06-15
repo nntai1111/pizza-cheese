@@ -5,12 +5,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import pizza_cheese.todo.dao.mapper.RefreshTokenRowMapper;
@@ -54,21 +53,20 @@ public class RefreshTokenDao {
             refreshToken.setCreatedAt(Instant.now());
         }
 
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        Long userId = refreshToken.getUser() != null
+        if (refreshToken.getId() == null) {
+            refreshToken.setId(UUID.randomUUID());
+        }
+
+        UUID userId = refreshToken.getUser() != null
                 ? refreshToken.getUser().getId()
                 : refreshToken.getUserId();
 
         jdbc.update(queries.get("insert"), new MapSqlParameterSource()
+                .addValue("id", refreshToken.getId())
                 .addValue("token", refreshToken.getToken())
                 .addValue("userId", userId)
                 .addValue("expiresAt", JdbcTimeUtil.toTimestamp(refreshToken.getExpiresAt()))
-                .addValue("createdAt", JdbcTimeUtil.toTimestamp(refreshToken.getCreatedAt())), keyHolder, new String[] { "id" });
-
-        Number key = keyHolder.getKey();
-        if (key != null) {
-            refreshToken.setId(key.longValue());
-        }
+                .addValue("createdAt", JdbcTimeUtil.toTimestamp(refreshToken.getCreatedAt())));
         return refreshToken;
     }
 

@@ -7,12 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import pizza_cheese.todo.dao.mapper.UserRowMapper;
@@ -37,7 +36,7 @@ public class UserDao {
         return findOne(queries.get("findByEmail"), Map.of("email", email));
     }
 
-    public Optional<User> findById(Long id) {
+    public Optional<User> findById(UUID id) {
         return findOne(queries.get("findById"), Map.of("id", id));
     }
 
@@ -45,6 +44,14 @@ public class UserDao {
         Boolean exists = jdbc.queryForObject(
                 queries.get("existsByEmail"),
                 Map.of("email", email),
+                Boolean.class);
+        return Boolean.TRUE.equals(exists);
+    }
+
+    public boolean existsByUsername(String username) {
+        Boolean exists = jdbc.queryForObject(
+                queries.get("existsByUsername"),
+                Map.of("username", username),
                 Boolean.class);
         return Boolean.TRUE.equals(exists);
     }
@@ -66,8 +73,8 @@ public class UserDao {
             jdbc.update(queries.get("update"), new MapSqlParameterSource()
                     .addValue("id", user.getId())
                     .addValue("email", user.getEmail())
-                    .addValue("password", user.getPassword())
-                    .addValue("name", user.getName())
+                    .addValue("passwordHash", user.getPasswordHash())
+                    .addValue("fullName", user.getFullName())
                     .addValue("updatedAt", JdbcTimeUtil.toTimestamp(user.getUpdatedAt())));
             jdbc.update(queries.get("deleteRolesByUserId"), Map.of("userId", user.getId()));
         }
@@ -86,7 +93,7 @@ public class UserDao {
         return Optional.of(user);
     }
 
-    private Set<Role> findRolesByUserId(Long userId) {
+    private Set<Role> findRolesByUserId(UUID userId) {
         List<Role> roles = jdbc.query(
                 queries.get("findRolesByUserId"),
                 Map.of("userId", userId),
@@ -95,20 +102,20 @@ public class UserDao {
     }
 
     private void insert(User user) {
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update(queries.get("insert"), new MapSqlParameterSource()
-                .addValue("email", user.getEmail())
-                .addValue("password", user.getPassword())
-                .addValue("name", user.getName())
-                .addValue("createdAt", JdbcTimeUtil.toTimestamp(user.getCreatedAt()))
-                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(user.getUpdatedAt())), keyHolder, new String[] { "id" });
-        Number key = keyHolder.getKey();
-        if (key != null) {
-            user.setId(key.longValue());
+        if (user.getId() == null) {
+            user.setId(UUID.randomUUID());
         }
+        jdbc.update(queries.get("insert"), new MapSqlParameterSource()
+                .addValue("id", user.getId())
+                .addValue("username", user.getUsername())
+                .addValue("email", user.getEmail())
+                .addValue("passwordHash", user.getPasswordHash())
+                .addValue("fullName", user.getFullName())
+                .addValue("createdAt", JdbcTimeUtil.toTimestamp(user.getCreatedAt()))
+                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(user.getUpdatedAt())));
     }
 
-    private void saveRoles(Long userId, Set<Role> roles) {
+    private void saveRoles(UUID userId, Set<Role> roles) {
         if (roles == null || roles.isEmpty()) {
             return;
         }
