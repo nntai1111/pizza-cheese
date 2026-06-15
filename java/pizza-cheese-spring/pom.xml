@@ -9,11 +9,11 @@
 		<version>3.4.3</version>
 		<relativePath />
 	</parent>
-	<groupId>vn.hoidanit</groupId>
+	<groupId>pizza_cheese</groupId>
 	<artifactId>todo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>todo</name>
-	<description>Java Spring REST Starter - made by @hoidanit</description>
+	<description>Pizza Store - made by @tainn20</description>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
@@ -24,7 +24,15 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
