@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from '../core/guards/auth.guard';
 import { AUTH_ROUTES } from '../features/auth/auth.routes';
+import { ADMIN_ROUTES } from '../features/admin/admin.routes';
+import { CUSTOMER_ROUTES } from '../features/customer/customer.routes';
 import { ROLES_ROUTES } from '../features/roles/roles.routes';
 
 export const routes: Routes = [
@@ -19,6 +21,8 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard],
   },
+  ...CUSTOMER_ROUTES,
+  ...ADMIN_ROUTES,
   ...ROLES_ROUTES,
   {
     path: '**',

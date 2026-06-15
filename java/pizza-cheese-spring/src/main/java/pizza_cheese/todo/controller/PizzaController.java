@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,11 +26,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import pizza_cheese.todo.dto.request.CreatePizzaRequest;
 import pizza_cheese.todo.dto.request.UpdatePizzaRequest;
+import pizza_cheese.todo.dto.response.PageResponse;
 import pizza_cheese.todo.dto.response.PizzaResponse;
 import pizza_cheese.todo.dto.response.RestResponse;
 import pizza_cheese.todo.service.PizzaService;
 
 @Tag(name = "Pizza", description = "Quản lý menu pizza")
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/v1")
 public class PizzaController {
@@ -40,12 +43,14 @@ public class PizzaController {
         this.pizzaService = pizzaService;
     }
 
-    @Operation(summary = "Danh sách pizza")
+    @Operation(summary = "Danh sách pizza (phân trang)")
     @GetMapping("/pizzas")
-    public ResponseEntity<RestResponse<List<PizzaResponse>>> list(
+    public ResponseEntity<RestResponse<PageResponse<PizzaResponse>>> list(
             @RequestParam(defaultValue = "true") boolean activeOnly,
-            @RequestParam(required = false) UUID categoryId) {
-        return ResponseEntity.ok(RestResponse.success(pizzaService.findAll(activeOnly, categoryId)));
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        return ResponseEntity.ok(RestResponse.success(pizzaService.findPage(activeOnly, categoryId, page, size)));
     }
 
     @Operation(summary = "Chi tiết pizza")
@@ -68,8 +73,12 @@ public class PizzaController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RestResponse<PizzaResponse>> createMultipart(
             @Valid @RequestPart("request") CreatePizzaRequest request,
+            @RequestPart(value = "mainImage", required = false) @Schema(type = "string", format = "binary") MultipartFile mainImage,
             @RequestPart(value = "images", required = false) @Schema(type = "string", format = "binary") List<MultipartFile> images) {
-        return ResponseEntity.ok(RestResponse.success(pizzaService.create(request, images != null ? images : List.of())));
+        return ResponseEntity.ok(RestResponse.success(pizzaService.create(
+                request,
+                mainImage,
+                images != null ? images : List.of())));
     }
 
     @Operation(summary = "Cập nhật pizza (JSON)")
@@ -89,8 +98,13 @@ public class PizzaController {
     public ResponseEntity<RestResponse<PizzaResponse>> updateMultipart(
             @PathVariable UUID id,
             @Valid @RequestPart("request") UpdatePizzaRequest request,
+            @RequestPart(value = "mainImage", required = false) @Schema(type = "string", format = "binary") MultipartFile mainImage,
             @RequestPart(value = "images", required = false) @Schema(type = "string", format = "binary") List<MultipartFile> images) {
-        return ResponseEntity.ok(RestResponse.success(pizzaService.update(id, request, images != null ? images : List.of())));
+        return ResponseEntity.ok(RestResponse.success(pizzaService.update(
+                id,
+                request,
+                mainImage,
+                images != null ? images : List.of())));
     }
 
     @Operation(summary = "Xóa pizza (vô hiệu hóa)")

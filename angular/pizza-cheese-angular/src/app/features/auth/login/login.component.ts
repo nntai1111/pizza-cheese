@@ -7,6 +7,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
+import { getDefaultRouteForUser } from '../../../core/utils/role.util';
 
 @Component({
   selector: 'app-login',
@@ -38,9 +39,9 @@ export class LoginComponent {
 
     const { login, password } = this.form.getRawValue();
     this.authService.login({ login: login.trim(), password }).subscribe({
-      next: () => {
+      next: (data) => {
         this.loading.set(false);
-        this.router.navigate(['/dashboard']);
+        this.router.navigateByUrl(getDefaultRouteForUser(data.user));
       },
       error: (err) => {
         this.loading.set(false);

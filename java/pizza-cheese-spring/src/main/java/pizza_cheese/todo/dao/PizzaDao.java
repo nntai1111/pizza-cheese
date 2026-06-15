@@ -40,12 +40,37 @@ public class PizzaDao {
     public List<Pizza> findAll(boolean activeOnly, UUID categoryId) {
         List<Pizza> pizzas = jdbc.query(
                 queries.get("findAll"),
-                new MapSqlParameterSource()
-                        .addValue("activeOnly", activeOnly)
-                        .addValue("categoryId", categoryId),
+                pizzaQueryParams(activeOnly, categoryId),
                 pizzaRowMapper);
         pizzas.forEach(this::loadRelations);
         return pizzas;
+    }
+
+    public long countAll(boolean activeOnly, UUID categoryId) {
+        Long count = jdbc.queryForObject(
+                queries.get("countAll"),
+                pizzaQueryParams(activeOnly, categoryId),
+                Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<Pizza> findPage(boolean activeOnly, UUID categoryId, int page, int size) {
+        MapSqlParameterSource params = pizzaQueryParams(activeOnly, categoryId)
+                .addValue("limit", size)
+                .addValue("offset", (long) page * size);
+        List<Pizza> pizzas = jdbc.query(
+                queries.get("findPage"),
+                params,
+                pizzaRowMapper);
+        pizzas.forEach(this::loadRelations);
+        return pizzas;
+    }
+
+    private MapSqlParameterSource pizzaQueryParams(boolean activeOnly, UUID categoryId) {
+        return new MapSqlParameterSource()
+                .addValue("activeOnly", activeOnly)
+                .addValue("filterByCategory", categoryId != null)
+                .addValue("categoryId", categoryId);
     }
 
     public Optional<Pizza> findById(UUID id) {

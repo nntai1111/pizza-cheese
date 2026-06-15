@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import pizza_cheese.todo.dao.CategoryDao;
 import pizza_cheese.todo.domain.Category;
@@ -19,9 +20,11 @@ import pizza_cheese.todo.util.SlugUtil;
 public class CategoryService {
 
     private final CategoryDao categoryDao;
+    private final CloudinaryService cloudinaryService;
 
-    public CategoryService(CategoryDao categoryDao) {
+    public CategoryService(CategoryDao categoryDao, CloudinaryService cloudinaryService) {
         this.categoryDao = categoryDao;
+        this.cloudinaryService = cloudinaryService;
     }
 
     public List<CategoryResponse> findAll(boolean activeOnly) {
@@ -36,6 +39,11 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse create(CreateCategoryRequest request) {
+        return create(request, null);
+    }
+
+    @Transactional
+    public CategoryResponse create(CreateCategoryRequest request, MultipartFile imageFile) {
         String slug = SlugUtil.resolve(request.getSlug(), request.getName(), null);
         if (categoryDao.existsBySlug(slug)) {
             throw new SlugAlreadyExistsException("Slug đã tồn tại: " + slug);
@@ -45,7 +53,7 @@ public class CategoryService {
         category.setName(request.getName().trim());
         category.setSlug(slug);
         category.setDescription(request.getDescription());
-        category.setImageUrl(request.getImageUrl());
+        category.setImageUrl(resolveImageUrl(request.getImageUrl(), imageFile));
         category.setSortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0);
         category.setActive(request.getIsActive() == null || request.getIsActive());
 
@@ -54,6 +62,11 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse update(UUID id, UpdateCategoryRequest request) {
+        return update(id, request, null);
+    }
+
+    @Transactional
+    public CategoryResponse update(UUID id, UpdateCategoryRequest request, MultipartFile imageFile) {
         Category category = categoryDao.findById(id)
                 .orElseThrow(() -> new CategoryNotFoundException("Không tìm thấy danh mục"));
 
@@ -72,7 +85,9 @@ public class CategoryService {
         if (request.getDescription() != null) {
             category.setDescription(request.getDescription());
         }
-        if (request.getImageUrl() != null) {
+        if (imageFile != null && !imageFile.isEmpty()) {
+            category.setImageUrl(cloudinaryService.uploadCategoryImage(imageFile));
+        } else if (request.getImageUrl() != null) {
             category.setImageUrl(request.getImageUrl());
         }
         if (request.getSortOrder() != null) {
@@ -99,5 +114,12 @@ public class CategoryService {
         if (!category.isActive()) {
             throw new IllegalArgumentException("Danh mục không còn hoạt động");
         }
+    }
+
+    private String resolveImageUrl(String imageUrl, MultipartFile imageFile) {
+        if (imageFile != null && !imageFile.isEmpty()) {
+            return cloudinaryService.uploadCategoryImage(imageFile);
+        }
+        return imageUrl;
     }
 }

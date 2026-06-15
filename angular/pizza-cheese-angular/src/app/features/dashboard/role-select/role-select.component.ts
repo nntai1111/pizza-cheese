@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { APP_ROLES, AppRole } from '../../../core/enums/role.enum';
 import { AuthService } from '../../../core/services/auth.service';
+import { getRouteForRole, userHasRole } from '../../../core/utils/role.util';
 import { UserAvatarComponent } from '../../../shared/components';
 
 interface RoleOption {
@@ -29,13 +30,18 @@ export class RoleSelectComponent {
 
   readonly user = this.authService.currentUser;
 
-  readonly roles: RoleOption[] = APP_ROLES.map((role) => ({
-    role,
-    label: role,
-    icon: this.getRoleIcon(role),
-    route: `/welcome/${role.toLowerCase()}`,
-    color: this.getRoleColor(role),
-  }));
+  readonly roles = computed<RoleOption[]>(() => {
+    const currentUser = this.user();
+    return APP_ROLES.filter((role) => userHasRole(currentUser, role)).map(
+      (role) => ({
+        role,
+        label: role,
+        icon: this.getRoleIcon(role),
+        route: getRouteForRole(role),
+        color: this.getRoleColor(role),
+      }),
+    );
+  });
 
   logout(): void {
     this.authService.logout();

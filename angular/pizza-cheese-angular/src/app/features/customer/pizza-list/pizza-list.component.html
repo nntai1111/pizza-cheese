@@ -1,0 +1,102 @@
+<div class="customer-page">
+  <header class="customer-header">
+    <div class="customer-header__brand">
+      <span class="logo">🍕</span>
+      <div>
+        <h1>Pizza Cheese</h1>
+        <p>Xin chào, {{ user()?.name }}</p>
+      </div>
+    </div>
+    <div class="customer-header__actions">
+      <app-user-avatar [user]="user()" size="sm" />
+      <button type="button" class="btn-outline" (click)="logout()">Đăng xuất</button>
+    </div>
+  </header>
+
+  <main class="customer-main">
+    <section class="filters">
+      <h2>Thực đơn Pizza</h2>
+      <p class="filters__label">Danh mục</p>
+      <div class="category-grid">
+        <button
+          type="button"
+          class="category-card"
+          [class.category-card--active]="!selectedCategoryId()"
+          (click)="onCategoryChange('')"
+        >
+          <div class="category-card__image category-card__placeholder">🍕</div>
+          <span class="category-card__name">Tất cả</span>
+        </button>
+        @for (category of categories(); track category.id) {
+          <button
+            type="button"
+            class="category-card"
+            [class.category-card--active]="selectedCategoryId() === category.id"
+            (click)="onCategoryChange(category.id)"
+          >
+            @if (resolveCategoryImageUrl(category); as imageUrl) {
+              <img
+                class="category-card__image"
+                [src]="imageUrl"
+                [alt]="category.name"
+                loading="lazy"
+              />
+            } @else {
+              <div class="category-card__image category-card__placeholder">📁</div>
+            }
+            <span class="category-card__name">{{ category.name }}</span>
+          </button>
+        }
+      </div>
+    </section>
+
+    @if (errorMessage()) {
+      <div class="alert">{{ errorMessage() }}</div>
+    }
+
+    @if (loading()) {
+      <p class="loading-text">Đang tải...</p>
+    } @else if (pizzas().length === 0) {
+      <p class="empty-text">Không có pizza nào.</p>
+    } @else {
+      <div class="pizza-grid">
+        @for (pizza of pizzas(); track pizza.id) {
+          <article class="pizza-card">
+            <div class="pizza-card__image">
+              @if (getMainImage(pizza); as imageUrl) {
+                <img [src]="imageUrl" [alt]="pizza.name" loading="lazy" />
+              } @else {
+                <div class="pizza-card__placeholder">🍕</div>
+              }
+            </div>
+            <div class="pizza-card__body">
+              @if (pizza.category) {
+                <span class="pizza-card__category">{{ pizza.category.name }}</span>
+              }
+              <h3>{{ pizza.name }}</h3>
+              @if (pizza.description) {
+                <p class="pizza-card__desc">{{ pizza.description }}</p>
+              }
+              <p class="pizza-card__price">Từ {{ formatPrice(pizza.basePrice) }}</p>
+              @if (pizza.variants.length) {
+                <ul class="pizza-card__sizes">
+                  @for (variant of pizza.variants; track variant.size) {
+                    <li>{{ variant.size }}: {{ formatPrice(variant.price) }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          </article>
+        }
+      </div>
+
+      <app-pagination
+        [page]="page()"
+        [totalPages]="totalPages()"
+        [totalElements]="totalElements()"
+        [disabled]="loading()"
+        (pageChange)="onPageChange($event)"
+      />
+    }
+  </main>
+</div>

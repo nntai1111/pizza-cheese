@@ -1,0 +1,220 @@
+<div class="admin-page">
+  <div class="admin-page__header">
+    <h1>Quản lý Pizza</h1>
+    <button type="button" class="btn-primary" (click)="openCreate()">+ Thêm pizza</button>
+  </div>
+
+  <div class="filter-bar">
+    <label for="pizzaCategoryFilter">Lọc danh mục</label>
+    <select
+      id="pizzaCategoryFilter"
+      [value]="selectedCategoryId() ?? ''"
+      (change)="onCategoryFilterChange($any($event.target).value)"
+    >
+      <option value="">Tất cả</option>
+      @for (category of categories(); track category.id) {
+        <option [value]="category.id">{{ category.name }}</option>
+      }
+    </select>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (showForm()) {
+    <div class="form-card">
+      <h2>{{ editingId() ? 'Sửa pizza' : 'Thêm pizza' }}</h2>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <label>Danh mục *</label>
+          <select formControlName="categoryId">
+            @for (category of categories(); track category.id) {
+              <option [value]="category.id">{{ category.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Tên *</label>
+          <input formControlName="name" />
+        </div>
+        <div class="form-row">
+          <label>Mô tả</label>
+          <textarea formControlName="description" rows="2"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Giá cơ bản *</label>
+          <input type="number" formControlName="basePrice" min="0.01" step="1000" />
+        </div>
+        <div class="form-row">
+          <label>Giá theo size *</label>
+          <div class="variants-grid">
+            <div>
+              <label>Small</label>
+              <input type="number" formControlName="smallPrice" min="0.01" step="1000" />
+            </div>
+            <div>
+              <label>Medium</label>
+              <input type="number" formControlName="mediumPrice" min="0.01" step="1000" />
+            </div>
+            <div>
+              <label>Large</label>
+              <input type="number" formControlName="largePrice" min="0.01" step="1000" />
+            </div>
+          </div>
+        </div>
+        @if (toppings().length) {
+          <div class="form-row">
+            <label>Topping</label>
+            <div class="topping-checkboxes">
+              @for (topping of toppings(); track topping.id) {
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    [checked]="isToppingSelected(topping.id)"
+                    (change)="toggleTopping(topping.id, $any($event.target).checked)"
+                  />
+                  {{ topping.name }} ({{ formatPrice(topping.price) }})
+                </label>
+              }
+            </div>
+          </div>
+        }
+        <div class="form-row">
+          <label>Ảnh chính</label>
+          <input type="file" accept="image/*" (change)="onMainImageSelected($event)" />
+          <small class="form-hint">Ảnh đại diện hiển thị trên danh sách pizza.</small>
+          @if (existingMainImageUrl()) {
+            <div class="image-section">
+              <span class="image-section__label">Ảnh chính hiện tại</span>
+              <img
+                class="image-preview image-preview--main"
+                [src]="existingMainImageUrl()!"
+                alt="Ảnh chính hiện tại"
+              />
+            </div>
+          }
+          @if (mainImagePreviewUrl()) {
+            <div class="image-section">
+              <span class="image-section__label">Ảnh chính mới</span>
+              <img
+                class="image-preview image-preview--main"
+                [src]="mainImagePreviewUrl()!"
+                alt="Ảnh chính mới"
+              />
+            </div>
+          }
+        </div>
+        <div class="form-row">
+          <label>Ảnh phụ</label>
+          <input
+            #secondaryImageInput
+            type="file"
+            accept="image/*"
+            multiple
+            (change)="onSecondaryImagesSelected($event)"
+          />
+          <small class="form-hint">
+            Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều ảnh cùng lúc, hoặc chọn thêm nhiều lần.
+            @if (selectedSecondaryImageFiles().length) {
+              Đã chọn {{ selectedSecondaryImageFiles().length }} ảnh phụ.
+            }
+          </small>
+          @if (existingSecondaryImageUrls().length) {
+            <div class="image-section">
+              <span class="image-section__label">Ảnh phụ hiện tại</span>
+              <div class="image-preview-grid">
+                @for (url of existingSecondaryImageUrls(); track url) {
+                  <img class="image-preview" [src]="url" alt="Ảnh phụ hiện tại" />
+                }
+              </div>
+            </div>
+          }
+          @if (secondaryImagePreviewUrls().length) {
+            <div class="image-section">
+              <span class="image-section__label">Ảnh phụ mới</span>
+              <div class="image-preview-grid">
+                @for (url of secondaryImagePreviewUrls(); track $index) {
+                  <div class="image-preview-item">
+                    <img class="image-preview" [src]="url" [alt]="'Ảnh phụ ' + ($index + 1)" />
+                    <button
+                      type="button"
+                      class="image-preview-remove"
+                      (click)="removeSecondaryImage($index)"
+                    >
+                      ×
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="isActive" />
+          Hoạt động
+        </label>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancelForm()">Hủy</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Đang lưu...' : 'Lưu' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="loading-text">Đang tải...</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Ảnh</th>
+            <th>Tên</th>
+            <th>Danh mục</th>
+            <th>Giá cơ bản</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (pizza of pizzas(); track pizza.id) {
+            <tr>
+              <td>
+                @if (getMainImage(pizza); as imageUrl) {
+                  <img class="table-thumb" [src]="imageUrl" [alt]="pizza.name" />
+                } @else {
+                  <span class="table-thumb-placeholder">🍕</span>
+                }
+              </td>
+              <td>{{ pizza.name }}</td>
+              <td>{{ pizza.category?.name ?? '—' }}</td>
+              <td>{{ formatPrice(pizza.basePrice) }}</td>
+              <td>
+                <span class="badge" [class.badge--active]="pizza.active">
+                  {{ pizza.active ? 'Hoạt động' : 'Ẩn' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button type="button" class="btn-link" (click)="openEdit(pizza)">Sửa</button>
+                <button type="button" class="btn-link btn-link--danger" (click)="deletePizza(pizza)">
+                  Xóa
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [page]="page()"
+      [totalPages]="totalPages()"
+      [totalElements]="totalElements()"
+      [disabled]="loading()"
+      (pageChange)="onPageChange($event)"
+    />
+  }
+</div>

@@ -13,7 +13,7 @@
   </header>
 
   <div class="role-grid">
-    @for (item of roles; track item.role) {
+    @for (item of roles(); track item.role) {
       <a
         class="role-card"
         [routerLink]="item.route"

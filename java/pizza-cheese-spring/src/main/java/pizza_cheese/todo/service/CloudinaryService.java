@@ -32,6 +32,10 @@ public class CloudinaryService {
 		return upload(file, properties.getFolderPizza());
 	}
 
+	public String uploadCategoryImage(MultipartFile file) {
+		return upload(file, properties.getFolderCategory());
+	}
+
 	public String upload(MultipartFile file, String folder) {
 		try {
 			@SuppressWarnings("unchecked")

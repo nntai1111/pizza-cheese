@@ -1,0 +1,99 @@
+<div class="admin-page">
+  <div class="admin-page__header">
+    <h1>Quản lý Danh mục</h1>
+    <button type="button" class="btn-primary" (click)="openCreate()">+ Thêm danh mục</button>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (showForm()) {
+    <div class="form-card">
+      <h2>{{ editingId() ? 'Sửa danh mục' : 'Thêm danh mục' }}</h2>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <label>Tên *</label>
+          <input formControlName="name" placeholder="VD: Pizza Bò" />
+        </div>
+        <div class="form-row">
+          <label>Slug</label>
+          <input formControlName="slug" placeholder="Để trống sẽ tự tạo từ tên" />
+        </div>
+        <div class="form-row">
+          <label>Mô tả</label>
+          <textarea formControlName="description" rows="2" placeholder="Mô tả ngắn về danh mục"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Ảnh danh mục</label>
+          <input type="file" accept="image/*" (change)="onImageSelected($event)" />
+          @if (imagePreviewUrl()) {
+            <img class="image-preview" [src]="imagePreviewUrl()!" alt="Xem trước ảnh danh mục" />
+          }
+        </div>
+        <div class="form-row form-row--inline">
+          <div>
+            <label>Thứ tự</label>
+            <input type="number" formControlName="sortOrder" />
+          </div>
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="isActive" />
+            Hoạt động
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancelForm()">Hủy</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Đang lưu...' : 'Lưu' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="loading-text">Đang tải...</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Ảnh</th>
+            <th>Tên</th>
+            <th>Slug</th>
+            <th>Thứ tự</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (category of categories(); track category.id) {
+            <tr>
+              <td>
+                @if (resolveCategoryImageUrl(category); as imageUrl) {
+                  <img class="table-thumb" [src]="imageUrl" [alt]="category.name" loading="lazy" />
+                } @else {
+                  <span class="table-thumb-placeholder">📁</span>
+                }
+              </td>
+              <td>{{ category.name }}</td>
+              <td>{{ category.slug }}</td>
+              <td>{{ category.sortOrder }}</td>
+              <td>
+                <span class="badge" [class.badge--active]="isCategoryActive(category)">
+                  {{ isCategoryActive(category) ? 'Hoạt động' : 'Ẩn' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button type="button" class="btn-link" (click)="openEdit(category)">Sửa</button>
+                <button type="button" class="btn-link btn-link--danger" (click)="deleteCategory(category)">
+                  Xóa
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
