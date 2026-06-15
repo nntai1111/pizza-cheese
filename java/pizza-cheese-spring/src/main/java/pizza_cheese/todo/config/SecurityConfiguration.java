@@ -141,6 +141,11 @@ public class SecurityConfiguration {
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/refresh")
                         .permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**")
+                        .permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
