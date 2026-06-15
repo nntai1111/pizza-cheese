@@ -1,0 +1,133 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <span class="logo">🍕</span>
+      <h1>Pizza Cheese</h1>
+      <p>Tạo tài khoản mới</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="username">Tên đăng nhập</label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          placeholder="user123"
+          autocomplete="username"
+        />
+        @if (form.controls.username.touched && form.controls.username.errors?.['required']) {
+          <span class="error">Tên đăng nhập là bắt buộc</span>
+        }
+        @if (form.controls.username.touched && form.controls.username.errors?.['minlength']) {
+          <span class="error">Tên đăng nhập phải từ 3 đến 50 ký tự</span>
+        }
+        @if (form.controls.username.touched && form.controls.username.errors?.['pattern']) {
+          <span class="error">Chỉ được dùng chữ, số và dấu gạch dưới</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="user@hoidanit.vn"
+          autocomplete="email"
+        />
+        @if (form.controls.email.touched && form.controls.email.errors?.['required']) {
+          <span class="error">Email là bắt buộc</span>
+        }
+        @if (form.controls.email.touched && form.controls.email.errors?.['email']) {
+          <span class="error">Email không hợp lệ</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="fullName">Họ tên</label>
+        <input
+          id="fullName"
+          type="text"
+          formControlName="fullName"
+          placeholder="Nguyễn Văn A"
+          autocomplete="name"
+        />
+        @if (form.controls.fullName.touched && form.controls.fullName.errors?.['required']) {
+          <span class="error">Họ tên là bắt buộc</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Số điện thoại</label>
+        <input
+          id="phone"
+          type="tel"
+          formControlName="phone"
+          placeholder="0443967817"
+          autocomplete="tel"
+        />
+        @if (form.controls.phone.touched && form.controls.phone.errors?.['required']) {
+          <span class="error">Số điện thoại là bắt buộc</span>
+        }
+        @if (form.controls.phone.touched && form.controls.phone.errors?.['pattern']) {
+          <span class="error">Số điện thoại không hợp lệ</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mật khẩu</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="••••••"
+          autocomplete="new-password"
+        />
+        @if (form.controls.password.touched && form.controls.password.errors?.['required']) {
+          <span class="error">Mật khẩu là bắt buộc</span>
+        }
+        @if (form.controls.password.touched && form.controls.password.errors?.['minlength']) {
+          <span class="error">Mật khẩu phải có ít nhất 6 ký tự</span>
+        }
+      </div>
+
+      <div class="form-group avatar-upload">
+        <label>Ảnh đại diện (tuỳ chọn)</label>
+        <div class="avatar-picker">
+          <img
+            class="avatar-preview"
+            [src]="avatarPreview()"
+            alt="Xem trước ảnh đại diện"
+          />
+          <label class="btn-upload">
+            Chọn ảnh từ máy
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              (change)="onAvatarSelected($event)"
+              hidden
+            />
+          </label>
+        </div>
+        <p class="avatar-hint">Để trống sẽ dùng ảnh mặc định. Tối đa 2MB.</p>
+        @if (avatarError()) {
+          <span class="error">{{ avatarError() }}</span>
+        }
+      </div>
+
+      @if (errorMessage()) {
+        <div class="alert">{{ errorMessage() }}</div>
+      }
+
+      <button type="submit" class="btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Đang đăng ký...' : 'Đăng ký' }}
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      Đã có tài khoản?
+      <a routerLink="/login">Đăng nhập</a>
+    </p>
+  </div>
+</div>

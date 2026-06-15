@@ -108,3 +108,20 @@
     cursor: not-allowed;
   }
 }
+
+.auth-footer {
+  margin: 1.5rem 0 0;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+
+  a {
+    color: #e94560;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

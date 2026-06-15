@@ -4,13 +4,13 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
@@ -23,7 +23,7 @@ export class LoginComponent {
   readonly errorMessage = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
-    email: ['admin@hoidanit.vn', [Validators.required, Validators.email]],
+    login: ['user', [Validators.required]],
     password: ['123456', [Validators.required, Validators.minLength(6)]],
   });
 
@@ -36,7 +36,8 @@ export class LoginComponent {
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    this.authService.login(this.form.getRawValue()).subscribe({
+    const { login, password } = this.form.getRawValue();
+    this.authService.login({ login: login.trim(), password }).subscribe({
       next: () => {
         this.loading.set(false);
         this.router.navigate(['/dashboard']);

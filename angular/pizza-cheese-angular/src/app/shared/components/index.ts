@@ -1,1 +1,1 @@
-// Shared components barrel export
+export { UserAvatarComponent } from './user-avatar/user-avatar.component';

@@ -12,6 +12,12 @@
   margin: 0 auto 2.5rem;
   gap: 1rem;
 
+  .user-greeting {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
   h1 {
     margin: 0 0 0.5rem;
     font-size: 1.75rem;

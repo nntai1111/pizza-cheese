@@ -9,12 +9,17 @@ import {
   throwError,
 } from 'rxjs';
 
-import { AUTH_ENDPOINTS, STORAGE_KEYS } from '../constants/api.constants';
+import {
+  AUTH_ENDPOINTS,
+  DEFAULT_AVATAR_URL,
+  STORAGE_KEYS,
+} from '../constants/api.constants';
 import {
   ApiResponse,
   AuthData,
   LoginRequest,
   RefreshTokenRequest,
+  RegisterRequest,
   User,
 } from '../models/auth.model';
 
@@ -28,6 +33,17 @@ export class AuthService {
   login(credentials: LoginRequest): Observable<AuthData> {
     return this.http
       .post<ApiResponse<AuthData>>(AUTH_ENDPOINTS.login, credentials)
+      .pipe(map((response) => this.persistAuth(response.data)));
+  }
+
+  register(payload: RegisterRequest): Observable<AuthData> {
+    const body: RegisterRequest = {
+      ...payload,
+      avatarUrl: payload.avatarUrl?.trim() || DEFAULT_AVATAR_URL,
+    };
+
+    return this.http
+      .post<ApiResponse<AuthData>>(AUTH_ENDPOINTS.register, body)
       .pipe(map((response) => this.persistAuth(response.data)));
   }
 
@@ -61,7 +77,19 @@ export class AuthService {
   }
 
   logout(): void {
+    const refreshToken = this.getRefreshToken();
     this.clearAuth();
+
+    if (refreshToken) {
+      const body: RefreshTokenRequest = { refreshToken };
+      this.http
+        .post<ApiResponse<null>>(AUTH_ENDPOINTS.logout, body)
+        .subscribe();
+    }
+  }
+
+  getAvatarUrl(user: User | null | undefined): string {
+    return user?.avatarUrl?.trim() || DEFAULT_AVATAR_URL;
   }
 
   isAuthenticated(): boolean {

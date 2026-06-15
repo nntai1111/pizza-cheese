@@ -5,6 +5,7 @@ import { map } from 'rxjs';
 
 import { AppRole } from '../../../core/enums/role.enum';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserAvatarComponent } from '../../../shared/components';
 
 const WELCOME_MESSAGES: Record<string, { title: string; description: string; icon: string }> = {
   admin: {
@@ -36,7 +37,7 @@ const WELCOME_MESSAGES: Record<string, { title: string; description: string; ico
 
 @Component({
   selector: 'app-welcome',
-  imports: [RouterLink],
+  imports: [RouterLink, UserAvatarComponent],
   templateUrl: './welcome.component.html',
   styleUrl: './welcome.component.scss',
 })

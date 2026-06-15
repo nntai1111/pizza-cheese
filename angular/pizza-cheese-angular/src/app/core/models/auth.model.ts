@@ -6,8 +6,17 @@ export interface ApiResponse<T> {
 }
 
 export interface LoginRequest {
+  login: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  username: string;
   email: string;
   password: string;
+  fullName: string;
+  phone: string;
+  avatarUrl?: string;
 }
 
 export interface RefreshTokenRequest {
@@ -15,9 +24,12 @@ export interface RefreshTokenRequest {
 }
 
 export interface User {
-  id: number;
+  id: string;
+  username: string;
   email: string;
   name: string;
+  phone: string | null;
+  avatarUrl: string | null;
   roles: string[];
   createdAt: string;
   updatedAt: string;

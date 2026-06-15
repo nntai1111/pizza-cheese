@@ -1,5 +1,6 @@
 <div class="welcome-page">
   <div class="welcome-card">
+    <app-user-avatar [user]="user()" size="lg" [alt]="user()?.name ?? 'Avatar'" />
     <span class="welcome-icon">{{ welcomeInfo().icon }}</span>
     <h1>{{ welcomeInfo().title }}</h1>
     <p class="role-badge">{{ roleLabel() }}</p>

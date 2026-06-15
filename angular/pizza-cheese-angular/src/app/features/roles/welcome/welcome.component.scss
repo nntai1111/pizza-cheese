@@ -16,6 +16,11 @@
   width: 100%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 
+  app-user-avatar {
+    display: block;
+    margin: 0 auto 1rem;
+  }
+
   .welcome-icon {
     font-size: 4rem;
     display: block;

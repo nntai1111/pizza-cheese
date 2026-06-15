@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { APP_ROLES, AppRole } from '../../../core/enums/role.enum';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserAvatarComponent } from '../../../shared/components';
 
 interface RoleOption {
   role: AppRole;
@@ -14,7 +15,7 @@ interface RoleOption {
 
 @Component({
   selector: 'app-role-select',
-  imports: [RouterLink],
+  imports: [RouterLink, UserAvatarComponent],
   templateUrl: './role-select.component.html',
   styleUrl: './role-select.component.scss',
 })

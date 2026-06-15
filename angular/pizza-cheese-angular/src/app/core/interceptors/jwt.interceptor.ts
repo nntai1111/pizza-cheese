@@ -8,7 +8,12 @@ import { catchError, switchMap, throwError } from 'rxjs';
 import { AUTH_ENDPOINTS } from '../constants/api.constants';
 import { AuthService } from '../services/auth.service';
 
-const AUTH_URLS = [AUTH_ENDPOINTS.login, AUTH_ENDPOINTS.refresh];
+const AUTH_URLS = [
+  AUTH_ENDPOINTS.login,
+  AUTH_ENDPOINTS.register,
+  AUTH_ENDPOINTS.logout,
+  AUTH_ENDPOINTS.refresh,
+];
 
 
 //HttpInterceptorFn đánh dấu là 1 hàm interceptor
