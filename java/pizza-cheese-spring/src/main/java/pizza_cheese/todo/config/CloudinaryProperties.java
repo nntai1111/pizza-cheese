@@ -8,6 +8,8 @@ public class CloudinaryProperties {
 	private String cloudName;
 	private String apiKey;
 	private String apiSecret;
+	private String folderAvatar = "pizza-store/avatar";
+	private String folderPizza = "pizza-store/pizza";
 
 	public String getCloudName() {
 		return cloudName;
@@ -31,5 +33,21 @@ public class CloudinaryProperties {
 
 	public void setApiSecret(String apiSecret) {
 		this.apiSecret = apiSecret;
+	}
+
+	public String getFolderAvatar() {
+		return folderAvatar;
+	}
+
+	public void setFolderAvatar(String folderAvatar) {
+		this.folderAvatar = folderAvatar;
+	}
+
+	public String getFolderPizza() {
+		return folderPizza;
+	}
+
+	public void setFolderPizza(String folderPizza) {
+		this.folderPizza = folderPizza;
 	}
 }

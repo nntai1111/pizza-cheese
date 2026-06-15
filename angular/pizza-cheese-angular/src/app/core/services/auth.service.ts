@@ -36,14 +36,22 @@ export class AuthService {
       .pipe(map((response) => this.persistAuth(response.data)));
   }
 
-  register(payload: RegisterRequest): Observable<AuthData> {
-    const body: RegisterRequest = {
-      ...payload,
-      avatarUrl: payload.avatarUrl?.trim() || DEFAULT_AVATAR_URL,
-    };
+  register(payload: RegisterRequest, avatarFile?: File | null): Observable<AuthData> {
+    if (avatarFile) {
+      const formData = new FormData();
+      formData.append(
+        'request',
+        new Blob([JSON.stringify(payload)], { type: 'application/json' }),
+      );
+      formData.append('avatar', avatarFile, avatarFile.name);
+
+      return this.http
+        .post<ApiResponse<AuthData>>(AUTH_ENDPOINTS.register, formData)
+        .pipe(map((response) => this.persistAuth(response.data)));
+    }
 
     return this.http
-      .post<ApiResponse<AuthData>>(AUTH_ENDPOINTS.register, body)
+      .post<ApiResponse<AuthData>>(AUTH_ENDPOINTS.register, payload)
       .pipe(map((response) => this.persistAuth(response.data)));
   }
 

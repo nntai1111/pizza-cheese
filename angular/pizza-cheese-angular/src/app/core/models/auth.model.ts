@@ -16,7 +16,6 @@ export interface RegisterRequest {
   password: string;
   fullName: string;
   phone: string;
-  avatarUrl?: string;
 }
 
 export interface RefreshTokenRequest {

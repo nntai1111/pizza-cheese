@@ -20,7 +20,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import pizza_cheese.todo.domain.RefreshToken;
 import pizza_cheese.todo.domain.Role;
@@ -46,6 +46,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserDao userDao;
     private final RefreshTokenDao refreshTokenDao;
+    private final CloudinaryService cloudinaryService;
     private final long accessTokenExpiration;
     private final long refreshTokenExpiration;
     private final String defaultAvatarUrl;
@@ -56,6 +57,7 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             UserDao userDao,
             RefreshTokenDao refreshTokenDao,
+            CloudinaryService cloudinaryService,
             @Value("${app.jwt.access-token-validity-in-seconds}") long accessTokenExpiration,
             @Value("${app.jwt.refresh-token-validity-in-seconds}") long refreshTokenExpiration,
             @Value("${app.user.default-avatar-url}") String defaultAvatarUrl) {
@@ -64,13 +66,14 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.userDao = userDao;
         this.refreshTokenDao = refreshTokenDao;
+        this.cloudinaryService = cloudinaryService;
         this.accessTokenExpiration = accessTokenExpiration;
         this.refreshTokenExpiration = refreshTokenExpiration;
         this.defaultAvatarUrl = defaultAvatarUrl;
     }
 
     @Transactional
-    public LoginResponse register(RegisterRequest request) {
+    public LoginResponse register(RegisterRequest request, MultipartFile avatar) {
         String username = normalizeUsername(request.getUsername());
 
         if (userDao.existsByUsername(username)) {
@@ -85,7 +88,7 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setFullName(request.getFullName());
         user.setPhone(request.getPhone());
-        user.setAvatarUrl(resolveAvatarUrl(request.getAvatarUrl()));
+        user.setAvatarUrl(resolveAvatar(avatar));
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRoles(Set.of(Role.CUSTOMER));
         userDao.save(user);
@@ -185,8 +188,11 @@ public class AuthService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    private String resolveAvatarUrl(String avatarUrl) {
-        return StringUtils.hasText(avatarUrl) ? avatarUrl.trim() : defaultAvatarUrl;
+    private String resolveAvatar(MultipartFile avatar) {
+        if (avatar != null && !avatar.isEmpty()) {
+            return cloudinaryService.uploadAvatar(avatar);
+        }
+        return defaultAvatarUrl;
     }
 
     private String normalizeUsername(String username) {

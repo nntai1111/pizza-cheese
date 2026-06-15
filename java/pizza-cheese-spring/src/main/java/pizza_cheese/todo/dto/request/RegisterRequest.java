@@ -28,8 +28,6 @@ public class RegisterRequest {
     @Pattern(regexp = "^(0|\\+84)[0-9]{9,10}$", message = "Số điện thoại không hợp lệ")
     private String phone;
 
-    private String avatarUrl;
-
     public String getUsername() {
         return username;
     }
@@ -68,13 +66,5 @@ public class RegisterRequest {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
     }
 }

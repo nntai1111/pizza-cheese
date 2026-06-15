@@ -26,7 +26,7 @@ export class RegisterComponent {
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly avatarPreview = signal(DEFAULT_AVATAR_URL);
-  readonly avatarDataUrl = signal<string | null>(null);
+  readonly avatarFile = signal<File | null>(null);
   readonly avatarError = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
@@ -70,12 +70,11 @@ export class RegisterComponent {
     }
 
     this.avatarError.set(null);
+    this.avatarFile.set(file);
 
     const reader = new FileReader();
     reader.onload = () => {
-      const dataUrl = reader.result as string;
-      this.avatarPreview.set(dataUrl);
-      this.avatarDataUrl.set(dataUrl);
+      this.avatarPreview.set(reader.result as string);
     };
     reader.readAsDataURL(file);
     input.value = '';
@@ -91,10 +90,7 @@ export class RegisterComponent {
     this.errorMessage.set(null);
 
     this.authService
-      .register({
-        ...this.form.getRawValue(),
-        avatarUrl: this.avatarDataUrl() ?? undefined,
-      })
+      .register(this.form.getRawValue(), this.avatarFile())
       .subscribe({
         next: () => {
           this.loading.set(false);
@@ -103,7 +99,9 @@ export class RegisterComponent {
         error: (err) => {
           this.loading.set(false);
           const message =
-            err?.error?.message ?? 'Đăng ký thất bại. Vui lòng thử lại.';
+            err?.error?.error ??
+            err?.error?.message ??
+            'Đăng ký thất bại. Vui lòng thử lại.';
           this.errorMessage.set(message);
         },
       });
