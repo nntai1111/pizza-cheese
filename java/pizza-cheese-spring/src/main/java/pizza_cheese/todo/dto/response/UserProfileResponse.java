@@ -13,6 +13,8 @@ public class UserProfileResponse {
     private String username;
     private String email;
     private String name;
+    private String phone;
+    private String avatarUrl;
     private Set<Role> roles;
     private Instant createdAt;
     private Instant updatedAt;
@@ -23,6 +25,8 @@ public class UserProfileResponse {
         response.setUsername(user.getUsername());
         response.setEmail(user.getEmail());
         response.setName(user.getFullName());
+        response.setPhone(user.getPhone());
+        response.setAvatarUrl(user.getAvatarUrl());
         response.setRoles(user.getRoles());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
@@ -59,6 +63,22 @@ public class UserProfileResponse {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public Set<Role> getRoles() {

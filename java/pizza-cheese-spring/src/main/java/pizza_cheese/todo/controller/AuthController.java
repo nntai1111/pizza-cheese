@@ -41,7 +41,7 @@ public class AuthController {
         return ResponseEntity.ok(RestResponse.success(loginResponse));
     }
 
-    @Operation(summary = "Đăng nhập")
+    @Operation(summary = "Đăng nhập bằng email hoặc tên đăng nhập")
     @PostMapping("/login")
     public ResponseEntity<RestResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse loginResponse = authService.login(request);

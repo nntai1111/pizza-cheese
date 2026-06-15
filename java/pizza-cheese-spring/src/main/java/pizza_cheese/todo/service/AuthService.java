@@ -20,6 +20,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import pizza_cheese.todo.domain.RefreshToken;
 import pizza_cheese.todo.domain.Role;
@@ -30,6 +31,7 @@ import pizza_cheese.todo.dto.response.LoginResponse;
 import pizza_cheese.todo.dto.response.UserProfileResponse;
 import pizza_cheese.todo.exception.EmailAlreadyExistsException;
 import pizza_cheese.todo.exception.InvalidRefreshTokenException;
+import pizza_cheese.todo.exception.UsernameAlreadyExistsException;
 import pizza_cheese.todo.dao.RefreshTokenDao;
 import pizza_cheese.todo.dao.UserDao;
 import pizza_cheese.todo.util.SecurityUtil;
@@ -46,6 +48,7 @@ public class AuthService {
     private final RefreshTokenDao refreshTokenDao;
     private final long accessTokenExpiration;
     private final long refreshTokenExpiration;
+    private final String defaultAvatarUrl;
 
     public AuthService(
             AuthenticationManager authenticationManager,
@@ -54,7 +57,8 @@ public class AuthService {
             UserDao userDao,
             RefreshTokenDao refreshTokenDao,
             @Value("${app.jwt.access-token-validity-in-seconds}") long accessTokenExpiration,
-            @Value("${app.jwt.refresh-token-validity-in-seconds}") long refreshTokenExpiration) {
+            @Value("${app.jwt.refresh-token-validity-in-seconds}") long refreshTokenExpiration,
+            @Value("${app.user.default-avatar-url}") String defaultAvatarUrl) {
         this.authenticationManager = authenticationManager;
         this.jwtEncoder = jwtEncoder;
         this.passwordEncoder = passwordEncoder;
@@ -62,24 +66,32 @@ public class AuthService {
         this.refreshTokenDao = refreshTokenDao;
         this.accessTokenExpiration = accessTokenExpiration;
         this.refreshTokenExpiration = refreshTokenExpiration;
+        this.defaultAvatarUrl = defaultAvatarUrl;
     }
 
     @Transactional
     public LoginResponse register(RegisterRequest request) {
+        String username = normalizeUsername(request.getUsername());
+
+        if (userDao.existsByUsername(username)) {
+            throw new UsernameAlreadyExistsException("Tên đăng nhập đã được sử dụng");
+        }
         if (userDao.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("Email đã được sử dụng");
         }
 
         User user = new User();
+        user.setUsername(username);
         user.setEmail(request.getEmail());
-        user.setUsername(resolveUniqueUsername(request.getEmail()));
-        user.setFullName(request.getName());
+        user.setFullName(request.getFullName());
+        user.setPhone(request.getPhone());
+        user.setAvatarUrl(resolveAvatarUrl(request.getAvatarUrl()));
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRoles(Set.of(Role.CUSTOMER));
         userDao.save(user);
 
         LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setEmail(request.getEmail());
+        loginRequest.setLogin(request.getEmail());
         loginRequest.setPassword(request.getPassword());
         return login(loginRequest);
     }
@@ -92,13 +104,15 @@ public class AuthService {
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
+        String login = request.getLogin().trim();
+
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                request.getEmail(),
+                login,
                 request.getPassword());
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 
-        User user = userDao.findByEmail(request.getEmail())
+        User user = userDao.findByEmailOrUsername(login)
                 .orElseThrow();
 
         refreshTokenDao.deleteByUser(user);
@@ -171,14 +185,12 @@ public class AuthService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    private String resolveUniqueUsername(String email) {
-        String base = email.contains("@") ? email.substring(0, email.indexOf('@')) : email;
-        String username = base;
-        int suffix = 1;
-        while (userDao.existsByUsername(username)) {
-            username = base + suffix++;
-        }
-        return username;
+    private String resolveAvatarUrl(String avatarUrl) {
+        return StringUtils.hasText(avatarUrl) ? avatarUrl.trim() : defaultAvatarUrl;
+    }
+
+    private String normalizeUsername(String username) {
+        return username.trim().toLowerCase();
     }
 
     private String generateAccessToken(Authentication authentication, Instant issuedAt, Instant expiresAt) {

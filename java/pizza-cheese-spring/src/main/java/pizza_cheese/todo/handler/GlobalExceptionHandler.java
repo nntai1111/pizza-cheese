@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import pizza_cheese.todo.dto.response.RestResponse;
 import pizza_cheese.todo.exception.EmailAlreadyExistsException;
 import pizza_cheese.todo.exception.InvalidRefreshTokenException;
+import pizza_cheese.todo.exception.UsernameAlreadyExistsException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -31,7 +32,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<RestResponse<Void>> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(RestResponse.error(401, "Unauthorized", "Email hoặc mật khẩu không đúng"));
+                .body(RestResponse.error(401, "Unauthorized", "Email/tên đăng nhập hoặc mật khẩu không đúng"));
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
@@ -48,6 +49,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<RestResponse<Void>> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(RestResponse.error(409, "Conflict", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<RestResponse<Void>> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(RestResponse.error(409, "Conflict", ex.getMessage()));
     }

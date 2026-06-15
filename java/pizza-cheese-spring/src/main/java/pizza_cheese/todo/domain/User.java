@@ -12,6 +12,8 @@ public class User {
     private String email;
     private String passwordHash;
     private String fullName;
+    private String phone;
+    private String avatarUrl;
     private Set<Role> roles = new HashSet<>();
     private Instant createdAt;
     private Instant updatedAt;
@@ -54,6 +56,22 @@ public class User {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public Set<Role> getRoles() {

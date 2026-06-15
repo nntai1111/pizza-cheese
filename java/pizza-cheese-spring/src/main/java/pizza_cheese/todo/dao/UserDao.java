@@ -36,6 +36,14 @@ public class UserDao {
         return findOne(queries.get("findByEmail"), Map.of("email", email));
     }
 
+    public Optional<User> findByUsername(String username) {
+        return findOne(queries.get("findByUsername"), Map.of("username", username));
+    }
+
+    public Optional<User> findByEmailOrUsername(String login) {
+        return findOne(queries.get("findByEmailOrUsername"), Map.of("login", login));
+    }
+
     public Optional<User> findById(UUID id) {
         return findOne(queries.get("findById"), Map.of("id", id));
     }
@@ -75,6 +83,8 @@ public class UserDao {
                     .addValue("email", user.getEmail())
                     .addValue("passwordHash", user.getPasswordHash())
                     .addValue("fullName", user.getFullName())
+                    .addValue("phone", user.getPhone())
+                    .addValue("avatarUrl", user.getAvatarUrl())
                     .addValue("updatedAt", JdbcTimeUtil.toTimestamp(user.getUpdatedAt())));
             jdbc.update(queries.get("deleteRolesByUserId"), Map.of("userId", user.getId()));
         }
@@ -111,6 +121,8 @@ public class UserDao {
                 .addValue("email", user.getEmail())
                 .addValue("passwordHash", user.getPasswordHash())
                 .addValue("fullName", user.getFullName())
+                .addValue("phone", user.getPhone())
+                .addValue("avatarUrl", user.getAvatarUrl())
                 .addValue("createdAt", JdbcTimeUtil.toTimestamp(user.getCreatedAt()))
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(user.getUpdatedAt())));
     }

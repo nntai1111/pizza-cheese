@@ -20,6 +20,8 @@ public class UserRowMapper implements RowMapper<User> {
         user.setEmail(rs.getString("email"));
         user.setPasswordHash(rs.getString("password_hash"));
         user.setFullName(rs.getString("full_name"));
+        user.setPhone(rs.getString("phone"));
+        user.setAvatarUrl(rs.getString("avatar_url"));
         user.setCreatedAt(toInstant(rs.getObject("created_at", OffsetDateTime.class)));
         user.setUpdatedAt(toInstant(rs.getObject("updated_at", OffsetDateTime.class)));
         return user;

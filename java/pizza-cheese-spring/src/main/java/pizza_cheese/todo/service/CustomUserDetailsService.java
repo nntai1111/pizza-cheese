@@ -20,9 +20,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        pizza_cheese.todo.domain.User user = userDao.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user với email: " + email));
+    public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
+        pizza_cheese.todo.domain.User user = userDao.findByEmailOrUsername(login)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "Không tìm thấy user với email hoặc tên đăng nhập: " + login));
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
