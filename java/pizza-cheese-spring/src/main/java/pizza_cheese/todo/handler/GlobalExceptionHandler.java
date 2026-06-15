@@ -13,9 +13,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import pizza_cheese.todo.dto.response.RestResponse;
+import pizza_cheese.todo.exception.CategoryNotFoundException;
 import pizza_cheese.todo.exception.EmailAlreadyExistsException;
 import pizza_cheese.todo.exception.FileUploadException;
 import pizza_cheese.todo.exception.InvalidRefreshTokenException;
+import pizza_cheese.todo.exception.PizzaNotFoundException;
+import pizza_cheese.todo.exception.SlugAlreadyExistsException;
+import pizza_cheese.todo.exception.ToppingNotFoundException;
 import pizza_cheese.todo.exception.UsernameAlreadyExistsException;
 
 @RestControllerAdvice
@@ -72,6 +76,36 @@ public class GlobalExceptionHandler {
     public ResponseEntity<RestResponse<Void>> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(RestResponse.error(409, "Conflict", ex.getMessage()));
+    }
+
+    @ExceptionHandler(PizzaNotFoundException.class)
+    public ResponseEntity<RestResponse<Void>> handlePizzaNotFound(PizzaNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(RestResponse.error(404, "Not Found", ex.getMessage()));
+    }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<RestResponse<Void>> handleCategoryNotFound(CategoryNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(RestResponse.error(404, "Not Found", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ToppingNotFoundException.class)
+    public ResponseEntity<RestResponse<Void>> handleToppingNotFound(ToppingNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(RestResponse.error(404, "Not Found", ex.getMessage()));
+    }
+
+    @ExceptionHandler(SlugAlreadyExistsException.class)
+    public ResponseEntity<RestResponse<Void>> handleSlugAlreadyExists(SlugAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(RestResponse.error(409, "Conflict", ex.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<RestResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest()
+                .body(RestResponse.error(400, "Bad Request", ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

@@ -146,6 +146,9 @@ public class SecurityConfiguration {
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**")
                         .permitAll()
+                        .requestMatchers("/api/v1/pizzas", "/api/v1/pizzas/**").permitAll()
+                        .requestMatchers("/api/v1/categories", "/api/v1/categories/**").permitAll()
+                        .requestMatchers("/api/v1/toppings", "/api/v1/toppings/**").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
