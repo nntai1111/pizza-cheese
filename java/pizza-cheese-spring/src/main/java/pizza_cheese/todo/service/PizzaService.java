@@ -228,24 +228,26 @@ public class PizzaService {
         if (isPresent(mainImage)) {
             images.add(createUploadedImage(mainImage, true, order++));
         } else {
-            existingImages.stream()
-                    .filter(PizzaImage::isMain)
-                    .findFirst()
-                    .ifPresent(image -> images.add(cloneWithOrder(image, order++)));
+            for (PizzaImage image : existingImages) {
+                if (image.isMain()) {
+                    images.add(cloneWithOrder(image, order++));
+                    break;
+                }
+            }
         }
 
-        boolean replacingSecondary = secondaryImages != null
-                && secondaryImages.stream().anyMatch(this::isPresent);
-        if (replacingSecondary) {
+        for (PizzaImage image : existingImages) {
+            if (!image.isMain()) {
+                images.add(cloneWithOrder(image, order++));
+            }
+        }
+
+        if (secondaryImages != null) {
             for (MultipartFile file : secondaryImages) {
                 if (isPresent(file)) {
                     images.add(createUploadedImage(file, false, order++));
                 }
             }
-        } else {
-            existingImages.stream()
-                    .filter(image -> !image.isMain())
-                    .forEach(image -> images.add(cloneWithOrder(image, order++)));
         }
 
         ensureSingleMainImage(images);
