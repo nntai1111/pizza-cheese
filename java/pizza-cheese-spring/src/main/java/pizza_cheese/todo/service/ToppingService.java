@@ -32,6 +32,7 @@ public class ToppingService {
                 .orElseThrow(() -> new ToppingNotFoundException("Không tìm thấy topping"));
     }
 
+    // những hàm có ghi dữ liệu xuống DB.
     @Transactional
     public ToppingResponse create(CreateToppingRequest request) {
         Topping topping = new Topping();

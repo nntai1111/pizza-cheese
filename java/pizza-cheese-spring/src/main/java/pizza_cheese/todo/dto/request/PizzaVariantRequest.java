@@ -5,8 +5,12 @@ import java.math.BigDecimal;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 
+import lombok.Getter;
+import lombok.Setter;
 import pizza_cheese.todo.domain.PizzaSize;
 
+@Getter
+@Setter
 public class PizzaVariantRequest {
 
     @NotNull(message = "Kích thước pizza không được để trống")
@@ -15,20 +19,4 @@ public class PizzaVariantRequest {
     @NotNull(message = "Giá theo size không được để trống")
     @DecimalMin(value = "0.01", message = "Giá theo size phải lớn hơn 0")
     private BigDecimal price;
-
-    public PizzaSize getSize() {
-        return size;
-    }
-
-    public void setSize(PizzaSize size) {
-        this.size = size;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
 }

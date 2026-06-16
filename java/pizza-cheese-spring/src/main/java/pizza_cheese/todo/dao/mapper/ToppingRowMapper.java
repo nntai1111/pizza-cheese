@@ -10,6 +10,8 @@ import org.springframework.jdbc.core.RowMapper;
 
 import pizza_cheese.todo.domain.Topping;
 
+// RowMapper = đọc từng dòng kết quả SQL.
+// ToppingRowMapper = biến từng dòng đó thành object Topping.
 public class ToppingRowMapper implements RowMapper<Topping> {
 
     @Override

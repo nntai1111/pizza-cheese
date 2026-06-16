@@ -17,11 +17,15 @@ import pizza_cheese.todo.domain.Topping;
 import pizza_cheese.todo.util.JdbcTimeUtil;
 import pizza_cheese.todo.util.SqlLoader;
 
+// báo cho Spring biết đây là bean truy cập dữ liệu.
 @Repository
 public class ToppingDao {
 
     private final NamedParameterJdbcTemplate jdbc;
+    // thay vì WHERE id = ? thì dùng WHERE id = :id để đặt tên tham số
+    // và truyền Map.of("id", id)
     private final Map<String, String> queries;
+    // gọi query từ topping.sql
     private final ToppingRowMapper rowMapper = new ToppingRowMapper();
 
     public ToppingDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
@@ -45,6 +49,8 @@ public class ToppingDao {
         return jdbc.query(queries.get("findByIds"), Map.of("ids", ids), rowMapper);
     }
 
+    // Chưa có id → tạo mới (INSERT)
+    // Có id → cập nhật (UPDATE)
     public Topping save(Topping topping) {
         Instant now = Instant.now();
 
@@ -67,6 +73,7 @@ public class ToppingDao {
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(Instant.now())));
     }
 
+    // 👉 Chuyển object thành tham số SQL
     private MapSqlParameterSource toParams(Topping topping) {
         return new MapSqlParameterSource()
                 .addValue("id", topping.getId())
