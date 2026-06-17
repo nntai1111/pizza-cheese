@@ -6,11 +6,32 @@ import { AppRole } from '../../core/enums/role.enum';
 
 export const CUSTOMER_ROUTES: Routes = [
   {
-    path: 'customer/pizzas',
+    path: 'customer',
     loadComponent: () =>
-      import('./pizza-list/pizza-list.component').then(
-        (m) => m.PizzaListComponent,
+      import('./customer-layout/customer-layout.component').then(
+        (m) => m.CustomerLayoutComponent,
       ),
     canActivate: [authGuard, roleGuard(AppRole.CUSTOMER)],
+    children: [
+      {
+        path: '',
+        redirectTo: 'pizzas',
+        pathMatch: 'full',
+      },
+      {
+        path: 'pizzas',
+        loadComponent: () =>
+          import('./pizza-list/pizza-list.component').then(
+            (m) => m.PizzaListComponent,
+          ),
+      },
+      {
+        path: 'pizzas/:id',
+        loadComponent: () =>
+          import('./pizza-detail/pizza-detail.component').then(
+            (m) => m.PizzaDetailComponent,
+          ),
+      },
+    ],
   },
 ];

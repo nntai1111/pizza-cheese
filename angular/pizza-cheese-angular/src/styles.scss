@@ -4,6 +4,24 @@
   box-sizing: border-box;
 }
 
+:root {
+  --pc-yellow: #fbb034;
+  --pc-yellow-light: #ffd56b;
+  --pc-yellow-dark: #e59a1a;
+  --pc-cream: #fff9ee;
+  --pc-cream-dark: #fff3d6;
+  --pc-crust: #3d2314;
+  --pc-crust-muted: #6b4c3b;
+  --pc-white: #ffffff;
+  --pc-border: #f0e0c8;
+  --pc-shadow: rgba(61, 35, 20, 0.08);
+  --pc-shadow-hover: rgba(61, 35, 20, 0.14);
+  --pc-danger: #c1121f;
+  --pc-success: #2d6a4f;
+  --pc-radius: 16px;
+  --pc-radius-sm: 10px;
+}
+
 html,
 body {
   margin: 0;

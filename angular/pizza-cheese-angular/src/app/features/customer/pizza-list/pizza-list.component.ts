@@ -1,7 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { AuthService } from '../../../core/services/auth.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { PizzaService } from '../../../core/services/pizza.service';
 import { Category } from '../../../core/models/category.model';
@@ -9,23 +8,25 @@ import {
   getCategoryImageUrl as resolveCategoryImageUrl,
 } from '../../../core/utils/category.util';
 import { Pizza } from '../../../core/models/pizza.model';
-import { getPizzaMainImage } from '../../../core/utils/pizza.util';
-import { UserAvatarComponent } from '../../../shared/components';
+import {
+  formatVnd,
+  getPizzaMainImage,
+  getPizzaMinPrice,
+  sortPizzaVariants,
+} from '../../../core/utils/pizza.util';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-pizza-list',
-  imports: [UserAvatarComponent, PaginationComponent],
+  imports: [RouterLink, PaginationComponent],
   templateUrl: './pizza-list.component.html',
   styleUrl: './pizza-list.component.scss',
 })
 export class PizzaListComponent {
-  private readonly authService = inject(AuthService);
   private readonly pizzaService = inject(PizzaService);
   private readonly categoryService = inject(CategoryService);
   private readonly router = inject(Router);
 
-  readonly user = this.authService.currentUser;
   readonly pizzas = signal<Pizza[]>([]);
   readonly categories = signal<Category[]>([]);
   readonly selectedCategoryId = signal<string | null>(null);
@@ -36,13 +37,24 @@ export class PizzaListComponent {
   readonly errorMessage = signal<string | null>(null);
 
   readonly pageSize = 12;
+  readonly resolveCategoryImageUrl = resolveCategoryImageUrl;
+  readonly formatPrice = formatVnd;
+  readonly getMainImage = getPizzaMainImage;
+  readonly getMinPrice = getPizzaMinPrice;
+  readonly sortVariants = sortPizzaVariants;
+
+  readonly selectedCategoryName = computed(() => {
+    const id = this.selectedCategoryId();
+    if (!id) {
+      return 'Tất cả';
+    }
+    return this.categories().find((c) => c.id === id)?.name ?? 'Danh mục';
+  });
 
   constructor() {
     this.loadCategories();
     this.loadPizzas();
   }
-
-  readonly resolveCategoryImageUrl = resolveCategoryImageUrl;
 
   onCategoryChange(categoryId: string): void {
     this.selectedCategoryId.set(categoryId || null);
@@ -55,20 +67,8 @@ export class PizzaListComponent {
     this.loadPizzas();
   }
 
-  getMainImage(pizza: Pizza): string | null {
-    return getPizzaMainImage(pizza);
-  }
-
-  formatPrice(price: number): string {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(price);
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+  viewDetail(pizzaId: string): void {
+    this.router.navigate(['/customer/pizzas', pizzaId]);
   }
 
   private loadCategories(): void {

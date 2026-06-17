@@ -1,0 +1,161 @@
+@if (loading()) {
+  <div class="detail-loading">
+    <div class="detail-loading__spinner"></div>
+    <p>Đang tải pizza...</p>
+  </div>
+} @else if (errorMessage()) {
+  <div class="detail-error">
+    <span>😕</span>
+    <h2>{{ errorMessage() }}</h2>
+    <button type="button" class="btn-back" (click)="goBack()">← Quay lại thực đơn</button>
+  </div>
+} @else if (pizza(); as item) {
+  <nav class="breadcrumb">
+    <a routerLink="/customer/pizzas">Thực đơn</a>
+    <span>/</span>
+    @if (item.category) {
+      <span>{{ item.category.name }}</span>
+      <span>/</span>
+    }
+    <span class="breadcrumb__current">{{ item.name }}</span>
+  </nav>
+
+  <div class="detail-layout">
+    <section class="gallery">
+      <div class="gallery__main">
+        @if (activeImage(); as image) {
+          <img [src]="image.imageUrl" [alt]="item.name" />
+        } @else {
+          <div class="gallery__placeholder">
+            <span>🍕</span>
+            <p>Chưa có hình ảnh</p>
+          </div>
+        }
+      </div>
+
+      @if (sortedImages().length > 1) {
+        <div class="gallery__thumbs">
+          @for (image of sortedImages(); track image.id ?? image.imageUrl; let i = $index) {
+            <button
+              type="button"
+              class="gallery__thumb"
+              [class.gallery__thumb--active]="activeImageIndex() === i"
+              (click)="selectImage(i)"
+            >
+              <img [src]="image.imageUrl" [alt]="item.name + ' ' + (i + 1)" loading="lazy" />
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="detail-info">
+      @if (item.category) {
+        <span class="detail-info__category">{{ item.category.name }}</span>
+      }
+      <h1>{{ item.name }}</h1>
+
+      @if (item.description) {
+        <p class="detail-info__desc">{{ item.description }}</p>
+      } @else {
+        <p class="detail-info__desc detail-info__desc--muted">
+          Pizza thơm ngon với lớp phô mai tan chảy đặc trưng của Pizza Cheese.
+        </p>
+      }
+
+      <div class="detail-block">
+        <h2>Chọn cỡ bánh</h2>
+        @if (item.variants.length) {
+          <div class="size-options">
+            @for (variant of sortVariants(item.variants); track variant.id ?? variant.size) {
+              <button
+                type="button"
+                class="size-option"
+                [class.size-option--active]="selectedVariant()?.size === variant.size"
+                (click)="selectVariant(variant)"
+              >
+                <span class="size-option__label">{{ getSizeLabel(variant.size) }}</span>
+                <span class="size-option__price">{{ formatPrice(variant.price) }}</span>
+              </button>
+            }
+          </div>
+        } @else {
+          <p class="hint-text">Giá cơ bản: {{ formatPrice(item.basePrice) }}</p>
+        }
+      </div>
+
+      @if (activeToppings().length) {
+        <div class="detail-block">
+          <h2>Topping thêm</h2>
+          <p class="block-hint">Chọn thêm topping yêu thích (nếu có)</p>
+          <ul class="topping-list">
+            @for (topping of activeToppings(); track topping.id) {
+              <li>
+                <label class="topping-item">
+                  <input
+                    type="checkbox"
+                    [checked]="isToppingSelected(topping.id)"
+                    (change)="toggleTopping(topping.id)"
+                  />
+                  <span class="topping-item__name">{{ topping.name }}</span>
+                  <span class="topping-item__price">
+                    @if (topping.price > 0) {
+                      +{{ formatPrice(topping.price) }}
+                    } @else {
+                      Miễn phí
+                    }
+                  </span>
+                </label>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <div class="detail-block order-panel">
+        <div class="quantity-row">
+          <span>Số lượng</span>
+          <div class="quantity-control">
+            <button type="button" (click)="decreaseQuantity()" [disabled]="quantity() <= 1">−</button>
+            <span>{{ quantity() }}</span>
+            <button type="button" (click)="increaseQuantity()">+</button>
+          </div>
+        </div>
+
+        <div class="price-summary">
+          <div class="price-summary__row">
+            <span>Đơn giá</span>
+            <strong>{{ formatPrice(unitPrice()) }}</strong>
+          </div>
+          <div class="price-summary__row price-summary__row--total">
+            <span>Tổng cộng</span>
+            <strong>{{ formatPrice(totalPrice()) }}</strong>
+          </div>
+        </div>
+
+        <button type="button" class="btn-add-cart" (click)="addToCart()">
+          🛒 Thêm vào giỏ hàng
+        </button>
+
+        @if (orderNotice()) {
+          <p class="order-notice">{{ orderNotice() }}</p>
+        }
+      </div>
+
+      <dl class="detail-meta">
+        <div>
+          <dt>Mã món</dt>
+          <dd>{{ item.slug }}</dd>
+        </div>
+        <div>
+          <dt>Giá gốc</dt>
+          <dd>{{ formatPrice(item.basePrice) }}</dd>
+        </div>
+        <div>
+          <dt>Số ảnh</dt>
+          <dd>{{ item.images.length }}</dd>
+        </div>
+      </dl>
+    </section>
+  </div>
+}

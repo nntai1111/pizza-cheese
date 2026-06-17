@@ -1,0 +1,38 @@
+<div class="customer-shell">
+  <header class="customer-topbar">
+    <a routerLink="/customer/pizzas" class="customer-brand">
+      <span class="customer-brand__logo">🧀</span>
+      <div class="customer-brand__text">
+        <strong>Pizza Cheese</strong>
+        <span>Phô mai tan chảy, vị ngon đậm đà</span>
+      </div>
+    </a>
+
+    <nav class="customer-nav">
+      <a
+        routerLink="/customer/pizzas"
+        routerLinkActive="customer-nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="customer-nav__link"
+      >
+        Thực đơn
+      </a>
+    </nav>
+
+    <div class="customer-topbar__actions">
+      <div class="customer-user">
+        <app-user-avatar [user]="user()" size="sm" />
+        <span class="customer-user__name">{{ user()?.name }}</span>
+      </div>
+      <button type="button" class="btn-logout" (click)="logout()">Đăng xuất</button>
+    </div>
+  </header>
+
+  <main class="customer-content">
+    <router-outlet />
+  </main>
+
+  <footer class="customer-footer">
+    <p>© {{ currentYear }} Pizza Cheese — Giao tận nơi, nóng hổi thơm phức</p>
+  </footer>
+</div>
