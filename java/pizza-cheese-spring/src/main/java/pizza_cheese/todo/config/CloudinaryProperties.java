@@ -16,4 +16,5 @@ public class CloudinaryProperties {
 	private String folderAvatar = "pizza-store/avatar";
 	private String folderPizza = "pizza-store/pizza";
 	private String folderCategory = "pizza-store/category";
+	private String folderCombo = "pizza-store/combo";
 }

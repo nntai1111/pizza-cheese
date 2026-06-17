@@ -1,0 +1,91 @@
+@if (loading()) {
+  <div class="detail-loading">
+    <div class="detail-loading__spinner"></div>
+    <p>Đang tải combo...</p>
+  </div>
+} @else if (errorMessage()) {
+  <div class="detail-error">
+    <span>😕</span>
+    <h2>{{ errorMessage() }}</h2>
+    <button type="button" class="btn-back" (click)="goBack()">← Quay lại combo</button>
+  </div>
+} @else if (combo(); as item) {
+  <nav class="breadcrumb">
+    <a routerLink="/customer/combos">Combo</a>
+    <span>/</span>
+    <span class="breadcrumb__current">{{ item.name }}</span>
+  </nav>
+
+  <div class="detail-layout">
+    <section class="gallery">
+      @if (getImageUrl(item); as imageUrl) {
+        <img class="gallery__image" [src]="imageUrl" [alt]="item.name" />
+      } @else {
+        <div class="gallery__placeholder">
+          <span>🎁</span>
+          <p>Chưa có hình ảnh</p>
+        </div>
+      }
+    </section>
+
+    <section class="detail-info">
+      <span class="detail-info__badge">Combo tiết kiệm</span>
+      <h1>{{ item.name }}</h1>
+
+      @if (item.description) {
+        <p class="detail-info__desc">{{ item.description }}</p>
+      }
+
+      <div class="detail-info__price">
+        @if (discountedPrice(); as discounted) {
+          <span class="detail-info__price-old">{{ formatPrice(item) }}</span>
+          <strong>{{ formatVnd(discounted) }}</strong>
+          <span class="detail-info__discount">-{{ item.discountPercent }}%</span>
+        } @else {
+          <strong>{{ formatPrice(item) }}</strong>
+        }
+      </div>
+
+      <div class="combo-items">
+        <h2>Pizza trong combo</h2>
+        <ul>
+          @for (comboItem of item.items; track comboItem.pizzaVariantId) {
+            <li>
+              <span class="combo-items__qty">{{ comboItem.quantity }}x</span>
+              <span>
+                {{ comboItem.pizzaName }}
+                @if (comboItem.pizzaSize) {
+                  <small>({{ getSizeLabel(comboItem.pizzaSize) }})</small>
+                }
+              </span>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div class="order-panel">
+        <div class="quantity-control">
+          <span>Số lượng</span>
+          <div class="quantity-control__buttons">
+            <button type="button" (click)="decreaseQuantity()">−</button>
+            <span>{{ quantity() }}</span>
+            <button type="button" (click)="increaseQuantity()">+</button>
+          </div>
+        </div>
+
+        <div class="order-panel__total">
+          <span>Tổng tạm tính</span>
+          <strong>{{ formatVnd(totalPrice()) }}</strong>
+        </div>
+
+        <button type="button" class="btn-order" (click)="addToCart()">
+          Thêm vào giỏ hàng
+        </button>
+
+        @if (orderNotice()) {
+          <p class="order-notice">{{ orderNotice() }}</p>
+        }
+      </div>
+    </section>
+  </div>
+}

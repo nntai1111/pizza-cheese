@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import pizza_cheese.todo.dto.response.RestResponse;
 import pizza_cheese.todo.exception.CategoryNotFoundException;
+import pizza_cheese.todo.exception.ComboNotFoundException;
 import pizza_cheese.todo.exception.EmailAlreadyExistsException;
 import pizza_cheese.todo.exception.FileUploadException;
 import pizza_cheese.todo.exception.InvalidRefreshTokenException;
@@ -86,6 +87,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CategoryNotFoundException.class)
     public ResponseEntity<RestResponse<Void>> handleCategoryNotFound(CategoryNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(RestResponse.error(404, "Not Found", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ComboNotFoundException.class)
+    public ResponseEntity<RestResponse<Void>> handleComboNotFound(ComboNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(RestResponse.error(404, "Not Found", ex.getMessage()));
     }

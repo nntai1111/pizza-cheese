@@ -35,6 +35,13 @@ export const ADMIN_ROUTES: Routes = [
             (m) => m.PizzaAdminListComponent,
           ),
       },
+      {
+        path: 'combos',
+        loadComponent: () =>
+          import('./combos/combo-list.component').then(
+            (m) => m.ComboListComponent,
+          ),
+      },
     ],
   },
 ];

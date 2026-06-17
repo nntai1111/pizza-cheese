@@ -36,6 +36,10 @@ public class CloudinaryService {
 		return upload(file, properties.getFolderCategory());
 	}
 
+	public String uploadComboImage(MultipartFile file) {
+		return upload(file, properties.getFolderCombo());
+	}
+
 	public String upload(MultipartFile file, String folder) {
 		try {
 			@SuppressWarnings("unchecked")

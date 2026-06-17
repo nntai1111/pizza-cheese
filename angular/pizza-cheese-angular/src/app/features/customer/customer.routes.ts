@@ -32,6 +32,20 @@ export const CUSTOMER_ROUTES: Routes = [
             (m) => m.PizzaDetailComponent,
           ),
       },
+      {
+        path: 'combos',
+        loadComponent: () =>
+          import('./combo-list/combo-list.component').then(
+            (m) => m.ComboListComponent,
+          ),
+      },
+      {
+        path: 'combos/:id',
+        loadComponent: () =>
+          import('./combo-detail/combo-detail.component').then(
+            (m) => m.ComboDetailComponent,
+          ),
+      },
     ],
   },
 ];
