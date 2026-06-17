@@ -1,7 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { PizzaService } from '../../../core/services/pizza.service';
+import { CartService } from '../../../core/services/cart.service';
 import { Pizza, PizzaImage, PizzaVariant } from '../../../core/models/pizza.model';
 import {
   formatVnd,
@@ -9,6 +11,7 @@ import {
   getPizzaSortedImages,
   sortPizzaVariants,
 } from '../../../core/utils/pizza.util';
+import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
 
 @Component({
   selector: 'app-pizza-detail',
@@ -20,6 +23,7 @@ export class PizzaDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly pizzaService = inject(PizzaService);
+  private readonly cartService = inject(CartService);
 
   readonly pizza = signal<Pizza | null>(null);
   readonly loading = signal(true);
@@ -29,6 +33,7 @@ export class PizzaDetailComponent {
   readonly selectedToppingIds = signal<Set<string>>(new Set());
   readonly quantity = signal(1);
   readonly orderNotice = signal<string | null>(null);
+  readonly addingToCart = signal(false);
 
   readonly formatPrice = formatVnd;
   readonly getSizeLabel = getPizzaSizeLabel;
@@ -115,9 +120,33 @@ export class PizzaDetailComponent {
   }
 
   addToCart(): void {
-    this.orderNotice.set(
-      'Tính năng giỏ hàng đang được phát triển. Bạn đã chọn xong pizza!',
-    );
+    const pizza = this.pizza();
+    const variant = this.selectedVariant();
+    if (!pizza || !variant?.id) {
+      this.orderNotice.set('Vui lòng chọn size pizza.');
+      return;
+    }
+
+    this.addingToCart.set(true);
+    this.orderNotice.set(null);
+
+    this.cartService
+      .addPizza({
+        pizzaId: pizza.id,
+        pizzaVariantId: variant.id,
+        toppingIds: Array.from(this.selectedToppingIds()),
+        quantity: this.quantity(),
+      })
+      .subscribe({
+        next: () => {
+          this.addingToCart.set(false);
+          this.orderNotice.set('Đã thêm pizza vào giỏ hàng!');
+        },
+        error: (err: HttpErrorResponse) => {
+          this.addingToCart.set(false);
+          this.orderNotice.set(getHttpErrorMessage(err, 'Không thể thêm vào giỏ hàng.'));
+        },
+      });
   }
 
   goBack(): void {

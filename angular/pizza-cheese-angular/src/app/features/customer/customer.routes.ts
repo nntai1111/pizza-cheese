@@ -46,6 +46,11 @@ export const CUSTOMER_ROUTES: Routes = [
             (m) => m.ComboDetailComponent,
           ),
       },
+      {
+        path: 'cart',
+        loadComponent: () =>
+          import('./cart/cart.component').then((m) => m.CartComponent),
+      },
     ],
   },
 ];

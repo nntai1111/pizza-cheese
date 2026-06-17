@@ -112,7 +112,26 @@
         </div>
       }
 
-      <div class="detail-block order-panel">
+      <dl class="detail-meta">
+        <div>
+          <dt>Mã món</dt>
+          <dd>{{ item.slug }}</dd>
+        </div>
+        <div>
+          <dt>Giá gốc</dt>
+          <dd>{{ formatPrice(item.basePrice) }}</dd>
+        </div>
+        <div>
+          <dt>Số ảnh</dt>
+          <dd>{{ item.images.length }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <aside class="order-sidebar">
+      <div class="order-sidebar__card">
+        <h2 class="order-sidebar__title">Thêm vào giỏ</h2>
+
         <div class="quantity-row">
           <span>Số lượng</span>
           <div class="quantity-control">
@@ -133,29 +152,23 @@
           </div>
         </div>
 
-        <button type="button" class="btn-add-cart" (click)="addToCart()">
-          🛒 Thêm vào giỏ hàng
+        <button
+          type="button"
+          class="btn-add-cart"
+          (click)="addToCart()"
+          [disabled]="addingToCart() || !selectedVariant()"
+        >
+          @if (addingToCart()) {
+            Đang thêm...
+          } @else {
+            🛒 Thêm vào giỏ hàng
+          }
         </button>
 
         @if (orderNotice()) {
           <p class="order-notice">{{ orderNotice() }}</p>
         }
       </div>
-
-      <dl class="detail-meta">
-        <div>
-          <dt>Mã món</dt>
-          <dd>{{ item.slug }}</dd>
-        </div>
-        <div>
-          <dt>Giá gốc</dt>
-          <dd>{{ formatPrice(item.basePrice) }}</dd>
-        </div>
-        <div>
-          <dt>Số ảnh</dt>
-          <dd>{{ item.images.length }}</dd>
-        </div>
-      </dl>
-    </section>
+    </aside>
   </div>
 }

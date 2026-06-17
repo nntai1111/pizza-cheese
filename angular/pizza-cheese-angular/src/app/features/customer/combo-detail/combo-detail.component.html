@@ -62,8 +62,12 @@
           }
         </ul>
       </div>
+    </section>
 
-      <div class="order-panel">
+    <aside class="order-sidebar">
+      <div class="order-sidebar__card">
+        <h2 class="order-sidebar__title">Thêm vào giỏ</h2>
+
         <div class="quantity-control">
           <span>Số lượng</span>
           <div class="quantity-control__buttons">
@@ -78,14 +82,23 @@
           <strong>{{ formatVnd(totalPrice()) }}</strong>
         </div>
 
-        <button type="button" class="btn-order" (click)="addToCart()">
-          Thêm vào giỏ hàng
+        <button
+          type="button"
+          class="btn-order"
+          (click)="addToCart()"
+          [disabled]="addingToCart()"
+        >
+          @if (addingToCart()) {
+            Đang thêm...
+          } @else {
+            🛒 Thêm vào giỏ hàng
+          }
         </button>
 
         @if (orderNotice()) {
           <p class="order-notice">{{ orderNotice() }}</p>
         }
       </div>
-    </section>
+    </aside>
   </div>
 }

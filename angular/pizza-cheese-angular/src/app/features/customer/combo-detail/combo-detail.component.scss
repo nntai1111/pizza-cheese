@@ -60,8 +60,17 @@
 
 .detail-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) 300px;
+  gap: 1.5rem;
+  align-items: start;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr 1fr;
+
+    .order-sidebar {
+      grid-column: 1 / -1;
+    }
+  }
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
@@ -182,6 +191,26 @@
   li small {
     color: var(--pc-crust-muted);
     font-size: 0.8125rem;
+  }
+}
+
+.order-sidebar {
+  position: sticky;
+  top: 88px;
+
+  &__card {
+    @include customer-theme.pc-card;
+    padding: 1.25rem;
+    background: linear-gradient(180deg, var(--pc-white), var(--pc-cream));
+    border: 2px solid var(--pc-yellow-light);
+  }
+
+  &__title {
+    margin: 0 0 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--pc-border);
+    color: var(--pc-crust);
+    font-size: 1.0625rem;
   }
 }
 

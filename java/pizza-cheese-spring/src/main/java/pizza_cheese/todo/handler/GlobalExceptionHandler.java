@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import pizza_cheese.todo.dto.response.RestResponse;
+import pizza_cheese.todo.exception.CartItemNotFoundException;
 import pizza_cheese.todo.exception.CategoryNotFoundException;
 import pizza_cheese.todo.exception.ComboNotFoundException;
 import pizza_cheese.todo.exception.EmailAlreadyExistsException;
@@ -81,6 +82,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PizzaNotFoundException.class)
     public ResponseEntity<RestResponse<Void>> handlePizzaNotFound(PizzaNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(RestResponse.error(404, "Not Found", ex.getMessage()));
+    }
+
+    @ExceptionHandler(CartItemNotFoundException.class)
+    public ResponseEntity<RestResponse<Void>> handleCartItemNotFound(CartItemNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(RestResponse.error(404, "Not Found", ex.getMessage()));
     }
