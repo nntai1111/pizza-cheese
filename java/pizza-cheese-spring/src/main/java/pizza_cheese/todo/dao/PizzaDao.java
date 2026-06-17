@@ -133,10 +133,12 @@ public class PizzaDao {
                 queries.get("findVariantsByPizzaId"),
                 Map.of("pizzaId", pizza.getId()),
                 variantRowMapper));
-        pizza.setToppings(jdbc.query(
+        var toppings = jdbc.query(
                 queries.get("findToppingsByPizzaId"),
                 Map.of("pizzaId", pizza.getId()),
-                toppingRowMapper));
+                toppingRowMapper);
+        pizza.setToppings(toppings);
+        pizza.setToppingIds(toppings.stream().map(t -> t.getId()).toList());
         pizza.setImages(jdbc.query(
                 queries.get("findImagesByPizzaId"),
                 Map.of("pizzaId", pizza.getId()),
