@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { ComboService } from '../../../core/services/combo.service';
+import { ShopContextService } from '../../../core/services/shop-context.service';
 import { Combo } from '../../../core/models/combo.model';
 import {
   formatComboItemSummary,
@@ -21,6 +22,9 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 export class ComboListComponent {
   private readonly comboService = inject(ComboService);
   private readonly router = inject(Router);
+  private readonly shopContext = inject(ShopContextService);
+
+  readonly shop = this.shopContext;
 
   readonly combos = signal<Combo[]>([]);
   readonly page = signal(0);
@@ -46,7 +50,7 @@ export class ComboListComponent {
   }
 
   viewDetail(comboId: string): void {
-    this.router.navigate(['/customer/combos', comboId]);
+    this.router.navigate(this.shopContext.segments('combos', comboId));
   }
 
   private loadCombos(): void {

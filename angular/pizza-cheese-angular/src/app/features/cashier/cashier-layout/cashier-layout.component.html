@@ -1,10 +1,10 @@
 <div class="customer-shell">
   <header class="customer-topbar">
     <a [routerLink]="shop.segments('pizzas')" class="customer-brand">
-      <span class="customer-brand__logo">🧀</span>
+      <span class="customer-brand__logo">💰</span>
       <div class="customer-brand__text">
         <strong>Pizza Cheese</strong>
-        <span>Phô mai tan chảy, vị ngon đậm đà</span>
+        <span>Quầy thu ngân</span>
       </div>
     </a>
 
@@ -30,7 +30,7 @@
         routerLinkActive="customer-nav__link--active"
         class="customer-nav__link"
       >
-        Đơn hàng
+        Quản lý đơn
       </a>
     </nav>
 
@@ -63,7 +63,7 @@
     @if (!isCartPage()) {
       <aside class="cart-sidebar">
         <div class="cart-sidebar__header">
-          <h2>🛒 Giỏ hàng</h2>
+          <h2>🛒 Giỏ hàng quầy</h2>
           @if (cartItemCount() > 0) {
             <span class="cart-sidebar__count">{{ cartItemCount() }} món</span>
           }
@@ -73,7 +73,7 @@
           @if (!currentCart.items.length) {
             <div class="cart-sidebar__empty">
               <p>Chưa có món nào</p>
-              <span>Chọn pizza hoặc combo để thêm vào giỏ</span>
+              <span>Chọn pizza hoặc combo để tạo đơn tại quầy</span>
             </div>
           } @else {
             <ul class="cart-sidebar__items">
@@ -109,6 +109,6 @@
   </div>
 
   <footer class="customer-footer">
-    <p>© {{ currentYear }} Pizza Cheese — Giao tận nơi, nóng hổi thơm phức</p>
+    <p>© {{ currentYear }} Pizza Cheese — Quầy thu ngân</p>
   </footer>
 </div>

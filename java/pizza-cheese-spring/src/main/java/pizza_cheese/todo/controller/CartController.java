@@ -31,7 +31,7 @@ import pizza_cheese.todo.service.CartService;
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/v1/cart")
-@PreAuthorize("hasRole('CUSTOMER')")
+@PreAuthorize("hasAnyRole('CUSTOMER', 'CASHIER')")
 public class CartController {
 
     private final CartService cartService;

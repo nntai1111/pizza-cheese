@@ -11,7 +11,7 @@
   </div>
 } @else if (pizza(); as item) {
   <nav class="breadcrumb">
-    <a routerLink="/customer/pizzas">Thực đơn</a>
+    <a [routerLink]="shop.segments('pizzas')">Thực đơn</a>
     <span>/</span>
     @if (item.category) {
       <span>{{ item.category.name }}</span>

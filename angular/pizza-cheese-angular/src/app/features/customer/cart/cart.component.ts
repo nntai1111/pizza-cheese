@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { CartItem } from '../../../core/models/cart.model';
 import { CartService } from '../../../core/services/cart.service';
+import { ShopContextService } from '../../../core/services/shop-context.service';
 import {
   getCartItemImage,
   getCartItemTitle,
@@ -19,7 +20,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class CartComponent {
   private readonly cartService = inject(CartService);
+  private readonly shopContext = inject(ShopContextService);
   private readonly router = inject(Router);
+
+  readonly shop = this.shopContext;
 
   readonly cart = this.cartService.cart;
   readonly loading = this.cartService.loading;
@@ -92,7 +96,7 @@ export class CartComponent {
       this.errorMessage.set('Vui lòng chọn ít nhất một món để thanh toán.');
       return;
     }
-    void this.router.navigate(['/customer/checkout']);
+    void this.router.navigate(this.shopContext.segments('checkout'));
   }
 
   getToppingSummary(item: CartItem): string {

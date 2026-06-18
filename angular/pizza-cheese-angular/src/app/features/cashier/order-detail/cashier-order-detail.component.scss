@@ -1,0 +1,9 @@
+@use '../../customer/customer-theme';
+
+.order-detail-summary {
+  .btn-confirm {
+    @include customer-theme.pc-btn-primary;
+    width: 100%;
+    margin-top: 1rem;
+  }
+}

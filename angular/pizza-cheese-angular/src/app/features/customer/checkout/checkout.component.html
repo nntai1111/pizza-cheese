@@ -13,12 +13,12 @@
     @if (!currentCart.items.length) {
       <div class="checkout-empty">
         <p>Giỏ hàng trống.</p>
-        <a routerLink="/customer/pizzas" class="btn-primary">Xem thực đơn</a>
+        <a [routerLink]="shop.segments('pizzas')" class="btn-primary">Xem thực đơn</a>
       </div>
     } @else if (!selectedItems().length) {
       <div class="checkout-empty">
         <p>Chưa chọn món nào để thanh toán.</p>
-        <a routerLink="/customer/cart" class="btn-primary">Quay lại giỏ hàng</a>
+        <a [routerLink]="shop.segments('cart')" class="btn-primary">Quay lại giỏ hàng</a>
       </div>
     } @else {
       <form class="checkout-layout" [formGroup]="form" (ngSubmit)="submit()">
@@ -100,7 +100,7 @@
               Đặt hàng
             }
           </button>
-          <a routerLink="/customer/cart" class="btn-outline">Quay lại giỏ hàng</a>
+          <a [routerLink]="shop.segments('cart')" class="btn-outline">Quay lại giỏ hàng</a>
         </aside>
       </form>
     }

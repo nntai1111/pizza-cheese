@@ -11,7 +11,7 @@
   </div>
 } @else if (combo(); as item) {
   <nav class="breadcrumb">
-    <a routerLink="/customer/combos">Combo</a>
+    <a [routerLink]="shop.segments('combos')">Combo</a>
     <span>/</span>
     <span class="breadcrumb__current">{{ item.name }}</span>
   </nav>

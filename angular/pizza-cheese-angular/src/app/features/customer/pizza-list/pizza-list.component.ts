@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { CategoryService } from '../../../core/services/category.service';
 import { PizzaService } from '../../../core/services/pizza.service';
+import { ShopContextService } from '../../../core/services/shop-context.service';
 import { Category } from '../../../core/models/category.model';
 import {
   getCategoryImageUrl as resolveCategoryImageUrl,
@@ -26,6 +27,9 @@ export class PizzaListComponent {
   private readonly pizzaService = inject(PizzaService);
   private readonly categoryService = inject(CategoryService);
   private readonly router = inject(Router);
+  private readonly shopContext = inject(ShopContextService);
+
+  readonly shop = this.shopContext;
 
   readonly pizzas = signal<Pizza[]>([]);
   readonly categories = signal<Category[]>([]);
@@ -68,7 +72,7 @@ export class PizzaListComponent {
   }
 
   viewDetail(pizzaId: string): void {
-    this.router.navigate(['/customer/pizzas', pizzaId]);
+    this.router.navigate(this.shopContext.segments('pizzas', pizzaId));
   }
 
   private loadCategories(): void {

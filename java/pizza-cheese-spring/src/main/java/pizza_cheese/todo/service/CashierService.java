@@ -1,0 +1,160 @@
+package pizza_cheese.todo.service;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import pizza_cheese.todo.dao.OrderDao;
+import pizza_cheese.todo.dao.PaymentDao;
+import pizza_cheese.todo.dao.UserDao;
+import pizza_cheese.todo.domain.Order;
+import pizza_cheese.todo.domain.OrderStatus;
+import pizza_cheese.todo.domain.Payment;
+import pizza_cheese.todo.domain.PaymentMethod;
+import pizza_cheese.todo.domain.PaymentStatus;
+import pizza_cheese.todo.domain.User;
+import pizza_cheese.todo.dto.response.OrderResponse;
+import pizza_cheese.todo.dto.response.PageResponse;
+import pizza_cheese.todo.exception.InvalidOrderStateException;
+import pizza_cheese.todo.exception.OrderNotFoundException;
+
+@Service
+public class CashierService {
+
+    private final OrderDao orderDao;
+    private final PaymentDao paymentDao;
+    private final UserDao userDao;
+
+    public CashierService(OrderDao orderDao, PaymentDao paymentDao, UserDao userDao) {
+        this.orderDao = orderDao;
+        this.paymentDao = paymentDao;
+        this.userDao = userDao;
+    }
+
+    public PageResponse<OrderResponse> getOrders(OrderStatus status, int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        long total = status == null ? orderDao.countAll() : orderDao.countByStatus(status);
+        List<Order> orders = status == null
+                ? orderDao.findPage(safePage, safeSize)
+                : orderDao.findPageByStatus(status, safePage, safeSize);
+        List<OrderResponse> content = orders.stream()
+                .map(order -> enrichWithCustomer(
+                        OrderResponse.summary(order, paymentDao.findLatestByOrderId(order.getId()).orElse(null)),
+                        order.getUserId()))
+                .toList();
+        return PageResponse.of(content, safePage, safeSize, total);
+    }
+
+    public OrderResponse getOrder(UUID orderId) {
+        Order order = orderDao.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy đơn hàng"));
+        Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
+        return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
+    }
+
+    @Transactional
+    public OrderResponse confirmPayment(String staffEmail, UUID orderId) {
+        UUID staffId = resolveUserId(staffEmail);
+        Order order = orderDao.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy đơn hàng"));
+        Payment payment = paymentDao.findLatestByOrderId(orderId)
+                .orElseThrow(() -> new InvalidOrderStateException("Không tìm thấy thông tin thanh toán"));
+
+        if (order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.REFUNDED) {
+            throw new InvalidOrderStateException("Không thể xác nhận thanh toán cho đơn đã hủy");
+        }
+
+        if (payment.getStatus() == PaymentStatus.PAID) {
+            throw new InvalidOrderStateException("Đơn đã được thanh toán");
+        }
+
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            throw new InvalidOrderStateException("Không thể xác nhận thanh toán ở trạng thái hiện tại");
+        }
+
+        Instant now = Instant.now();
+        payment.setStatus(PaymentStatus.PAID);
+        payment.setPaidAt(now);
+        paymentDao.updateStatus(payment);
+
+        if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
+            orderDao.updateStatus(orderId, OrderStatus.CONFIRMED);
+            orderDao.insertStatusHistory(orderId, OrderStatus.CONFIRMED, staffId, "Thu ngan xac nhan thanh toan");
+            order.setStatus(OrderStatus.CONFIRMED);
+        } else if (order.getStatus() == OrderStatus.CONFIRMED) {
+            orderDao.insertStatusHistory(orderId, OrderStatus.CONFIRMED, staffId, "Thu ngan xac nhan thu tien");
+        } else {
+            throw new InvalidOrderStateException("Không thể xác nhận thanh toán ở trạng thái đơn hiện tại");
+        }
+
+        return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
+    }
+
+    @Transactional
+    public OrderResponse cancelOrder(String staffEmail, UUID orderId) {
+        UUID staffId = resolveUserId(staffEmail);
+        Order order = orderDao.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy đơn hàng"));
+        Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
+        }
+
+        if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
+            failPendingPayment(payment);
+            orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
+            orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, staffId, "Thu ngan huy don chua thanh toan");
+            order.setStatus(OrderStatus.CANCELLED);
+            return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
+        }
+
+        if (order.getStatus() != OrderStatus.CONFIRMED) {
+            throw new InvalidOrderStateException("Không thể hủy đơn ở trạng thái hiện tại");
+        }
+
+        if (payment != null && payment.getStatus() == PaymentStatus.PAID
+                && order.getPaymentMethodSelected() == PaymentMethod.VNPAY) {
+            throw new InvalidOrderStateException("Đơn đã thanh toán online, không thể hủy");
+        }
+
+        if (payment != null && payment.getStatus() == PaymentStatus.PENDING) {
+            failPendingPayment(payment);
+            orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
+            orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, staffId, "Thu ngan huy don");
+            order.setStatus(OrderStatus.CANCELLED);
+            return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
+        }
+
+        throw new InvalidOrderStateException("Không thể hủy đơn ở trạng thái hiện tại");
+    }
+
+    private void failPendingPayment(Payment payment) {
+        if (payment == null || payment.getStatus() != PaymentStatus.PENDING) {
+            return;
+        }
+        payment.setStatus(PaymentStatus.FAILED);
+        paymentDao.updateStatus(payment);
+    }
+
+    private OrderResponse enrichWithCustomer(OrderResponse response, UUID userId) {
+        userDao.findById(userId).ifPresent(user -> applyCustomerInfo(response, user));
+        return response;
+    }
+
+    private void applyCustomerInfo(OrderResponse response, User user) {
+        response.setCustomerName(user.getFullName());
+        response.setCustomerEmail(user.getEmail());
+    }
+
+    private UUID resolveUserId(String userEmail) {
+        return userDao.findByEmail(userEmail)
+                .map(User::getId)
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản"));
+    }
+}

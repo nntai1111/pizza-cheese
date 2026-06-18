@@ -75,6 +75,8 @@ export interface Order {
   createdAt: string;
   paidAt: string | null;
   items: OrderItem[] | null;
+  customerName?: string | null;
+  customerEmail?: string | null;
 }
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
@@ -94,4 +96,11 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   VNPAY: 'VNPay',
   MOMO: 'MoMo',
   STRIPE: 'Stripe',
+};
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  PENDING: 'Chưa thanh toán',
+  PAID: 'Đã thanh toán',
+  FAILED: 'Thất bại / đã hủy',
+  REFUNDED: 'Đã hoàn tiền',
 };

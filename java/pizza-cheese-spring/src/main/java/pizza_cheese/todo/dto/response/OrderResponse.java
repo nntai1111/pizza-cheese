@@ -37,6 +37,8 @@ public class OrderResponse {
     private Instant createdAt;
     private Instant paidAt;
     private List<OrderItemResponse> items;
+    private String customerName;
+    private String customerEmail;
 
     public static OrderResponse from(Order order, Payment payment) {
         OrderResponse response = new OrderResponse();

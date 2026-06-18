@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { PizzaService } from '../../../core/services/pizza.service';
 import { CartService } from '../../../core/services/cart.service';
+import { ShopContextService } from '../../../core/services/shop-context.service';
 import { Pizza, PizzaImage, PizzaVariant } from '../../../core/models/pizza.model';
 import {
   formatVnd,
@@ -24,6 +25,9 @@ export class PizzaDetailComponent {
   private readonly router = inject(Router);
   private readonly pizzaService = inject(PizzaService);
   private readonly cartService = inject(CartService);
+  private readonly shopContext = inject(ShopContextService);
+
+  readonly shop = this.shopContext;
 
   readonly pizza = signal<Pizza | null>(null);
   readonly loading = signal(true);
@@ -153,7 +157,7 @@ export class PizzaDetailComponent {
           busySignal.set(false);
           if (checkoutImmediately) {
             this.cartService.setCheckoutForNewItems(previousItemIds, cart);
-            void this.router.navigate(['/customer/checkout']);
+            void this.router.navigate(this.shopContext.segments('checkout'));
             return;
           }
           this.orderNotice.set('Đã thêm pizza vào giỏ hàng!');
@@ -166,7 +170,7 @@ export class PizzaDetailComponent {
   }
 
   goBack(): void {
-    this.router.navigate(['/customer/pizzas']);
+    this.router.navigate(this.shopContext.segments('pizzas'));
   }
 
   private loadPizza(id: string): void {

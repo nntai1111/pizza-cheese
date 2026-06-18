@@ -28,7 +28,6 @@ import pizza_cheese.todo.service.OrderService;
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/v1/orders")
-@PreAuthorize("hasRole('CUSTOMER')")
 public class OrderController {
 
     private final OrderService orderService;
@@ -40,6 +39,7 @@ public class OrderController {
     @Operation(summary = "Tạo đơn hàng từ giỏ hàng")
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'CASHIER')")
     public ResponseEntity<RestResponse<OrderResponse>> createOrder(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody CreateOrderRequest request,
@@ -51,6 +51,7 @@ public class OrderController {
     @Operation(summary = "Danh sách đơn hàng của tôi")
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<RestResponse<java.util.List<OrderResponse>>> getMyOrders(@AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(RestResponse.success(orderService.getMyOrders(jwt.getSubject())));
     }
@@ -58,6 +59,7 @@ public class OrderController {
     @Operation(summary = "Chi tiết đơn hàng")
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<RestResponse<OrderResponse>> getOrder(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID id) {
@@ -67,6 +69,7 @@ public class OrderController {
     @Operation(summary = "Hủy đơn hàng")
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<RestResponse<OrderResponse>> cancelOrder(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID id) {

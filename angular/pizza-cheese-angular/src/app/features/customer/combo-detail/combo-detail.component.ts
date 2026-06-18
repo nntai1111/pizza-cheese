@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { ComboService } from '../../../core/services/combo.service';
 import { CartService } from '../../../core/services/cart.service';
+import { ShopContextService } from '../../../core/services/shop-context.service';
 import { Combo } from '../../../core/models/combo.model';
 import {
   formatComboPrice,
@@ -24,6 +25,9 @@ export class ComboDetailComponent {
   private readonly router = inject(Router);
   private readonly comboService = inject(ComboService);
   private readonly cartService = inject(CartService);
+  private readonly shopContext = inject(ShopContextService);
+
+  readonly shop = this.shopContext;
 
   readonly combo = signal<Combo | null>(null);
   readonly loading = signal(true);
@@ -63,7 +67,7 @@ export class ComboDetailComponent {
   }
 
   goBack(): void {
-    this.router.navigate(['/customer/combos']);
+    this.router.navigate(this.shopContext.segments('combos'));
   }
 
   increaseQuantity(): void {
@@ -103,7 +107,7 @@ export class ComboDetailComponent {
           busySignal.set(false);
           if (checkoutImmediately) {
             this.cartService.setCheckoutForNewItems(previousItemIds, cart);
-            void this.router.navigate(['/customer/checkout']);
+            void this.router.navigate(this.shopContext.segments('checkout'));
             return;
           }
           this.orderNotice.set('Đã thêm combo vào giỏ hàng!');

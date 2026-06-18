@@ -42,6 +42,52 @@ FROM orders
 WHERE user_id = :userId
 ORDER BY created_at DESC
 
+-- name: findAll
+SELECT id, order_code, user_id, address_id, status,
+       total_amount, discount_amount, final_amount, coupon_id,
+       payment_method_selected, note, estimated_delivery_time,
+       kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
+       created_at, updated_at
+FROM orders
+ORDER BY created_at DESC
+
+-- name: countAll
+SELECT COUNT(*) FROM orders
+
+-- name: findPage
+SELECT id, order_code, user_id, address_id, status,
+       total_amount, discount_amount, final_amount, coupon_id,
+       payment_method_selected, note, estimated_delivery_time,
+       kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
+       created_at, updated_at
+FROM orders
+ORDER BY created_at DESC
+LIMIT :limit OFFSET :offset
+
+-- name: findByStatus
+SELECT id, order_code, user_id, address_id, status,
+       total_amount, discount_amount, final_amount, coupon_id,
+       payment_method_selected, note, estimated_delivery_time,
+       kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
+       created_at, updated_at
+FROM orders
+WHERE status = CAST(:status AS order_status)
+ORDER BY created_at DESC
+
+-- name: countByStatus
+SELECT COUNT(*) FROM orders WHERE status = CAST(:status AS order_status)
+
+-- name: findPageByStatus
+SELECT id, order_code, user_id, address_id, status,
+       total_amount, discount_amount, final_amount, coupon_id,
+       payment_method_selected, note, estimated_delivery_time,
+       kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
+       created_at, updated_at
+FROM orders
+WHERE status = CAST(:status AS order_status)
+ORDER BY created_at DESC
+LIMIT :limit OFFSET :offset
+
 -- name: existsByOrderCode
 SELECT COUNT(*) FROM orders WHERE order_code = :orderCode
 

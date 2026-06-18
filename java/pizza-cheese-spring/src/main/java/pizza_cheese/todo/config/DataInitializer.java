@@ -35,6 +35,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         if (userDao.count() == 0) {
             seedUser("admin", "admin@hoidanit.vn", "Admin User", "123456", Set.of(Role.ADMIN));
+            seedUser("cashier", "cashier@hoidanit.vn", "Cashier User", "123456", Set.of(Role.CASHIER));
             seedUser("user", "user@hoidanit.vn", "Normal User", "123456", Set.of(Role.CUSTOMER));
             log.info("Seeded default users into database");
         }

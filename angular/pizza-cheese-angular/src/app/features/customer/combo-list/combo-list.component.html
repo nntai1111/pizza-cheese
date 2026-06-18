@@ -71,7 +71,7 @@
             </div>
             <a
               class="combo-card__cta"
-              [routerLink]="['/customer/combos', combo.id]"
+              [routerLink]="shop.segments('combos', combo.id)"
               (click)="$event.stopPropagation()"
             >
               Xem chi tiết

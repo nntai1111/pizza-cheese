@@ -78,6 +78,46 @@ public class OrderDao {
         return orders;
     }
 
+    public List<Order> findAll() {
+        return jdbc.query(queries.get("findAll"), Map.of(), orderRowMapper);
+    }
+
+    public long countAll() {
+        Long count = jdbc.queryForObject(queries.get("countAll"), Map.of(), Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<Order> findPage(int page, int size) {
+        return jdbc.query(
+                queries.get("findPage"),
+                new MapSqlParameterSource()
+                        .addValue("limit", size)
+                        .addValue("offset", (long) page * size),
+                orderRowMapper);
+    }
+
+    public List<Order> findByStatus(OrderStatus status) {
+        return jdbc.query(queries.get("findByStatus"), Map.of("status", status.name()), orderRowMapper);
+    }
+
+    public long countByStatus(OrderStatus status) {
+        Long count = jdbc.queryForObject(
+                queries.get("countByStatus"),
+                Map.of("status", status.name()),
+                Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<Order> findPageByStatus(OrderStatus status, int page, int size) {
+        return jdbc.query(
+                queries.get("findPageByStatus"),
+                new MapSqlParameterSource()
+                        .addValue("status", status.name())
+                        .addValue("limit", size)
+                        .addValue("offset", (long) page * size),
+                orderRowMapper);
+    }
+
     public boolean existsByOrderCode(String orderCode) {
         Integer count = jdbc.queryForObject(
                 queries.get("existsByOrderCode"),

@@ -13,12 +13,12 @@ import { formatVnd } from '../../../core/utils/pizza.util';
 import { UserAvatarComponent } from '../../../shared/components';
 
 @Component({
-  selector: 'app-customer-layout',
+  selector: 'app-cashier-layout',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, UserAvatarComponent],
-  templateUrl: './customer-layout.component.html',
-  styleUrl: './customer-layout.component.scss',
+  templateUrl: './cashier-layout.component.html',
+  styleUrls: ['../../customer/customer-layout/customer-layout.component.scss'],
 })
-export class CustomerLayoutComponent implements OnInit {
+export class CashierLayoutComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly cartService = inject(CartService);
   private readonly shopContext = inject(ShopContextService);
@@ -36,7 +36,7 @@ export class CustomerLayoutComponent implements OnInit {
   readonly getItemImage = getCartItemImage;
 
   ngOnInit(): void {
-    this.shopContext.setBasePath('/customer');
+    this.shopContext.setBasePath('/cashier');
     this.isCartPage.set(this.shopContext.isCartPage(this.router.url));
     this.cartService.loadCart().subscribe();
 
@@ -49,6 +49,6 @@ export class CustomerLayoutComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    void this.router.navigate(['/login']);
   }
 }

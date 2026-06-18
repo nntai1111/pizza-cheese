@@ -23,6 +23,8 @@ export function getRouteForRole(role: AppRole): string {
       return '/admin/categories';
     case AppRole.CUSTOMER:
       return '/customer/pizzas';
+    case AppRole.CASHIER:
+      return '/cashier/pizzas';
     default:
       return `/welcome/${role.toLowerCase()}`;
   }

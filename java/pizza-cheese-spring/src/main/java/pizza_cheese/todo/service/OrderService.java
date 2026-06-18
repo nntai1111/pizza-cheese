@@ -173,6 +173,7 @@ public class OrderService {
         }
 
         if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
+            failPendingPayment(payment);
             orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
             orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, userId, "Khach huy don truoc thanh toan");
             order.setStatus(OrderStatus.CANCELLED);
@@ -189,6 +190,7 @@ public class OrderService {
         }
 
         if (payment != null && payment.getStatus() == PaymentStatus.PENDING) {
+            failPendingPayment(payment);
             orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
             orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, userId, "Khach huy don");
             order.setStatus(OrderStatus.CANCELLED);
@@ -277,5 +279,13 @@ public class OrderService {
         return userDao.findByEmail(userEmail)
                 .map(pizza_cheese.todo.domain.User::getId)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản"));
+    }
+
+    private void failPendingPayment(Payment payment) {
+        if (payment == null || payment.getStatus() != PaymentStatus.PENDING) {
+            return;
+        }
+        payment.setStatus(PaymentStatus.FAILED);
+        paymentDao.updateStatus(payment);
     }
 }

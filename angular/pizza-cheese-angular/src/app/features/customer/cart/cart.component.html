@@ -29,8 +29,8 @@
       <div class="cart-empty">
         <p>Chưa có món nào trong giỏ hàng.</p>
         <div class="cart-empty__actions">
-          <a routerLink="/customer/pizzas" class="btn-primary">Xem thực đơn</a>
-          <a routerLink="/customer/combos" class="btn-outline">Xem combo</a>
+          <a [routerLink]="shop.segments('pizzas')" class="btn-primary">Xem thực đơn</a>
+          <a [routerLink]="shop.segments('combos')" class="btn-outline">Xem combo</a>
         </div>
       </div>
     } @else {
@@ -138,7 +138,7 @@
           >
             Tiến hành thanh toán
           </button>
-          <a routerLink="/customer/pizzas" class="btn-continue">Tiếp tục mua sắm</a>
+          <a [routerLink]="shop.segments('pizzas')" class="btn-continue">Tiếp tục mua sắm</a>
         </aside>
       </div>
     }

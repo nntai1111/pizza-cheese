@@ -111,7 +111,7 @@
             </div>
             <a
               class="pizza-card__cta"
-              [routerLink]="['/customer/pizzas', pizza.id]"
+              [routerLink]="shop.segments('pizzas', pizza.id)"
               (click)="$event.stopPropagation()"
             >
               Xem chi tiết

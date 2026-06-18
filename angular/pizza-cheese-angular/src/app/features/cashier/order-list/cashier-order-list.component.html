@@ -1,0 +1,77 @@
+<section class="order-list-page">
+  <header class="order-list-hero">
+    <span class="order-list-hero__badge">💰 Quản lý đơn</span>
+    <h1>Đơn hàng tại quầy</h1>
+    <p>Xem, xác nhận thanh toán và hủy đơn khi cần.</p>
+  </header>
+
+  <div class="order-filters">
+    @for (filter of filters; track filter.value) {
+      <button
+        type="button"
+        class="filter-chip"
+        [class.filter-chip--active]="activeFilter() === filter.value"
+        (click)="setFilter(filter.value)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="order-list-status">Đang tải...</p>
+  }
+
+  @if (errorMessage()) {
+    <p class="order-list-error">{{ errorMessage() }}</p>
+  }
+
+  @if (!loading() && !orders().length) {
+    <div class="order-list-empty">
+      <p>Không có đơn hàng nào trong bộ lọc này.</p>
+      <a [routerLink]="shop.segments('pizzas')" class="btn-primary">Tạo đơn mới</a>
+    </div>
+  }
+
+  @if (orders().length) {
+    <ul class="order-cards">
+      @for (order of orders(); track order.id) {
+        <li class="order-card" [class.order-card--action]="needsPaymentAction(order)">
+          <div class="order-card__head">
+            <div>
+              <strong>{{ order.orderCode }}</strong>
+              <span>{{ order.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+              @if (order.customerName) {
+                <span class="order-card__customer">{{ order.customerName }}</span>
+              }
+            </div>
+            <span class="order-card__status">{{ statusLabels[order.status] }}</span>
+          </div>
+          <div class="order-card__body">
+            <div>
+              <span>{{ paymentLabels[order.paymentMethod] }}</span>
+              @if (order.paymentStatus) {
+                <span class="order-card__payment">
+                  {{ paymentStatusLabels[order.paymentStatus] }}
+                </span>
+              }
+            </div>
+            <strong>{{ formatPrice(order.finalAmount) }}</strong>
+          </div>
+          @if (needsPaymentAction(order)) {
+            <p class="order-card__hint">Cần xác nhận thanh toán</p>
+          }
+          <a [routerLink]="shop.segments('orders', order.id)" class="order-card__link">Xử lý đơn</a>
+        </li>
+      }
+    </ul>
+
+    <app-pagination
+      [page]="page()"
+      [totalPages]="totalPages()"
+      [totalElements]="totalElements()"
+      [disabled]="loading()"
+      (pageChange)="onPageChange($event)"
+    />
+  }
+</section>
