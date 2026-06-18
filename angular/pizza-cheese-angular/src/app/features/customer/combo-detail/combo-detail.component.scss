@@ -264,6 +264,15 @@
 .btn-order {
   @include customer-theme.pc-btn-primary;
   width: 100%;
+  margin-bottom: 0.75rem;
+
+  &--outline {
+    @include customer-theme.pc-btn-outline;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .order-notice {

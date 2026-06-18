@@ -15,6 +15,11 @@
         <p>Giỏ hàng trống.</p>
         <a routerLink="/customer/pizzas" class="btn-primary">Xem thực đơn</a>
       </div>
+    } @else if (!selectedItems().length) {
+      <div class="checkout-empty">
+        <p>Chưa chọn món nào để thanh toán.</p>
+        <a routerLink="/customer/cart" class="btn-primary">Quay lại giỏ hàng</a>
+      </div>
     } @else {
       <form class="checkout-layout" [formGroup]="form" (ngSubmit)="submit()">
         <div class="checkout-form">
@@ -77,7 +82,7 @@
         <aside class="checkout-summary">
           <h2>Đơn hàng</h2>
           <ul>
-            @for (item of currentCart.items; track item.id) {
+            @for (item of selectedItems(); track item.id) {
               <li>
                 <span>{{ getItemTitle(item) }} × {{ item.quantity }}</span>
                 <strong>{{ formatPrice(item.lineTotal) }}</strong>
@@ -86,7 +91,7 @@
           </ul>
           <div class="checkout-summary__total">
             <span>Tổng thanh toán</span>
-            <strong>{{ formatPrice(currentCart.subtotal) }}</strong>
+            <strong>{{ formatPrice(selectedSubtotal()) }}</strong>
           </div>
           <button type="submit" class="btn-primary" [disabled]="loading()">
             @if (loading()) {

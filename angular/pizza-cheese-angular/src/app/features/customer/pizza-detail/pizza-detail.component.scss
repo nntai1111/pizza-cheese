@@ -3,7 +3,6 @@
 .breadcrumb {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1.25rem;
   font-size: 0.875rem;
@@ -74,7 +73,6 @@
     gap: 0.5rem;
     margin-top: 0.75rem;
     overflow-x: auto;
-    padding-bottom: 0.25rem;
   }
 
   &__thumb {
@@ -97,7 +95,6 @@
 
     &--active {
       border-color: var(--pc-yellow-dark);
-      box-shadow: 0 0 0 2px rgba(251, 176, 52, 0.3);
     }
   }
 }
@@ -168,7 +165,7 @@
   border-radius: var(--pc-radius-sm);
   background: var(--pc-white);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s;
 
   &:hover {
     border-color: var(--pc-yellow);
@@ -248,10 +245,20 @@
   }
 }
 
-.order-panel {
-  @include customer-theme.pc-card;
-  padding: 1.25rem;
-  background: linear-gradient(180deg, var(--pc-white), var(--pc-cream));
+.order-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  &__add {
+    @include customer-theme.pc-btn-outline;
+    width: 100%;
+  }
+
+  &__buy {
+    @include customer-theme.pc-btn-primary;
+    width: 100%;
+  }
 }
 
 .quantity-row {
@@ -328,13 +335,6 @@
       }
     }
   }
-}
-
-.btn-add-cart {
-  @include customer-theme.pc-btn-primary;
-  width: 100%;
-  padding: 1rem;
-  font-size: 1rem;
 }
 
 .order-notice {

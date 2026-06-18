@@ -152,18 +152,33 @@
           </div>
         </div>
 
-        <button
-          type="button"
-          class="btn-add-cart"
-          (click)="addToCart()"
-          [disabled]="addingToCart() || !selectedVariant()"
-        >
-          @if (addingToCart()) {
-            Đang thêm...
-          } @else {
-            🛒 Thêm vào giỏ hàng
-          }
-        </button>
+        <div class="order-actions">
+          <button
+            type="button"
+            class="order-actions__add"
+            (click)="addToCart()"
+            [disabled]="addingToCart() || buyingNow() || !selectedVariant()"
+          >
+            @if (addingToCart()) {
+              Đang thêm...
+            } @else {
+              🛒 Thêm vào giỏ hàng
+            }
+          </button>
+
+          <button
+            type="button"
+            class="order-actions__buy"
+            (click)="buyNow()"
+            [disabled]="addingToCart() || buyingNow() || !selectedVariant()"
+          >
+            @if (buyingNow()) {
+              Đang chuyển...
+            } @else {
+              💳 Mua ngay
+            }
+          </button>
+        </div>
 
         @if (orderNotice()) {
           <p class="order-notice">{{ orderNotice() }}</p>

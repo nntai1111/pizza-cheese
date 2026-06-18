@@ -29,6 +29,7 @@ export interface CreateOrderRequest {
   paymentMethod: PaymentMethod;
   deliveryAddress: DeliveryAddress;
   note?: string;
+  cartItemIds: string[];
 }
 
 export interface OrderItemTopping {

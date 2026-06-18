@@ -4,8 +4,11 @@ import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -34,6 +37,7 @@ import pizza_cheese.todo.domain.PaymentStatus;
 import pizza_cheese.todo.dto.request.CreateOrderRequest;
 import pizza_cheese.todo.dto.request.DeliveryAddressRequest;
 import pizza_cheese.todo.dto.response.OrderResponse;
+import pizza_cheese.todo.exception.CartItemNotFoundException;
 import pizza_cheese.todo.exception.EmptyCartException;
 import pizza_cheese.todo.exception.InvalidOrderStateException;
 import pizza_cheese.todo.exception.OrderNotFoundException;
@@ -78,7 +82,9 @@ public class OrderService {
             throw new IllegalArgumentException("Phương thức thanh toán chưa được hỗ trợ");
         }
 
-        BigDecimal totalAmount = cart.getItems().stream()
+        List<CartItem> selectedItems = resolveSelectedCartItems(cart, request.getCartItemIds());
+
+        BigDecimal totalAmount = selectedItems.stream()
                 .map(CartItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal discountAmount = BigDecimal.ZERO;
@@ -106,7 +112,7 @@ public class OrderService {
                 userId,
                 paymentMethod == PaymentMethod.VNPAY ? "Tao don cho thanh toan VNPay" : "Tao don COD");
 
-        snapshotCartItems(cart, order.getId());
+        snapshotCartItems(selectedItems, order.getId());
 
         Payment payment = new Payment();
         payment.setId(UUID.randomUUID());
@@ -124,7 +130,9 @@ public class OrderService {
             vnPayService.createPaymentUrl(order, payment, clientIp);
         }
 
-        cartDao.deleteItemsByCartId(cart.getId());
+        for (CartItem selectedItem : selectedItems) {
+            cartDao.deleteItemById(selectedItem.getId());
+        }
         cartDao.touchUpdatedAt(cart.getId());
 
         Order savedOrder = orderDao.findById(order.getId()).orElse(order);
@@ -190,8 +198,33 @@ public class OrderService {
         throw new InvalidOrderStateException("Không thể hủy đơn ở trạng thái hiện tại");
     }
 
-    private void snapshotCartItems(Cart cart, UUID orderId) {
-        for (CartItem cartItem : cart.getItems()) {
+    private List<CartItem> resolveSelectedCartItems(Cart cart, List<UUID> cartItemIds) {
+        if (cartItemIds == null || cartItemIds.isEmpty()) {
+            throw new EmptyCartException("Chưa chọn món để đặt hàng");
+        }
+
+        Set<UUID> cartItemIdSet = cart.getItems().stream()
+                .map(CartItem::getId)
+                .collect(Collectors.toCollection(HashSet::new));
+
+        Set<UUID> requestedIds = new HashSet<>(cartItemIds);
+        if (requestedIds.size() != cartItemIds.size()) {
+            throw new IllegalArgumentException("Món trong giỏ hàng bị trùng lặp");
+        }
+
+        for (UUID cartItemId : requestedIds) {
+            if (!cartItemIdSet.contains(cartItemId)) {
+                throw new CartItemNotFoundException("Không tìm thấy món trong giỏ hàng");
+            }
+        }
+
+        return cart.getItems().stream()
+                .filter(item -> requestedIds.contains(item.getId()))
+                .toList();
+    }
+
+    private void snapshotCartItems(List<CartItem> cartItems, UUID orderId) {
+        for (CartItem cartItem : cartItems) {
             OrderItem orderItem = new OrderItem();
             orderItem.setOrderId(orderId);
             orderItem.setItemType(cartItem.getItemType());

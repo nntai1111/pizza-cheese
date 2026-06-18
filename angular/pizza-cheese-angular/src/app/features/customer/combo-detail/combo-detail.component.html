@@ -84,14 +84,27 @@
 
         <button
           type="button"
-          class="btn-order"
+          class="btn-order btn-order--outline"
           (click)="addToCart()"
-          [disabled]="addingToCart()"
+          [disabled]="addingToCart() || buyingNow()"
         >
           @if (addingToCart()) {
             Đang thêm...
           } @else {
             🛒 Thêm vào giỏ hàng
+          }
+        </button>
+
+        <button
+          type="button"
+          class="btn-order"
+          (click)="buyNow()"
+          [disabled]="addingToCart() || buyingNow()"
+        >
+          @if (buyingNow()) {
+            Đang chuyển...
+          } @else {
+            💳 Mua ngay
           }
         </button>
 

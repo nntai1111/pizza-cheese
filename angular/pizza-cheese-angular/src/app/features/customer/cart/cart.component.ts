@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 
 import { CartItem } from '../../../core/models/cart.model';
 import { CartService } from '../../../core/services/cart.service';
@@ -19,9 +19,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class CartComponent {
   private readonly cartService = inject(CartService);
+  private readonly router = inject(Router);
 
   readonly cart = this.cartService.cart;
   readonly loading = this.cartService.loading;
+  readonly selectedSubtotal = this.cartService.selectedSubtotal;
+  readonly allItemsSelected = this.cartService.allItemsSelected;
+  readonly selectedCount = computed(() => this.cartService.selectedItems().length);
   readonly errorMessage = signal<string | null>(null);
   readonly actionItemId = signal<string | null>(null);
 
@@ -69,6 +73,26 @@ export class CartComponent {
         this.errorMessage.set(getHttpErrorMessage(err, 'Không thể xóa giỏ hàng.'));
       },
     });
+  }
+
+  isSelected(itemId: string): boolean {
+    return this.cartService.isCheckoutSelected(itemId);
+  }
+
+  toggleItemSelection(itemId: string): void {
+    this.cartService.toggleCheckoutItem(itemId);
+  }
+
+  toggleSelectAll(): void {
+    this.cartService.toggleSelectAllForCheckout();
+  }
+
+  goToCheckout(): void {
+    if (this.selectedCount() === 0) {
+      this.errorMessage.set('Vui lòng chọn ít nhất một món để thanh toán.');
+      return;
+    }
+    void this.router.navigate(['/customer/checkout']);
   }
 
   getToppingSummary(item: CartItem): string {

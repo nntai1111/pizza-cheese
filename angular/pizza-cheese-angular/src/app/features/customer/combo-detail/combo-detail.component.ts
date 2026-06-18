@@ -31,6 +31,7 @@ export class ComboDetailComponent {
   readonly quantity = signal(1);
   readonly orderNotice = signal<string | null>(null);
   readonly addingToCart = signal(false);
+  readonly buyingNow = signal(false);
 
   readonly formatPrice = formatComboPrice;
   readonly formatVnd = formatVnd;
@@ -74,12 +75,22 @@ export class ComboDetailComponent {
   }
 
   addToCart(): void {
+    this.addItemToCart(false);
+  }
+
+  buyNow(): void {
+    this.addItemToCart(true);
+  }
+
+  private addItemToCart(checkoutImmediately: boolean): void {
     const combo = this.combo();
     if (!combo) {
       return;
     }
 
-    this.addingToCart.set(true);
+    const previousItemIds = new Set(this.cartService.cart()?.items.map((item) => item.id) ?? []);
+    const busySignal = checkoutImmediately ? this.buyingNow : this.addingToCart;
+    busySignal.set(true);
     this.orderNotice.set(null);
 
     this.cartService
@@ -88,12 +99,17 @@ export class ComboDetailComponent {
         quantity: this.quantity(),
       })
       .subscribe({
-        next: () => {
-          this.addingToCart.set(false);
+        next: (cart) => {
+          busySignal.set(false);
+          if (checkoutImmediately) {
+            this.cartService.setCheckoutForNewItems(previousItemIds, cart);
+            void this.router.navigate(['/customer/checkout']);
+            return;
+          }
           this.orderNotice.set('Đã thêm combo vào giỏ hàng!');
         },
         error: (err: HttpErrorResponse) => {
-          this.addingToCart.set(false);
+          busySignal.set(false);
           this.orderNotice.set(getHttpErrorMessage(err, 'Không thể thêm vào giỏ hàng.'));
         },
       });

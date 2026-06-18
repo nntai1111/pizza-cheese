@@ -28,6 +28,8 @@ export class CheckoutComponent {
   private readonly router = inject(Router);
 
   readonly cart = this.cartService.cart;
+  readonly selectedItems = this.cartService.selectedItems;
+  readonly selectedSubtotal = this.cartService.selectedSubtotal;
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
@@ -62,8 +64,13 @@ export class CheckoutComponent {
     }
 
     const cart = this.cart();
+    const selectedItems = this.selectedItems();
     if (!cart?.items.length) {
       this.errorMessage.set('Giỏ hàng trống.');
+      return;
+    }
+    if (!selectedItems.length) {
+      this.errorMessage.set('Vui lòng chọn ít nhất một món để thanh toán.');
       return;
     }
 
@@ -73,6 +80,7 @@ export class CheckoutComponent {
 
     this.orderService
       .createOrder({
+        cartItemIds: selectedItems.map((item) => item.id),
         paymentMethod: value.paymentMethod,
         note: value.note || undefined,
         deliveryAddress: {
@@ -88,6 +96,7 @@ export class CheckoutComponent {
       .subscribe({
         next: (order) => {
           this.loading.set(false);
+          this.cartService.clearCheckoutSelection();
           this.cartService.loadCart().subscribe();
           sessionStorage.setItem(PENDING_ORDER_KEY, order.id);
           sessionStorage.setItem('pizza_cheese_last_order', JSON.stringify(order));

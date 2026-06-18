@@ -35,9 +35,33 @@
       </div>
     } @else {
       <div class="cart-layout">
-        <ul class="cart-items">
+        <div class="cart-items-panel">
+          <div class="cart-select-bar">
+            <label class="cart-select-all">
+              <input
+                type="checkbox"
+                [checked]="allItemsSelected()"
+                (change)="toggleSelectAll()"
+              />
+              <span>Chọn tất cả ({{ selectedCount() }}/{{ currentCart.items.length }})</span>
+            </label>
+          </div>
+
+          <ul class="cart-items">
           @for (item of currentCart.items; track item.id) {
-            <li class="cart-item" [class.cart-item--busy]="actionItemId() === item.id">
+            <li
+              class="cart-item"
+              [class.cart-item--selected]="isSelected(item.id)"
+              [class.cart-item--busy]="actionItemId() === item.id"
+            >
+              <label class="cart-item__select">
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(item.id)"
+                  (change)="toggleItemSelection(item.id)"
+                />
+              </label>
+
               <div class="cart-item__media">
                 @if (getItemImage(item); as imageUrl) {
                   <img [src]="imageUrl" [alt]="getItemTitle(item)" />
@@ -95,19 +119,25 @@
             </li>
           }
         </ul>
+        </div>
 
         <aside class="cart-summary">
           <h2>Tổng đơn</h2>
           <div class="cart-summary__row">
-            <span>Tạm tính</span>
-            <strong>{{ formatPrice(currentCart.subtotal) }}</strong>
+            <span>Tạm tính ({{ selectedCount() }} món)</span>
+            <strong>{{ formatPrice(selectedSubtotal()) }}</strong>
           </div>
           <p class="cart-summary__note">
-            Kiểm tra đơn trước khi thanh toán.
+            Chọn món muốn thanh toán, các món còn lại vẫn giữ trong giỏ.
           </p>
-          <a routerLink="/customer/checkout" class="btn-checkout">
+          <button
+            type="button"
+            class="btn-checkout"
+            [disabled]="selectedCount() === 0"
+            (click)="goToCheckout()"
+          >
             Tiến hành thanh toán
-          </a>
+          </button>
           <a routerLink="/customer/pizzas" class="btn-continue">Tiếp tục mua sắm</a>
         </aside>
       </div>
