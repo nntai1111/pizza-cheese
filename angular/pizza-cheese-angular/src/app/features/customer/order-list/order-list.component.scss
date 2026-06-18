@@ -1,0 +1,111 @@
+@use '../customer-theme';
+
+.order-list-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.order-list-hero {
+  @include customer-theme.pc-card;
+  padding: 2rem 2.25rem;
+
+  &__badge {
+    display: inline-block;
+    padding: 0.35rem 0.85rem;
+    margin-bottom: 0.75rem;
+    border-radius: 999px;
+    background: var(--pc-cream-dark);
+    color: var(--pc-crust);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  h1 {
+    margin: 0 0 0.5rem;
+    color: var(--pc-crust);
+  }
+
+  p {
+    margin: 0;
+    color: var(--pc-crust-muted);
+  }
+}
+
+.order-list-status,
+.order-list-error {
+  margin: 0;
+}
+
+.order-list-error {
+  color: var(--pc-danger);
+}
+
+.order-list-empty {
+  @include customer-theme.pc-card;
+  padding: 2rem;
+  text-align: center;
+
+  .btn-primary {
+    @include customer-theme.pc-btn-primary;
+    display: inline-flex;
+    margin-top: 1rem;
+    text-decoration: none;
+  }
+}
+
+.order-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.order-card {
+  @include customer-theme.pc-card;
+  padding: 1.25rem 1.5rem;
+
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+
+    strong {
+      display: block;
+      color: var(--pc-crust);
+      font-size: 1.0625rem;
+    }
+
+    span {
+      color: var(--pc-crust-muted);
+      font-size: 0.875rem;
+    }
+  }
+
+  &__status {
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: var(--pc-cream);
+    color: var(--pc-crust);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  &__body {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    color: var(--pc-crust-muted);
+  }
+
+  &__link {
+    @include customer-theme.pc-btn-outline;
+    display: inline-flex;
+    text-decoration: none;
+  }
+}

@@ -17,6 +17,10 @@ import pizza_cheese.todo.exception.CartItemNotFoundException;
 import pizza_cheese.todo.exception.CategoryNotFoundException;
 import pizza_cheese.todo.exception.ComboNotFoundException;
 import pizza_cheese.todo.exception.EmailAlreadyExistsException;
+import pizza_cheese.todo.exception.EmptyCartException;
+import pizza_cheese.todo.exception.InvalidOrderStateException;
+import pizza_cheese.todo.exception.InvalidPaymentSignatureException;
+import pizza_cheese.todo.exception.OrderNotFoundException;
 import pizza_cheese.todo.exception.FileUploadException;
 import pizza_cheese.todo.exception.InvalidRefreshTokenException;
 import pizza_cheese.todo.exception.PizzaNotFoundException;
@@ -60,6 +64,30 @@ public class GlobalExceptionHandler {
     public ResponseEntity<RestResponse<Void>> handleInvalidRefreshToken(InvalidRefreshTokenException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(RestResponse.error(401, "Unauthorized", ex.getMessage()));
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<RestResponse<Void>> handleOrderNotFound(OrderNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(RestResponse.error(404, "Not Found", ex.getMessage()));
+    }
+
+    @ExceptionHandler(EmptyCartException.class)
+    public ResponseEntity<RestResponse<Void>> handleEmptyCart(EmptyCartException ex) {
+        return ResponseEntity.badRequest()
+                .body(RestResponse.error(400, "Bad Request", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidOrderStateException.class)
+    public ResponseEntity<RestResponse<Void>> handleInvalidOrderState(InvalidOrderStateException ex) {
+        return ResponseEntity.badRequest()
+                .body(RestResponse.error(400, "Bad Request", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidPaymentSignatureException.class)
+    public ResponseEntity<RestResponse<Void>> handleInvalidPaymentSignature(InvalidPaymentSignatureException ex) {
+        return ResponseEntity.badRequest()
+                .body(RestResponse.error(400, "Bad Request", ex.getMessage()));
     }
 
     @ExceptionHandler(EmailAlreadyExistsException.class)

@@ -151,6 +151,10 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/categories", "/api/v1/categories/**").permitAll()
                         .requestMatchers("/api/v1/toppings", "/api/v1/toppings/**").permitAll()
                         .requestMatchers("/api/v1/combos", "/api/v1/combos/**").permitAll()
+                        .requestMatchers(
+                                "/api/v1/payments/vnpay/ipn",
+                                "/api/v1/payments/vnpay/return")
+                        .permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2

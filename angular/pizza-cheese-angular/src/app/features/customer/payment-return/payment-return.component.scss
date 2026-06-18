@@ -1,0 +1,81 @@
+@use '../customer-theme';
+
+.payment-return {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+
+  &__status {
+    color: var(--pc-crust-muted);
+  }
+
+  &__card {
+    @include customer-theme.pc-card;
+    width: min(100%, 520px);
+    padding: 2.5rem 2rem;
+    text-align: center;
+
+    &--success {
+      border-color: rgba(45, 106, 79, 0.35);
+    }
+
+    &--fail,
+    &--error {
+      border-color: rgba(193, 18, 31, 0.25);
+    }
+
+    h1 {
+      margin: 0 0 0.75rem;
+      color: var(--pc-crust);
+    }
+
+    p {
+      margin: 0 0 1.5rem;
+      color: var(--pc-crust-muted);
+      line-height: 1.6;
+    }
+  }
+
+  &__icon {
+    display: block;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  &__meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: var(--pc-radius-sm);
+    background: var(--pc-cream);
+
+    span {
+      display: block;
+      font-size: 0.8125rem;
+      color: var(--pc-crust-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    strong {
+      color: var(--pc-crust);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .btn-primary {
+    @include customer-theme.pc-btn-primary;
+    text-decoration: none;
+  }
+
+  .btn-outline {
+    @include customer-theme.pc-btn-outline;
+    text-decoration: none;
+  }
+}

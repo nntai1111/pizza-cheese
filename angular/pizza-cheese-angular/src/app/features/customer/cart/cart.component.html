@@ -103,11 +103,11 @@
             <strong>{{ formatPrice(currentCart.subtotal) }}</strong>
           </div>
           <p class="cart-summary__note">
-            Thanh toán sẽ được bổ sung ở bước tiếp theo.
+            Kiểm tra đơn trước khi thanh toán.
           </p>
-          <button type="button" class="btn-checkout" disabled>
+          <a routerLink="/customer/checkout" class="btn-checkout">
             Tiến hành thanh toán
-          </button>
+          </a>
           <a routerLink="/customer/pizzas" class="btn-continue">Tiếp tục mua sắm</a>
         </aside>
       </div>

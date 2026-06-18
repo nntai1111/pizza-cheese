@@ -51,6 +51,28 @@ export const CUSTOMER_ROUTES: Routes = [
         loadComponent: () =>
           import('./cart/cart.component').then((m) => m.CartComponent),
       },
+      {
+        path: 'checkout',
+        loadComponent: () =>
+          import('./checkout/checkout.component').then((m) => m.CheckoutComponent),
+      },
+      {
+        path: 'payment/return',
+        loadComponent: () =>
+          import('./payment-return/payment-return.component').then(
+            (m) => m.PaymentReturnComponent,
+          ),
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./order-list/order-list.component').then((m) => m.OrderListComponent),
+      },
+      {
+        path: 'orders/:id',
+        loadComponent: () =>
+          import('./order-detail/order-detail.component').then((m) => m.OrderDetailComponent),
+      },
     ],
   },
 ];

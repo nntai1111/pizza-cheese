@@ -1,0 +1,43 @@
+<section class="order-list-page">
+  <header class="order-list-hero">
+    <span class="order-list-hero__badge">📦 Đơn hàng</span>
+    <h1>Theo dõi đơn hàng</h1>
+    <p>Xem trạng thái và chi tiết các đơn đã đặt.</p>
+  </header>
+
+  @if (loading()) {
+    <p class="order-list-status">Đang tải...</p>
+  }
+
+  @if (errorMessage()) {
+    <p class="order-list-error">{{ errorMessage() }}</p>
+  }
+
+  @if (!loading() && !orders().length) {
+    <div class="order-list-empty">
+      <p>Bạn chưa có đơn hàng nào.</p>
+      <a routerLink="/customer/pizzas" class="btn-primary">Đặt pizza ngay</a>
+    </div>
+  }
+
+  @if (orders().length) {
+    <ul class="order-cards">
+      @for (order of orders(); track order.id) {
+        <li class="order-card">
+          <div class="order-card__head">
+            <div>
+              <strong>{{ order.orderCode }}</strong>
+              <span>{{ order.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <span class="order-card__status">{{ statusLabels[order.status] }}</span>
+          </div>
+          <div class="order-card__body">
+            <span>{{ paymentLabels[order.paymentMethod] }}</span>
+            <strong>{{ formatPrice(order.finalAmount) }}</strong>
+          </div>
+          <a [routerLink]="['/customer/orders', order.id]" class="order-card__link">Xem chi tiết</a>
+        </li>
+      }
+    </ul>
+  }
+</section>
