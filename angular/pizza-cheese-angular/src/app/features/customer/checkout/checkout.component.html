@@ -23,47 +23,49 @@
     } @else {
       <form class="checkout-layout" [formGroup]="form" (ngSubmit)="submit()">
         <div class="checkout-form">
-          <h2>Thông tin giao hàng</h2>
+          <h2>{{ isCashierMode() ? 'Thông tin khách hàng' : 'Thông tin giao hàng' }}</h2>
 
           <label>
-            <span>Họ tên người nhận *</span>
-            <input type="text" formControlName="recipientName" placeholder="Nguyễn Văn A" />
+            <span>Họ tên khách nhận{{ isCashierMode() ? '' : ' *' }}</span>
+            <input type="text" formControlName="recipientName" [placeholder]="isCashierMode() ? 'Khách lẻ' : 'Nguyễn Văn A'" />
           </label>
 
           <label>
-            <span>Số điện thoại *</span>
-            <input type="tel" formControlName="phone" placeholder="0901234567" />
+            <span>Số điện thoại{{ isCashierMode() ? '' : ' *' }}</span>
+            <input type="tel" formControlName="phone" [placeholder]="isCashierMode() ? '0000000000' : '0901234567'" />
           </label>
 
-          <label>
-            <span>Địa chỉ *</span>
-            <input type="text" formControlName="addressLine1" placeholder="Số nhà, tên đường" />
-          </label>
-
-          <label>
-            <span>Địa chỉ bổ sung</span>
-            <input type="text" formControlName="addressLine2" placeholder="Tòa nhà, căn hộ..." />
-          </label>
-
-          <div class="checkout-form__row">
+          @if (!isCashierMode()) {
             <label>
-              <span>Phường / Xã</span>
-              <input type="text" formControlName="ward" />
+              <span>Địa chỉ *</span>
+              <input type="text" formControlName="addressLine1" placeholder="Số nhà, tên đường" />
             </label>
-            <label>
-              <span>Quận / Huyện</span>
-              <input type="text" formControlName="district" />
-            </label>
-          </div>
 
-          <label>
-            <span>Thành phố *</span>
-            <input type="text" formControlName="city" placeholder="Hà Nội" />
-          </label>
+            <label>
+              <span>Địa chỉ bổ sung</span>
+              <input type="text" formControlName="addressLine2" placeholder="Tòa nhà, căn hộ..." />
+            </label>
+
+            <div class="checkout-form__row">
+              <label>
+                <span>Phường / Xã</span>
+                <input type="text" formControlName="ward" />
+              </label>
+              <label>
+                <span>Quận / Huyện</span>
+                <input type="text" formControlName="district" />
+              </label>
+            </div>
+
+            <label>
+              <span>Thành phố *</span>
+              <input type="text" formControlName="city" placeholder="Hà Nội" />
+            </label>
+          }
 
           <label>
             <span>Ghi chú</span>
-            <textarea formControlName="note" rows="3" placeholder="Ghi chú cho shipper..."></textarea>
+            <textarea formControlName="note" rows="3" [placeholder]="isCashierMode() ? 'Yêu cầu chế biến (ví dụ: ít cay, không hành...)' : 'Ghi chú cho shipper...'"></textarea>
           </label>
 
           <h2>Phương thức thanh toán</h2>

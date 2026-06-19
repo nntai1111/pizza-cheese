@@ -16,7 +16,7 @@ import { UserAvatarComponent } from '../../../shared/components';
   selector: 'app-cashier-layout',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, UserAvatarComponent],
   templateUrl: './cashier-layout.component.html',
-  styleUrls: ['../../customer/customer-layout/customer-layout.component.scss'],
+  styleUrl: './cashier-layout.component.scss',
 })
 export class CashierLayoutComponent implements OnInit {
   private readonly authService = inject(AuthService);

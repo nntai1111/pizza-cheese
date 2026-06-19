@@ -115,6 +115,9 @@ export class CashierOrderDetailComponent {
         district?: string;
         city?: string;
       };
+      if (address.addressLine1 === 'Tại quầy') {
+        return `Mua tại quầy · Khách hàng: ${address.recipientName || 'Khách lẻ'} · SĐT: ${address.phone || 'Không có'}`;
+      }
       const parts = [
         address.addressLine1,
         address.addressLine2,

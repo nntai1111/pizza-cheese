@@ -1,114 +1,126 @@
-<div class="customer-shell">
-  <header class="customer-topbar">
-    <a [routerLink]="shop.segments('pizzas')" class="customer-brand">
-      <span class="customer-brand__logo">💰</span>
-      <div class="customer-brand__text">
+<div class="cashier-layout-container">
+  <!-- Left Sidebar Navigation -->
+  <aside class="cashier-left-sidebar">
+    <a [routerLink]="shop.segments('pizzas')" class="sidebar-brand">
+      <span class="sidebar-brand__logo">💰</span>
+      <div class="sidebar-brand__text">
         <strong>Pizza Cheese</strong>
         <span>Quầy thu ngân</span>
       </div>
     </a>
 
-    <nav class="customer-nav">
+    <nav class="sidebar-nav">
       <a
         [routerLink]="shop.segments('pizzas')"
-        routerLinkActive="customer-nav__link--active"
+        routerLinkActive="sidebar-nav__link--active"
         [routerLinkActiveOptions]="{ exact: true }"
-        class="customer-nav__link"
+        class="sidebar-nav__link"
       >
-        Thực đơn
+        <span class="link-icon">🍕</span>
+        <span>Thực đơn</span>
       </a>
       <a
         [routerLink]="shop.segments('combos')"
-        routerLinkActive="customer-nav__link--active"
+        routerLinkActive="sidebar-nav__link--active"
         [routerLinkActiveOptions]="{ exact: true }"
-        class="customer-nav__link"
+        class="sidebar-nav__link"
       >
-        Combo
+        <span class="link-icon">🎁</span>
+        <span>Combo</span>
       </a>
       <a
         [routerLink]="shop.segments('orders')"
-        routerLinkActive="customer-nav__link--active"
-        class="customer-nav__link"
+        routerLinkActive="sidebar-nav__link--active"
+        class="sidebar-nav__link"
       >
-        Quản lý đơn
+        <span class="link-icon">📋</span>
+        <span>Quản lý đơn</span>
+      </a>
+      <a
+        [routerLink]="shop.segments('cart')"
+        routerLinkActive="sidebar-nav__link--active"
+        class="sidebar-nav__link cart-nav-link"
+      >
+        <span class="link-icon">🛒</span>
+        <span>Xem giỏ hàng</span>
+        @if (cartItemCount() > 0) {
+          <span class="cart-badge">{{ cartItemCount() }}</span>
+        }
       </a>
     </nav>
 
-    <div class="customer-topbar__actions">
-      <a
-        [routerLink]="shop.segments('cart')"
-        routerLinkActive="cart-link--active"
-        class="cart-link cart-link--mobile"
-        aria-label="Giỏ hàng"
-      >
-        <span class="cart-link__icon">🛒</span>
-        @if (cartItemCount() > 0) {
-          <span class="cart-link__badge">{{ cartItemCount() }}</span>
-        }
-      </a>
-
-      <div class="customer-user">
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
         <app-user-avatar [user]="user()" size="sm" />
-        <span class="customer-user__name">{{ user()?.name }}</span>
-      </div>
-      <button type="button" class="btn-logout" (click)="logout()">Đăng xuất</button>
-    </div>
-  </header>
-
-  <div class="customer-body">
-    <main class="customer-content">
-      <router-outlet />
-    </main>
-
-    @if (!isCartPage()) {
-      <aside class="cart-sidebar">
-        <div class="cart-sidebar__header">
-          <h2>🛒 Giỏ hàng quầy</h2>
-          @if (cartItemCount() > 0) {
-            <span class="cart-sidebar__count">{{ cartItemCount() }} món</span>
-          }
+        <div class="sidebar-user__info">
+          <span class="sidebar-user__name">{{ user()?.name }}</span>
+          <span class="sidebar-user__role">Thu ngân</span>
         </div>
+      </div>
+      <button type="button" class="btn-logout" (click)="logout()">
+        <span class="logout-icon">🚪</span>
+        <span>Đăng xuất</span>
+      </button>
+    </div>
+  </aside>
 
-        @if (cart(); as currentCart) {
-          @if (!currentCart.items.length) {
-            <div class="cart-sidebar__empty">
-              <p>Chưa có món nào</p>
-              <span>Chọn pizza hoặc combo để tạo đơn tại quầy</span>
-            </div>
-          } @else {
-            <ul class="cart-sidebar__items">
-              @for (item of currentCart.items; track item.id) {
-                <li class="sidebar-item">
-                  <div class="sidebar-item__thumb">
-                    @if (getItemImage(item); as imageUrl) {
-                      <img [src]="imageUrl" [alt]="getItemTitle(item)" />
-                    } @else {
-                      <span>{{ item.itemType === 'COMBO' ? '🎁' : '🍕' }}</span>
-                    }
-                  </div>
-                  <div class="sidebar-item__info">
-                    <strong>{{ getItemTitle(item) }}</strong>
-                    <span>{{ item.quantity }} × {{ formatPrice(item.unitPrice) }}</span>
-                  </div>
-                  <strong class="sidebar-item__total">{{ formatPrice(item.lineTotal) }}</strong>
-                </li>
-              }
-            </ul>
+  <!-- Right Main Content Area -->
+  <div class="cashier-main-container">
+    <div class="cashier-content-wrapper">
+      <main class="cashier-content">
+        <router-outlet />
+      </main>
 
-            <div class="cart-sidebar__footer">
-              <div class="cart-sidebar__subtotal">
-                <span>Tạm tính</span>
-                <strong>{{ formatPrice(currentCart.subtotal) }}</strong>
+      @if (!isCartPage()) {
+        <aside class="cart-sidebar">
+          <div class="cart-sidebar__header">
+            <h2>🛒 Giỏ hàng quầy</h2>
+            @if (cartItemCount() > 0) {
+              <span class="cart-sidebar__count">{{ cartItemCount() }} món</span>
+            }
+          </div>
+
+          @if (cart(); as currentCart) {
+            @if (!currentCart.items.length) {
+              <div class="cart-sidebar__empty">
+                <p>Chưa có món nào</p>
+                <span>Chọn pizza hoặc combo để tạo đơn tại quầy</span>
               </div>
-              <a [routerLink]="shop.segments('cart')" class="btn-view-cart">Xem giỏ hàng</a>
-            </div>
-          }
-        }
-      </aside>
-    }
-  </div>
+            } @else {
+              <ul class="cart-sidebar__items">
+                @for (item of currentCart.items; track item.id) {
+                  <li class="sidebar-item">
+                    <div class="sidebar-item__thumb">
+                      @if (getItemImage(item); as imageUrl) {
+                        <img [src]="imageUrl" [alt]="getItemTitle(item)" />
+                      } @else {
+                        <span>{{ item.itemType === 'COMBO' ? '🎁' : '🍕' }}</span>
+                      }
+                    </div>
+                    <div class="sidebar-item__info">
+                      <strong>{{ getItemTitle(item) }}</strong>
+                      <span>{{ item.quantity }} × {{ formatPrice(item.unitPrice) }}</span>
+                    </div>
+                    <strong class="sidebar-item__total">{{ formatPrice(item.lineTotal) }}</strong>
+                  </li>
+                }
+              </ul>
 
-  <footer class="customer-footer">
-    <p>© {{ currentYear }} Pizza Cheese — Quầy thu ngân</p>
-  </footer>
+              <div class="cart-sidebar__footer">
+                <div class="cart-sidebar__subtotal">
+                  <span>Tạm tính</span>
+                  <strong>{{ formatPrice(currentCart.subtotal) }}</strong>
+                </div>
+                <a [routerLink]="shop.segments('cart')" class="btn-view-cart">Xem giỏ hàng</a>
+              </div>
+            }
+          }
+        </aside>
+      }
+    </div>
+
+    <footer class="cashier-footer">
+      <p>© {{ currentYear }} Pizza Cheese — Quầy thu ngân</p>
+    </footer>
+  </div>
 </div>

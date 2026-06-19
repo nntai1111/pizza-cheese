@@ -65,6 +65,22 @@ export class CheckoutComponent {
         this.errorMessage.set(getHttpErrorMessage(err, 'Không thể tải giỏ hàng.'));
       },
     });
+
+    if (this.isCashierMode()) {
+      this.form.controls.recipientName.clearValidators();
+      this.form.controls.recipientName.setValidators([Validators.maxLength(100)]);
+      this.form.controls.phone.clearValidators();
+      this.form.controls.phone.setValidators([Validators.maxLength(20)]);
+      this.form.controls.addressLine1.clearValidators();
+      this.form.controls.addressLine1.setValidators([Validators.maxLength(255)]);
+      this.form.controls.city.clearValidators();
+      this.form.controls.city.setValidators([Validators.maxLength(100)]);
+
+      this.form.controls.recipientName.updateValueAndValidity();
+      this.form.controls.phone.updateValueAndValidity();
+      this.form.controls.addressLine1.updateValueAndValidity();
+      this.form.controls.city.updateValueAndValidity();
+    }
   }
 
   submit(): void {
@@ -88,18 +104,24 @@ export class CheckoutComponent {
     this.loading.set(true);
     this.errorMessage.set(null);
 
+    const isCashier = this.isCashierMode();
+    const recipientName = isCashier ? (value.recipientName.trim() || 'Khách lẻ') : value.recipientName;
+    const phone = isCashier ? (value.phone.trim() || '0000000000') : value.phone;
+    const addressLine1 = isCashier ? 'Tại quầy' : value.addressLine1;
+    const city = isCashier ? 'Hà Nội' : value.city;
+
     const request = {
       cartItemIds: selectedItems.map((item) => item.id),
       paymentMethod: value.paymentMethod,
       note: value.note || undefined,
       deliveryAddress: {
-        recipientName: value.recipientName,
-        phone: value.phone,
-        addressLine1: value.addressLine1,
-        addressLine2: value.addressLine2 || undefined,
-        ward: value.ward || undefined,
-        district: value.district || undefined,
-        city: value.city,
+        recipientName,
+        phone,
+        addressLine1,
+        addressLine2: isCashier ? undefined : (value.addressLine2 || undefined),
+        ward: isCashier ? undefined : (value.ward || undefined),
+        district: isCashier ? undefined : (value.district || undefined),
+        city,
       },
     };
 
