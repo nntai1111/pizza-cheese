@@ -1,3 +1,4 @@
+//kiểm tra login có đúng role khôgn
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 
