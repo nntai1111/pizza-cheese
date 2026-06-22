@@ -32,3 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 /bin/
+
+### Local secrets & logs ###
+.env
+.env.local
+out.txt
+*.log

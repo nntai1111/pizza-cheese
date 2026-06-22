@@ -10,12 +10,15 @@ import org.junit.jupiter.api.Test;
 
 class VnPayUtilTest {
 
+    private static final String TEST_HASH_SECRET = "TEST_VNPAY_HASH_SECRET_FOR_UNIT_TESTS";
+    private static final String TEST_TMN_CODE = "TESTTMNCODE";
+
     @Test
     void buildPaymentUrl_containsSecureHashAndRequiredParams() {
         Map<String, String> params = new LinkedHashMap<>();
         params.put("vnp_Version", "2.1.0");
         params.put("vnp_Command", "pay");
-        params.put("vnp_TmnCode", "FCR0JH8M");
+        params.put("vnp_TmnCode", TEST_TMN_CODE);
         params.put("vnp_Amount", "10000000");
         params.put("vnp_CurrCode", "VND");
         params.put("vnp_TxnRef", "PC2506181234");
@@ -30,10 +33,10 @@ class VnPayUtilTest {
         String url = VnPayUtil.buildPaymentUrl(
                 "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
                 params,
-                "17W6NZM6YJ35QKQ1O42636HAPRLGB7FX");
+                TEST_HASH_SECRET);
 
         assertTrue(url.contains("vnp_SecureHash="));
-        assertTrue(url.contains("vnp_TmnCode=FCR0JH8M"));
+        assertTrue(url.contains("vnp_TmnCode=" + TEST_TMN_CODE));
         assertTrue(url.startsWith("https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?"));
     }
 
@@ -42,7 +45,7 @@ class VnPayUtilTest {
         Map<String, String> params = new LinkedHashMap<>();
         params.put("vnp_Version", "2.1.0");
         params.put("vnp_Command", "pay");
-        params.put("vnp_TmnCode", "FCR0JH8M");
+        params.put("vnp_TmnCode", TEST_TMN_CODE);
         params.put("vnp_Amount", "10000000");
         params.put("vnp_CurrCode", "VND");
         params.put("vnp_TxnRef", "PC2506181234");
@@ -54,9 +57,8 @@ class VnPayUtilTest {
         params.put("vnp_CreateDate", "20250618103800");
         params.put("vnp_ExpireDate", "20250618105300");
 
-        String secret = "17W6NZM6YJ35QKQ1O42636HAPRLGB7FX";
         String url = VnPayUtil.buildPaymentUrl(
-                "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html", params, secret);
+                "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html", params, TEST_HASH_SECRET);
 
         String query = url.substring(url.indexOf('?') + 1);
         Map<String, String> parsed = new LinkedHashMap<>();
@@ -67,7 +69,7 @@ class VnPayUtilTest {
             }
         }
 
-        assertTrue(VnPayUtil.verifySignature(parsed, secret));
+        assertTrue(VnPayUtil.verifySignature(parsed, TEST_HASH_SECRET));
     }
 
     @Test
@@ -77,6 +79,6 @@ class VnPayUtilTest {
         params.put("vnp_TxnRef", "PC2506181234");
         params.put("vnp_SecureHash", "invalid");
 
-        assertFalse(VnPayUtil.verifySignature(params, "17W6NZM6YJ35QKQ1O42636HAPRLGB7FX"));
+        assertFalse(VnPayUtil.verifySignature(params, TEST_HASH_SECRET));
     }
 }

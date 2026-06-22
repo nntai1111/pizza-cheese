@@ -1,0 +1,21 @@
+# Secrets & local config
+.env
+.env.local
+*.env.local
+
+# IDE
+.vscode/*
+!.vscode/launch.json
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs & build artifacts
+*.log
+out.txt
