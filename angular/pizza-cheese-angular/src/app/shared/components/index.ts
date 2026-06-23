@@ -1,1 +1,0 @@
-export { UserAvatarComponent } from './user-avatar/user-avatar.component';
