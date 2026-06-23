@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,7 +31,6 @@ import pizza_cheese.todo.dto.response.RestResponse;
 import pizza_cheese.todo.service.CategoryService;
 
 @Tag(name = "Category", description = "Quản lý danh mục pizza")
-@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/v1")
 public class CategoryController {
@@ -59,7 +58,8 @@ public class CategoryController {
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping(value = "/admin/categories", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<RestResponse<CategoryResponse>> createJson(@Valid @RequestBody CreateCategoryRequest request) {
+    public ResponseEntity<RestResponse<CategoryResponse>> createJson(
+            @Valid @RequestBody CreateCategoryRequest request) {
         return ResponseEntity.ok(RestResponse.success(categoryService.create(request)));
     }
 

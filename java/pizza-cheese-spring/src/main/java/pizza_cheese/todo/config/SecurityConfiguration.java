@@ -110,7 +110,7 @@ public class SecurityConfiguration {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // Frontend của bạn
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:4200"));
 
         // Hoặc cho phép tất cả trong dev (không nên dùng production):
         // configuration.setAllowedOrigins(List.of("*"));
