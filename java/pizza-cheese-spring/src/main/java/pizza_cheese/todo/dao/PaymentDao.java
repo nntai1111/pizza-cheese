@@ -14,7 +14,6 @@ import org.springframework.stereotype.Repository;
 
 import pizza_cheese.todo.dao.mapper.PaymentRowMapper;
 import pizza_cheese.todo.domain.Payment;
-import pizza_cheese.todo.domain.PaymentStatus;
 import pizza_cheese.todo.util.JdbcTimeUtil;
 import pizza_cheese.todo.util.SqlLoader;
 

@@ -8,7 +8,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +22,6 @@ import pizza_cheese.todo.dao.PaymentDao;
 import pizza_cheese.todo.domain.Order;
 import pizza_cheese.todo.domain.OrderStatus;
 import pizza_cheese.todo.domain.Payment;
-import pizza_cheese.todo.domain.PaymentMethod;
 import pizza_cheese.todo.domain.PaymentStatus;
 import pizza_cheese.todo.exception.InvalidPaymentSignatureException;
 import pizza_cheese.todo.exception.OrderNotFoundException;

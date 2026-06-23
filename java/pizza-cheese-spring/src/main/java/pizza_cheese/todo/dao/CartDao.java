@@ -19,7 +19,6 @@ import pizza_cheese.todo.dao.mapper.CartRowMapper;
 import pizza_cheese.todo.domain.Cart;
 import pizza_cheese.todo.domain.CartItem;
 import pizza_cheese.todo.domain.CartItemComboLine;
-import pizza_cheese.todo.domain.CartItemTopping;
 import pizza_cheese.todo.util.JdbcTimeUtil;
 import pizza_cheese.todo.util.SqlLoader;
 
