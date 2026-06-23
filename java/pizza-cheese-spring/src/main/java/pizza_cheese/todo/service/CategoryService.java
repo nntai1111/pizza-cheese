@@ -12,8 +12,7 @@ import pizza_cheese.todo.domain.Category;
 import pizza_cheese.todo.dto.request.CreateCategoryRequest;
 import pizza_cheese.todo.dto.request.UpdateCategoryRequest;
 import pizza_cheese.todo.dto.response.CategoryResponse;
-import pizza_cheese.todo.exception.CategoryNotFoundException;
-import pizza_cheese.todo.exception.SlugAlreadyExistsException;
+import pizza_cheese.todo.exception.ApiException;
 import pizza_cheese.todo.util.SlugUtil;
 
 @Service
@@ -34,7 +33,7 @@ public class CategoryService {
     public CategoryResponse findById(UUID id) {
         return categoryDao.findById(id)
                 .map(CategoryResponse::from)
-                .orElseThrow(() -> new CategoryNotFoundException("Không tìm thấy danh mục"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy danh mục"));
     }
 
     @Transactional
@@ -46,7 +45,7 @@ public class CategoryService {
     public CategoryResponse create(CreateCategoryRequest request, MultipartFile imageFile) {
         String slug = SlugUtil.resolve(request.getSlug(), request.getName(), null);
         if (categoryDao.existsBySlug(slug)) {
-            throw new SlugAlreadyExistsException("Slug đã tồn tại: " + slug);
+            throw ApiException.conflict("Slug đã tồn tại: " + slug);
         }
 
         Category category = new Category();
@@ -68,7 +67,7 @@ public class CategoryService {
     @Transactional
     public CategoryResponse update(UUID id, UpdateCategoryRequest request, MultipartFile imageFile) {
         Category category = categoryDao.findById(id)
-                .orElseThrow(() -> new CategoryNotFoundException("Không tìm thấy danh mục"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy danh mục"));
 
         if (request.getName() != null) {
             category.setName(request.getName().trim());
@@ -76,7 +75,7 @@ public class CategoryService {
 
         String slug = SlugUtil.resolve(request.getSlug(), request.getName(), category.getSlug());
         if (slug != null && categoryDao.existsBySlugExcludingId(slug, id)) {
-            throw new SlugAlreadyExistsException("Slug đã tồn tại: " + slug);
+            throw ApiException.conflict("Slug đã tồn tại: " + slug);
         }
         if (slug != null) {
             category.setSlug(slug);
@@ -103,14 +102,14 @@ public class CategoryService {
     @Transactional
     public void delete(UUID id) {
         if (categoryDao.findById(id).isEmpty()) {
-            throw new CategoryNotFoundException("Không tìm thấy danh mục");
+            throw ApiException.notFound("Không tìm thấy danh mục");
         }
         categoryDao.deactivate(id);
     }
 
     public void requireActiveCategory(UUID categoryId) {
         Category category = categoryDao.findById(categoryId)
-                .orElseThrow(() -> new CategoryNotFoundException("Không tìm thấy danh mục"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy danh mục"));
         if (!category.isActive()) {
             throw new IllegalArgumentException("Danh mục không còn hoạt động");
         }

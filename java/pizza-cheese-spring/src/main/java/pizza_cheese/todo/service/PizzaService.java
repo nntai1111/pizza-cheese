@@ -21,8 +21,7 @@ import pizza_cheese.todo.dto.request.PizzaVariantRequest;
 import pizza_cheese.todo.dto.request.UpdatePizzaRequest;
 import pizza_cheese.todo.dto.response.PageResponse;
 import pizza_cheese.todo.dto.response.PizzaResponse;
-import pizza_cheese.todo.exception.PizzaNotFoundException;
-import pizza_cheese.todo.exception.SlugAlreadyExistsException;
+import pizza_cheese.todo.exception.ApiException;
 import pizza_cheese.todo.util.SlugUtil;
 
 @Service
@@ -62,7 +61,7 @@ public class PizzaService {
     public PizzaResponse findById(UUID id) {
         return pizzaDao.findById(id)
                 .map(PizzaResponse::from)
-                .orElseThrow(() -> new PizzaNotFoundException("Không tìm thấy pizza"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy pizza"));
     }
 
     @Transactional
@@ -90,7 +89,7 @@ public class PizzaService {
 
         String slug = SlugUtil.resolve(request.getSlug(), request.getName(), null);
         if (pizzaDao.existsBySlug(slug)) {
-            throw new SlugAlreadyExistsException("Slug đã tồn tại: " + slug);
+            throw ApiException.conflict("Slug đã tồn tại: " + slug);
         }
 
         Pizza pizza = new Pizza();
@@ -129,7 +128,7 @@ public class PizzaService {
             MultipartFile mainImage,
             List<MultipartFile> secondaryImages) {
         Pizza pizza = pizzaDao.findById(id)
-                .orElseThrow(() -> new PizzaNotFoundException("Không tìm thấy pizza"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy pizza"));
 
         if (request.getCategoryId() != null) {
             categoryService.requireActiveCategory(request.getCategoryId());
@@ -142,7 +141,7 @@ public class PizzaService {
 
         String slug = SlugUtil.resolve(request.getSlug(), request.getName(), pizza.getSlug());
         if (slug != null && pizzaDao.existsBySlugExcludingId(slug, id)) {
-            throw new SlugAlreadyExistsException("Slug đã tồn tại: " + slug);
+            throw ApiException.conflict("Slug đã tồn tại: " + slug);
         }
         if (slug != null) {
             pizza.setSlug(slug);
@@ -190,7 +189,7 @@ public class PizzaService {
     @Transactional
     public void delete(UUID id) {
         if (pizzaDao.findById(id).isEmpty()) {
-            throw new PizzaNotFoundException("Không tìm thấy pizza");
+            throw ApiException.notFound("Không tìm thấy pizza");
         }
         pizzaDao.deactivate(id);
     }

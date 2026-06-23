@@ -11,7 +11,7 @@ import pizza_cheese.todo.domain.Topping;
 import pizza_cheese.todo.dto.request.CreateToppingRequest;
 import pizza_cheese.todo.dto.request.UpdateToppingRequest;
 import pizza_cheese.todo.dto.response.ToppingResponse;
-import pizza_cheese.todo.exception.ToppingNotFoundException;
+import pizza_cheese.todo.exception.ApiException;
 
 @Service
 public class ToppingService {
@@ -29,7 +29,7 @@ public class ToppingService {
     public ToppingResponse findById(UUID id) {
         return toppingDao.findById(id)
                 .map(ToppingResponse::from)
-                .orElseThrow(() -> new ToppingNotFoundException("Không tìm thấy topping"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy topping"));
     }
 
     // những hàm có ghi dữ liệu xuống DB.
@@ -46,7 +46,7 @@ public class ToppingService {
     @Transactional
     public ToppingResponse update(UUID id, UpdateToppingRequest request) {
         Topping topping = toppingDao.findById(id)
-                .orElseThrow(() -> new ToppingNotFoundException("Không tìm thấy topping"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy topping"));
 
         if (request.getName() != null) {
             topping.setName(request.getName().trim());
@@ -64,7 +64,7 @@ public class ToppingService {
     @Transactional
     public void delete(UUID id) {
         if (toppingDao.findById(id).isEmpty()) {
-            throw new ToppingNotFoundException("Không tìm thấy topping");
+            throw ApiException.notFound("Không tìm thấy topping");
         }
         toppingDao.deactivate(id);
     }
@@ -79,7 +79,7 @@ public class ToppingService {
         }
         for (UUID toppingId : toppingIds) {
             Topping topping = toppingDao.findById(toppingId)
-                    .orElseThrow(() -> new ToppingNotFoundException("Không tìm thấy topping: " + toppingId));
+                    .orElseThrow(() -> ApiException.notFound("Không tìm thấy topping: " + toppingId));
             if (!topping.isActive()) {
                 throw new IllegalArgumentException("Topping không còn hoạt động: " + topping.getName());
             }

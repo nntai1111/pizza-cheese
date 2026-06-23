@@ -29,9 +29,7 @@ import pizza_cheese.todo.dto.request.LoginRequest;
 import pizza_cheese.todo.dto.request.RegisterRequest;
 import pizza_cheese.todo.dto.response.LoginResponse;
 import pizza_cheese.todo.dto.response.UserProfileResponse;
-import pizza_cheese.todo.exception.EmailAlreadyExistsException;
-import pizza_cheese.todo.exception.InvalidRefreshTokenException;
-import pizza_cheese.todo.exception.UsernameAlreadyExistsException;
+import pizza_cheese.todo.exception.ApiException;
 import pizza_cheese.todo.dao.RefreshTokenDao;
 import pizza_cheese.todo.dao.UserDao;
 import pizza_cheese.todo.util.SecurityUtil;
@@ -77,10 +75,10 @@ public class AuthService {
         String username = normalizeUsername(request.getUsername());
 
         if (userDao.existsByUsername(username)) {
-            throw new UsernameAlreadyExistsException("Tên đăng nhập đã được sử dụng");
+            throw ApiException.conflict("Tên đăng nhập đã được sử dụng");
         }
         if (userDao.existsByEmail(request.getEmail())) {
-            throw new EmailAlreadyExistsException("Email đã được sử dụng");
+            throw ApiException.conflict("Email đã được sử dụng");
         }
 
         User user = new User();
@@ -128,11 +126,11 @@ public class AuthService {
     @Transactional
     public LoginResponse refresh(String refreshTokenValue) {
         RefreshToken refreshToken = refreshTokenDao.findByToken(refreshTokenValue)
-                .orElseThrow(() -> new InvalidRefreshTokenException("Refresh token không hợp lệ"));
+                .orElseThrow(() -> ApiException.unauthorized("Refresh token không hợp lệ"));
 
         if (refreshToken.isExpired()) {
             refreshTokenDao.delete(refreshToken);
-            throw new InvalidRefreshTokenException("Refresh token đã hết hạn");
+            throw ApiException.unauthorized("Refresh token đã hết hạn");
         }
 
         User user = refreshToken.getUser();

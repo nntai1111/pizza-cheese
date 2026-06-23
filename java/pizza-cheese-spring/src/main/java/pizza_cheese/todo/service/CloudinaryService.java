@@ -11,7 +11,7 @@ import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 
 import pizza_cheese.todo.config.CloudinaryProperties;
-import pizza_cheese.todo.exception.FileUploadException;
+import pizza_cheese.todo.exception.ApiException;
 
 @Service
 public class CloudinaryService {
@@ -52,11 +52,11 @@ public class CloudinaryService {
 		} catch (Exception ex) {
 			String detail = ex.getMessage();
 			if (detail != null && detail.contains("missing permissions")) {
-				throw new FileUploadException(
+				throw ApiException.uploadFailed(
 						"API key Cloudinary chưa có quyền upload. Vào Cloudinary Console → Settings → API Keys → chọn key → Assign Roles → gán role Master Admin (hoặc role có quyền create/upload).",
 						ex);
 			}
-			throw new FileUploadException("Không thể tải ảnh lên Cloudinary", ex);
+			throw ApiException.uploadFailed("Không thể tải ảnh lên Cloudinary", ex);
 		}
 	}
 

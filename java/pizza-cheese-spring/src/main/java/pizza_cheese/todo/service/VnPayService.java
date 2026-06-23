@@ -23,8 +23,7 @@ import pizza_cheese.todo.domain.Order;
 import pizza_cheese.todo.domain.OrderStatus;
 import pizza_cheese.todo.domain.Payment;
 import pizza_cheese.todo.domain.PaymentStatus;
-import pizza_cheese.todo.exception.InvalidPaymentSignatureException;
-import pizza_cheese.todo.exception.OrderNotFoundException;
+import pizza_cheese.todo.exception.ApiException;
 import pizza_cheese.todo.util.VnPayUtil;
 
 @Service
@@ -102,7 +101,7 @@ public class VnPayService {
 
         String txnRef = params.get("vnp_TxnRef");
         Payment payment = paymentDao.findByTransactionId(txnRef)
-                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy giao dịch thanh toán"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy giao dịch thanh toán"));
 
         if (payment.getStatus() == PaymentStatus.PAID) {
             response.put("RspCode", "00");
@@ -111,7 +110,7 @@ public class VnPayService {
         }
 
         Order order = orderDao.findById(payment.getOrderId())
-                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy đơn hàng"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
 
         String responseCode = params.get("vnp_ResponseCode");
         String callbackJson = toJson(params);
@@ -135,19 +134,19 @@ public class VnPayService {
     @Transactional
     public void handleReturn(Map<String, String> params) {
         if (!VnPayUtil.verifySignature(params, vnPayProperties.getHashSecret())) {
-            throw new InvalidPaymentSignatureException("Chữ ký VNPay không hợp lệ");
+            throw ApiException.badRequest("Chữ ký VNPay không hợp lệ");
         }
 
         String txnRef = params.get("vnp_TxnRef");
         Payment payment = paymentDao.findByTransactionId(txnRef)
-                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy giao dịch thanh toán"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy giao dịch thanh toán"));
 
         if (payment.getStatus() == PaymentStatus.PAID) {
             return;
         }
 
         Order order = orderDao.findById(payment.getOrderId())
-                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy đơn hàng"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
 
         String responseCode = params.get("vnp_ResponseCode");
         String callbackJson = toJson(params);

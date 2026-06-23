@@ -19,8 +19,7 @@ import pizza_cheese.todo.domain.PaymentStatus;
 import pizza_cheese.todo.domain.User;
 import pizza_cheese.todo.dto.response.OrderResponse;
 import pizza_cheese.todo.dto.response.PageResponse;
-import pizza_cheese.todo.exception.InvalidOrderStateException;
-import pizza_cheese.todo.exception.OrderNotFoundException;
+import pizza_cheese.todo.exception.ApiException;
 
 @Service
 public class CashierService {
@@ -52,7 +51,7 @@ public class CashierService {
 
     public OrderResponse getOrder(UUID orderId) {
         Order order = orderDao.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy đơn hàng"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
         Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
         return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
     }
@@ -61,20 +60,20 @@ public class CashierService {
     public OrderResponse confirmPayment(String staffEmail, UUID orderId) {
         UUID staffId = resolveUserId(staffEmail);
         Order order = orderDao.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy đơn hàng"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
         Payment payment = paymentDao.findLatestByOrderId(orderId)
-                .orElseThrow(() -> new InvalidOrderStateException("Không tìm thấy thông tin thanh toán"));
+                .orElseThrow(() -> ApiException.badRequest("Không tìm thấy thông tin thanh toán"));
 
         if (order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.REFUNDED) {
-            throw new InvalidOrderStateException("Không thể xác nhận thanh toán cho đơn đã hủy");
+            throw ApiException.badRequest("Không thể xác nhận thanh toán cho đơn đã hủy");
         }
 
         if (payment.getStatus() == PaymentStatus.PAID) {
-            throw new InvalidOrderStateException("Đơn đã được thanh toán");
+            throw ApiException.badRequest("Đơn đã được thanh toán");
         }
 
         if (payment.getStatus() != PaymentStatus.PENDING) {
-            throw new InvalidOrderStateException("Không thể xác nhận thanh toán ở trạng thái hiện tại");
+            throw ApiException.badRequest("Không thể xác nhận thanh toán ở trạng thái hiện tại");
         }
 
         Instant now = Instant.now();
@@ -89,7 +88,7 @@ public class CashierService {
         } else if (order.getStatus() == OrderStatus.CONFIRMED) {
             orderDao.insertStatusHistory(orderId, OrderStatus.CONFIRMED, staffId, "Thu ngan xac nhan thu tien");
         } else {
-            throw new InvalidOrderStateException("Không thể xác nhận thanh toán ở trạng thái đơn hiện tại");
+            throw ApiException.badRequest("Không thể xác nhận thanh toán ở trạng thái đơn hiện tại");
         }
 
         return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
@@ -99,7 +98,7 @@ public class CashierService {
     public OrderResponse cancelOrder(String staffEmail, UUID orderId) {
         UUID staffId = resolveUserId(staffEmail);
         Order order = orderDao.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy đơn hàng"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
         Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
@@ -115,12 +114,12 @@ public class CashierService {
         }
 
         if (order.getStatus() != OrderStatus.CONFIRMED) {
-            throw new InvalidOrderStateException("Không thể hủy đơn ở trạng thái hiện tại");
+            throw ApiException.badRequest("Không thể hủy đơn ở trạng thái hiện tại");
         }
 
         if (payment != null && payment.getStatus() == PaymentStatus.PAID
                 && order.getPaymentMethodSelected() == PaymentMethod.VNPAY) {
-            throw new InvalidOrderStateException("Đơn đã thanh toán online, không thể hủy");
+            throw ApiException.badRequest("Đơn đã thanh toán online, không thể hủy");
         }
 
         if (payment != null && payment.getStatus() == PaymentStatus.PENDING) {
@@ -131,7 +130,7 @@ public class CashierService {
             return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
         }
 
-        throw new InvalidOrderStateException("Không thể hủy đơn ở trạng thái hiện tại");
+        throw ApiException.badRequest("Không thể hủy đơn ở trạng thái hiện tại");
     }
 
     private void failPendingPayment(Payment payment) {

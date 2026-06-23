@@ -36,10 +36,7 @@ import pizza_cheese.todo.domain.PaymentStatus;
 import pizza_cheese.todo.dto.request.CreateOrderRequest;
 import pizza_cheese.todo.dto.request.DeliveryAddressRequest;
 import pizza_cheese.todo.dto.response.OrderResponse;
-import pizza_cheese.todo.exception.CartItemNotFoundException;
-import pizza_cheese.todo.exception.EmptyCartException;
-import pizza_cheese.todo.exception.InvalidOrderStateException;
-import pizza_cheese.todo.exception.OrderNotFoundException;
+import pizza_cheese.todo.exception.ApiException;
 
 @Service
 public class OrderService {
@@ -74,7 +71,7 @@ public class OrderService {
         UUID userId = resolveUserId(userEmail);
         Cart cart = cartDao.findByUserId(userId)
                 .filter(existing -> existing.getItems() != null && !existing.getItems().isEmpty())
-                .orElseThrow(() -> new EmptyCartException("Giỏ hàng trống, không thể đặt hàng"));
+                .orElseThrow(() -> ApiException.badRequest("Giỏ hàng trống, không thể đặt hàng"));
 
         PaymentMethod paymentMethod = request.getPaymentMethod();
         if (paymentMethod != PaymentMethod.VNPAY && paymentMethod != PaymentMethod.COD) {
@@ -142,14 +139,14 @@ public class OrderService {
     public OrderResponse getOrder(String userEmail, UUID orderId) {
         UUID userId = resolveUserId(userEmail);
         Order order = orderDao.findByIdAndUserId(orderId, userId)
-                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy đơn hàng"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
         Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
         return OrderResponse.from(order, payment);
     }
 
     public OrderResponse getOrderByPaymentTxnRef(String userEmail, String txnRef) {
         Payment payment = paymentDao.findByTransactionId(txnRef)
-                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy giao dịch thanh toán"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy giao dịch thanh toán"));
         return getOrder(userEmail, payment.getOrderId());
     }
 
@@ -164,7 +161,7 @@ public class OrderService {
     public OrderResponse cancelOrder(String userEmail, UUID orderId) {
         UUID userId = resolveUserId(userEmail);
         Order order = orderDao.findByIdAndUserId(orderId, userId)
-                .orElseThrow(() -> new OrderNotFoundException("Không tìm thấy đơn hàng"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
         Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
@@ -180,12 +177,12 @@ public class OrderService {
         }
 
         if (order.getStatus() != OrderStatus.CONFIRMED) {
-            throw new InvalidOrderStateException("Không thể hủy đơn ở trạng thái hiện tại");
+            throw ApiException.badRequest("Không thể hủy đơn ở trạng thái hiện tại");
         }
 
         if (payment != null && payment.getStatus() == PaymentStatus.PAID
                 && order.getPaymentMethodSelected() == PaymentMethod.VNPAY) {
-            throw new InvalidOrderStateException("Đơn đã thanh toán online, không thể hủy");
+            throw ApiException.badRequest("Đơn đã thanh toán online, không thể hủy");
         }
 
         if (payment != null && payment.getStatus() == PaymentStatus.PENDING) {
@@ -196,12 +193,12 @@ public class OrderService {
             return OrderResponse.from(order, payment);
         }
 
-        throw new InvalidOrderStateException("Không thể hủy đơn ở trạng thái hiện tại");
+        throw ApiException.badRequest("Không thể hủy đơn ở trạng thái hiện tại");
     }
 
     private List<CartItem> resolveSelectedCartItems(Cart cart, List<UUID> cartItemIds) {
         if (cartItemIds == null || cartItemIds.isEmpty()) {
-            throw new EmptyCartException("Chưa chọn món để đặt hàng");
+            throw ApiException.badRequest("Chưa chọn món để đặt hàng");
         }
 
         Set<UUID> cartItemIdSet = cart.getItems().stream()
@@ -215,7 +212,7 @@ public class OrderService {
 
         for (UUID cartItemId : requestedIds) {
             if (!cartItemIdSet.contains(cartItemId)) {
-                throw new CartItemNotFoundException("Không tìm thấy món trong giỏ hàng");
+                throw ApiException.notFound("Không tìm thấy món trong giỏ hàng");
             }
         }
 

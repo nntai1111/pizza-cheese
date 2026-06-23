@@ -18,9 +18,7 @@ import pizza_cheese.todo.dto.request.CreateComboRequest;
 import pizza_cheese.todo.dto.request.UpdateComboRequest;
 import pizza_cheese.todo.dto.response.ComboResponse;
 import pizza_cheese.todo.dto.response.PageResponse;
-import pizza_cheese.todo.exception.ComboNotFoundException;
-import pizza_cheese.todo.exception.PizzaNotFoundException;
-import pizza_cheese.todo.exception.SlugAlreadyExistsException;
+import pizza_cheese.todo.exception.ApiException;
 import pizza_cheese.todo.util.SlugUtil;
 
 @Service
@@ -50,7 +48,7 @@ public class ComboService {
     public ComboResponse findById(UUID id) {
         return comboDao.findById(id)
                 .map(ComboResponse::from)
-                .orElseThrow(() -> new ComboNotFoundException("Không tìm thấy combo"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy combo"));
     }
 
     @Transactional
@@ -64,7 +62,7 @@ public class ComboService {
 
         String slug = SlugUtil.resolve(request.getSlug(), request.getName(), null);
         if (comboDao.existsBySlug(slug)) {
-            throw new SlugAlreadyExistsException("Slug đã tồn tại: " + slug);
+            throw ApiException.conflict("Slug đã tồn tại: " + slug);
         }
 
         Combo combo = new Combo();
@@ -89,7 +87,7 @@ public class ComboService {
     @Transactional
     public ComboResponse update(UUID id, UpdateComboRequest request, MultipartFile imageFile) {
         Combo combo = comboDao.findById(id)
-                .orElseThrow(() -> new ComboNotFoundException("Không tìm thấy combo"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy combo"));
 
         if (request.getName() != null) {
             combo.setName(request.getName().trim());
@@ -97,7 +95,7 @@ public class ComboService {
 
         String slug = SlugUtil.resolve(request.getSlug(), request.getName(), combo.getSlug());
         if (slug != null && comboDao.existsBySlugExcludingId(slug, id)) {
-            throw new SlugAlreadyExistsException("Slug đã tồn tại: " + slug);
+            throw ApiException.conflict("Slug đã tồn tại: " + slug);
         }
         if (slug != null) {
             combo.setSlug(slug);
@@ -133,7 +131,7 @@ public class ComboService {
     @Transactional
     public void delete(UUID id) {
         if (comboDao.findById(id).isEmpty()) {
-            throw new ComboNotFoundException("Không tìm thấy combo");
+            throw ApiException.notFound("Không tìm thấy combo");
         }
         comboDao.deactivate(id);
     }
@@ -148,7 +146,7 @@ public class ComboService {
         }
         for (ComboItemRequest item : items) {
             Pizza pizza = pizzaDao.findById(item.getPizzaId())
-                    .orElseThrow(() -> new PizzaNotFoundException("Không tìm thấy pizza: " + item.getPizzaId()));
+                    .orElseThrow(() -> ApiException.notFound("Không tìm thấy pizza: " + item.getPizzaId()));
             if (!pizza.isActive()) {
                 throw new IllegalArgumentException("Pizza không còn hoạt động: " + pizza.getName());
             }

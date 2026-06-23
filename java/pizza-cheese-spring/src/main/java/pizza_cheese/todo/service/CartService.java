@@ -30,10 +30,7 @@ import pizza_cheese.todo.dto.request.AddComboToCartRequest;
 import pizza_cheese.todo.dto.request.AddPizzaToCartRequest;
 import pizza_cheese.todo.dto.request.UpdateCartItemRequest;
 import pizza_cheese.todo.dto.response.CartResponse;
-import pizza_cheese.todo.exception.CartItemNotFoundException;
-import pizza_cheese.todo.exception.ComboNotFoundException;
-import pizza_cheese.todo.exception.PizzaNotFoundException;
-import pizza_cheese.todo.exception.ToppingNotFoundException;
+import pizza_cheese.todo.exception.ApiException;
 
 @Service
 public class CartService {
@@ -70,7 +67,7 @@ public class CartService {
         Cart cart = getOrCreateCart(userId);
 
         Pizza pizza = pizzaDao.findById(request.getPizzaId())
-                .orElseThrow(() -> new PizzaNotFoundException("Không tìm thấy pizza"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy pizza"));
         if (!pizza.isActive()) {
             throw new IllegalArgumentException("Pizza không còn hoạt động");
         }
@@ -114,7 +111,7 @@ public class CartService {
         Cart cart = getOrCreateCart(userId);
 
         Combo combo = comboDao.findById(request.getComboId())
-                .orElseThrow(() -> new ComboNotFoundException("Không tìm thấy combo"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy combo"));
         if (!combo.isActive()) {
             throw new IllegalArgumentException("Combo không còn hoạt động");
         }
@@ -198,13 +195,13 @@ public class CartService {
 
     private CartItem findOwnedItem(UUID userId, UUID itemId) {
         CartItem item = cartDao.findItemById(itemId)
-                .orElseThrow(() -> new CartItemNotFoundException("Không tìm thấy món trong giỏ hàng"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy món trong giỏ hàng"));
 
         Cart cart = cartDao.findByUserId(userId)
-                .orElseThrow(() -> new CartItemNotFoundException("Không tìm thấy món trong giỏ hàng"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy món trong giỏ hàng"));
 
         if (!item.getCartId().equals(cart.getId())) {
-            throw new CartItemNotFoundException("Không tìm thấy món trong giỏ hàng");
+            throw ApiException.notFound("Không tìm thấy món trong giỏ hàng");
         }
 
         return item;
@@ -228,7 +225,7 @@ public class CartService {
                 throw new IllegalArgumentException("Topping không hợp lệ cho pizza này");
             }
             Topping topping = toppingDao.findById(toppingId)
-                    .orElseThrow(() -> new ToppingNotFoundException("Không tìm thấy topping"));
+                    .orElseThrow(() -> ApiException.notFound("Không tìm thấy topping"));
             if (!topping.isActive()) {
                 throw new IllegalArgumentException("Topping không còn hoạt động: " + topping.getName());
             }
