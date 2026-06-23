@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import pizza_cheese.todo.config.AppProperties;
 import pizza_cheese.todo.dto.response.OrderResponse;
 import pizza_cheese.todo.dto.response.RestResponse;
 import pizza_cheese.todo.service.OrderService;
@@ -30,10 +31,15 @@ public class VnPayController {
 
     private final VnPayService vnPayService;
     private final OrderService orderService;
+    private final AppProperties appProperties;
 
-    public VnPayController(VnPayService vnPayService, OrderService orderService) {
+    public VnPayController(
+            VnPayService vnPayService,
+            OrderService orderService,
+            AppProperties appProperties) {
         this.vnPayService = vnPayService;
         this.orderService = orderService;
+        this.appProperties = appProperties;
     }
 
     @Operation(summary = "VNPay IPN callback")
@@ -55,7 +61,7 @@ public class VnPayController {
         }
 
         String query = request.getQueryString();
-        String redirectTarget = "http://localhost:4200/customer/payment/return";
+        String redirectTarget = appProperties.paymentReturnUrl();
         if (query != null && !query.isBlank()) {
             redirectTarget += "?" + query;
         }

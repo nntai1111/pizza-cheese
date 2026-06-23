@@ -41,16 +41,19 @@ import pizza_cheese.todo.util.SecurityUtil;
 public class SecurityConfiguration {
 
     private final SecurityUtil securityUtil;
+    private final AppProperties appProperties;
     private final CustomUserDetailsService customUserDetailsService;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     public SecurityConfiguration(
             SecurityUtil securityUtil,
+            AppProperties appProperties,
             CustomUserDetailsService customUserDetailsService,
             CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
             CustomAccessDeniedHandler customAccessDeniedHandler) {
         this.securityUtil = securityUtil;
+        this.appProperties = appProperties;
         this.customUserDetailsService = customUserDetailsService;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
         this.customAccessDeniedHandler = customAccessDeniedHandler;
@@ -108,12 +111,7 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // Frontend của bạn
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:4200"));
-
-        // Hoặc cho phép tất cả trong dev (không nên dùng production):
-        // configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedOriginPatterns(appProperties.getCors().getAllowedOrigins());
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*")); // hoặc liệt kê cụ thể: "Authorization", "Content-Type",
