@@ -18,21 +18,16 @@ import pizza_cheese.todo.domain.CartItem;
 import pizza_cheese.todo.domain.CartItemComboLine;
 import pizza_cheese.todo.domain.CartItemTopping;
 import pizza_cheese.todo.util.JdbcTimeUtil;
-import pizza_cheese.todo.util.SqlLoader;
 
 @Repository
-public class CartDao {
-
-    private final NamedParameterJdbcTemplate jdbc;
-    private final Map<String, String> queries;
+public class CartDao extends SqlDaoSupport {
 
     public CartDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
-        this.jdbc = jdbc;
-        this.queries = SqlLoader.load(resourceLoader.getResource("classpath:sql/cart.sql"));
+        super(jdbc, resourceLoader, "classpath:sql/cart.sql");
     }
 
     public Optional<Cart> findByUserId(UUID userId) {
-        List<Cart> carts = jdbc.query(queries.get("findByUserId"), Map.of("userId", userId), RowMappers.forEntity(Cart.class));
+        List<Cart> carts = jdbc.query(queries.require("findByUserId"), Map.of("userId", userId), RowMappers.forEntity(Cart.class));
         if (carts.isEmpty()) {
             return Optional.empty();
         }
@@ -49,7 +44,7 @@ public class CartDao {
         cart.setCreatedAt(now);
         cart.setUpdatedAt(now);
 
-        jdbc.update(queries.get("insert"), new MapSqlParameterSource()
+        jdbc.update(queries.require("insert"), new MapSqlParameterSource()
                 .addValue("id", cart.getId())
                 .addValue("userId", cart.getUserId())
                 .addValue("createdAt", JdbcTimeUtil.toTimestamp(cart.getCreatedAt()))
@@ -59,7 +54,7 @@ public class CartDao {
     }
 
     public Optional<CartItem> findItemById(UUID itemId) {
-        List<CartItem> items = jdbc.query(queries.get("findItemById"), Map.of("id", itemId), RowMappers.forEntity(CartItem.class));
+        List<CartItem> items = jdbc.query(queries.require("findItemById"), Map.of("id", itemId), RowMappers.forEntity(CartItem.class));
         return items.isEmpty() ? Optional.empty() : Optional.of(items.get(0));
     }
 
@@ -71,7 +66,7 @@ public class CartDao {
         item.setCreatedAt(now);
         item.setUpdatedAt(now);
 
-        jdbc.update(queries.get("insertItem"), new MapSqlParameterSource()
+        jdbc.update(queries.require("insertItem"), new MapSqlParameterSource()
                 .addValue("id", item.getId())
                 .addValue("cartId", item.getCartId())
                 .addValue("itemType", item.getItemType().name())
@@ -88,7 +83,7 @@ public class CartDao {
     }
 
     public void insertItemTopping(UUID cartItemId, UUID toppingId, java.math.BigDecimal price) {
-        jdbc.update(queries.get("insertItemTopping"), Map.of(
+        jdbc.update(queries.require("insertItemTopping"), Map.of(
                 "cartItemId", cartItemId,
                 "toppingId", toppingId,
                 "price", price));
@@ -98,7 +93,7 @@ public class CartDao {
         if (line.getId() == null) {
             line.setId(UUID.randomUUID());
         }
-        jdbc.update(queries.get("insertComboLine"), new MapSqlParameterSource()
+        jdbc.update(queries.require("insertComboLine"), new MapSqlParameterSource()
                 .addValue("id", line.getId())
                 .addValue("cartItemId", line.getCartItemId())
                 .addValue("pizzaId", line.getPizzaId())
@@ -110,7 +105,7 @@ public class CartDao {
 
     public void updateItemQuantity(CartItem item) {
         item.setUpdatedAt(LocalDateTime.now());
-        jdbc.update(queries.get("updateItemQuantity"), new MapSqlParameterSource()
+        jdbc.update(queries.require("updateItemQuantity"), new MapSqlParameterSource()
                 .addValue("id", item.getId())
                 .addValue("quantity", item.getQuantity())
                 .addValue("lineTotal", item.getLineTotal())
@@ -118,22 +113,22 @@ public class CartDao {
     }
 
     public void deleteItemById(UUID itemId) {
-        jdbc.update(queries.get("deleteItemById"), Map.of("id", itemId));
+        jdbc.update(queries.require("deleteItemById"), Map.of("id", itemId));
     }
 
     public void deleteItemsByCartId(UUID cartId) {
-        jdbc.update(queries.get("deleteItemsByCartId"), Map.of("cartId", cartId));
+        jdbc.update(queries.require("deleteItemsByCartId"), Map.of("cartId", cartId));
     }
 
     public void touchUpdatedAt(UUID cartId) {
-        jdbc.update(queries.get("touchUpdatedAt"), new MapSqlParameterSource()
+        jdbc.update(queries.require("touchUpdatedAt"), new MapSqlParameterSource()
                 .addValue("id", cartId)
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }
 
     private void loadItems(Cart cart) {
         List<CartItem> items = jdbc.query(
-                queries.get("findItemsByCartId"),
+                queries.require("findItemsByCartId"),
                 Map.of("cartId", cart.getId()),
                 RowMappers.forEntity(CartItem.class));
         items.forEach(this::loadRelations);
@@ -142,11 +137,11 @@ public class CartDao {
 
     private void loadRelations(CartItem item) {
         item.setToppings(jdbc.query(
-                queries.get("findToppingsByCartItemId"),
+                queries.require("findToppingsByCartItemId"),
                 Map.of("cartItemId", item.getId()),
                 RowMappers.forEntity(CartItemTopping.class)));
         item.setComboLines(jdbc.query(
-                queries.get("findComboLinesByCartItemId"),
+                queries.require("findComboLinesByCartItemId"),
                 Map.of("cartItemId", item.getId()),
                 RowMappers.forEntity(CartItemComboLine.class)));
     }

@@ -18,38 +18,33 @@ import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Role;
 import pizza_cheese.todo.domain.User;
 import pizza_cheese.todo.util.JdbcTimeUtil;
-import pizza_cheese.todo.util.SqlLoader;
 
 @Repository
-public class UserDao {
-
-    private final NamedParameterJdbcTemplate jdbc;
-    private final Map<String, String> queries;
+public class UserDao extends SqlDaoSupport {
 
     public UserDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
-        this.jdbc = jdbc;
-        this.queries = SqlLoader.load(resourceLoader.getResource("classpath:sql/user.sql"));
+        super(jdbc, resourceLoader, "classpath:sql/user.sql");
     }
 
     public Optional<User> findByEmail(String email) {
-        return findOne(queries.get("findByEmail"), Map.of("email", email));
+        return findOne(queries.require("findByEmail"), Map.of("email", email));
     }
 
     public Optional<User> findByUsername(String username) {
-        return findOne(queries.get("findByUsername"), Map.of("username", username));
+        return findOne(queries.require("findByUsername"), Map.of("username", username));
     }
 
     public Optional<User> findByEmailOrUsername(String login) {
-        return findOne(queries.get("findByEmailOrUsername"), Map.of("login", login));
+        return findOne(queries.require("findByEmailOrUsername"), Map.of("login", login));
     }
 
     public Optional<User> findById(UUID id) {
-        return findOne(queries.get("findById"), Map.of("id", id));
+        return findOne(queries.require("findById"), Map.of("id", id));
     }
 
     public boolean existsByEmail(String email) {
         Boolean exists = jdbc.queryForObject(
-                queries.get("existsByEmail"),
+                queries.require("existsByEmail"),
                 Map.of("email", email),
                 Boolean.class);
         return Boolean.TRUE.equals(exists);
@@ -57,14 +52,14 @@ public class UserDao {
 
     public boolean existsByUsername(String username) {
         Boolean exists = jdbc.queryForObject(
-                queries.get("existsByUsername"),
+                queries.require("existsByUsername"),
                 Map.of("username", username),
                 Boolean.class);
         return Boolean.TRUE.equals(exists);
     }
 
     public long count() {
-        Long count = jdbc.queryForObject(queries.get("count"), Map.of(), Long.class);
+        Long count = jdbc.queryForObject(queries.require("count"), Map.of(), Long.class);
         return count != null ? count : 0L;
     }
 
@@ -77,7 +72,7 @@ public class UserDao {
             insert(user);
         } else {
             user.setUpdatedAt(now);
-            jdbc.update(queries.get("update"), new MapSqlParameterSource()
+            jdbc.update(queries.require("update"), new MapSqlParameterSource()
                     .addValue("id", user.getId())
                     .addValue("email", user.getEmail())
                     .addValue("passwordHash", user.getPasswordHash())
@@ -85,7 +80,7 @@ public class UserDao {
                     .addValue("phone", user.getPhone())
                     .addValue("avatarUrl", user.getAvatarUrl())
                     .addValue("updatedAt", JdbcTimeUtil.toTimestamp(user.getUpdatedAt())));
-            jdbc.update(queries.get("deleteRolesByUserId"), Map.of("userId", user.getId()));
+            jdbc.update(queries.require("deleteRolesByUserId"), Map.of("userId", user.getId()));
         }
 
         saveRoles(user.getId(), user.getRoles());
@@ -104,7 +99,7 @@ public class UserDao {
 
     private Set<Role> findRolesByUserId(UUID userId) {
         List<Role> roles = jdbc.query(
-                queries.get("findRolesByUserId"),
+                queries.require("findRolesByUserId"),
                 Map.of("userId", userId),
                 (rs, rowNum) -> Role.valueOf(rs.getString("role")));
         return new HashSet<>(roles);
@@ -114,7 +109,7 @@ public class UserDao {
         if (user.getId() == null) {
             user.setId(UUID.randomUUID());
         }
-        jdbc.update(queries.get("insert"), new MapSqlParameterSource()
+        jdbc.update(queries.require("insert"), new MapSqlParameterSource()
                 .addValue("id", user.getId())
                 .addValue("username", user.getUsername())
                 .addValue("email", user.getEmail())
@@ -131,7 +126,7 @@ public class UserDao {
             return;
         }
         for (Role role : roles) {
-            jdbc.update(queries.get("insertRole"), Map.of("userId", userId, "role", role.name()));
+            jdbc.update(queries.require("insertRole"), Map.of("userId", userId, "role", role.name()));
         }
     }
 }

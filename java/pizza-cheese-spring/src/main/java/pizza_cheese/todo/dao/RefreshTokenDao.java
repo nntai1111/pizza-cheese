@@ -16,27 +16,23 @@ import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.RefreshToken;
 import pizza_cheese.todo.domain.User;
 import pizza_cheese.todo.util.JdbcTimeUtil;
-import pizza_cheese.todo.util.SqlLoader;
 
 @Repository
-public class RefreshTokenDao {
+public class RefreshTokenDao extends SqlDaoSupport {
 
-    private final NamedParameterJdbcTemplate jdbc;
     private final UserDao userDao;
-    private final Map<String, String> queries;
 
     public RefreshTokenDao(
             NamedParameterJdbcTemplate jdbc,
             UserDao userDao,
             ResourceLoader resourceLoader) throws IOException {
-        this.jdbc = jdbc;
+        super(jdbc, resourceLoader, "classpath:sql/refresh_token.sql");
         this.userDao = userDao;
-        this.queries = SqlLoader.load(resourceLoader.getResource("classpath:sql/refresh_token.sql"));
     }
 
     public Optional<RefreshToken> findByToken(String token) {
         List<RefreshToken> tokens = jdbc.query(
-                queries.get("findByToken"),
+                queries.require("findByToken"),
                 Map.of("token", token),
                 RowMappers.forEntity(RefreshToken.class));
         if (tokens.isEmpty()) {
@@ -60,7 +56,7 @@ public class RefreshTokenDao {
                 ? refreshToken.getUser().getId()
                 : refreshToken.getUserId();
 
-        jdbc.update(queries.get("insert"), new MapSqlParameterSource()
+        jdbc.update(queries.require("insert"), new MapSqlParameterSource()
                 .addValue("id", refreshToken.getId())
                 .addValue("token", refreshToken.getToken())
                 .addValue("userId", userId)
@@ -70,10 +66,10 @@ public class RefreshTokenDao {
     }
 
     public void delete(RefreshToken refreshToken) {
-        jdbc.update(queries.get("deleteById"), Map.of("id", refreshToken.getId()));
+        jdbc.update(queries.require("deleteById"), Map.of("id", refreshToken.getId()));
     }
 
     public void deleteByUser(User user) {
-        jdbc.update(queries.get("deleteByUserId"), Map.of("userId", user.getId()));
+        jdbc.update(queries.require("deleteByUserId"), Map.of("userId", user.getId()));
     }
 }

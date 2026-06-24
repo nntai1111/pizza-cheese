@@ -18,22 +18,17 @@ import pizza_cheese.todo.domain.PizzaImage;
 import pizza_cheese.todo.domain.PizzaVariant;
 import pizza_cheese.todo.domain.Topping;
 import pizza_cheese.todo.util.JdbcTimeUtil;
-import pizza_cheese.todo.util.SqlLoader;
 
 @Repository
-public class PizzaDao {
-
-    private final NamedParameterJdbcTemplate jdbc;
-    private final Map<String, String> queries;
+public class PizzaDao extends SqlDaoSupport {
 
     public PizzaDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
-        this.jdbc = jdbc;
-        this.queries = SqlLoader.load(resourceLoader.getResource("classpath:sql/pizza.sql"));
+        super(jdbc, resourceLoader, "classpath:sql/pizza.sql");
     }
 
     public List<Pizza> findAll(boolean activeOnly, UUID categoryId) {
         List<Pizza> pizzas = jdbc.query(
-                queries.get("findAll"),
+                queries.require("findAll"),
                 pizzaQueryParams(activeOnly, categoryId),
                 RowMappers.forEntity(Pizza.class));
         pizzas.forEach(this::loadRelations);
@@ -42,7 +37,7 @@ public class PizzaDao {
 
     public long countAll(boolean activeOnly, UUID categoryId) {
         Long count = jdbc.queryForObject(
-                queries.get("countAll"),
+                queries.require("countAll"),
                 pizzaQueryParams(activeOnly, categoryId),
                 Long.class);
         return count != null ? count : 0L;
@@ -53,7 +48,7 @@ public class PizzaDao {
                 .addValue("limit", size)
                 .addValue("offset", (long) page * size);
         List<Pizza> pizzas = jdbc.query(
-                queries.get("findPage"),
+                queries.require("findPage"),
                 params,
                 RowMappers.forEntity(Pizza.class));
         pizzas.forEach(this::loadRelations);
@@ -68,17 +63,17 @@ public class PizzaDao {
     }
 
     public Optional<Pizza> findById(UUID id) {
-        return findOne(queries.get("findById"), Map.of("id", id));
+        return findOne(queries.require("findById"), Map.of("id", id));
     }
 
     public boolean existsBySlug(String slug) {
-        Boolean exists = jdbc.queryForObject(queries.get("existsBySlug"), Map.of("slug", slug), Boolean.class);
+        Boolean exists = jdbc.queryForObject(queries.require("existsBySlug"), Map.of("slug", slug), Boolean.class);
         return Boolean.TRUE.equals(exists);
     }
 
     public boolean existsBySlugExcludingId(String slug, UUID id) {
         Boolean exists = jdbc.queryForObject(
-                queries.get("existsBySlugExcludingId"),
+                queries.require("existsBySlugExcludingId"),
                 Map.of("slug", slug, "id", id),
                 Boolean.class);
         return Boolean.TRUE.equals(exists);
@@ -95,9 +90,9 @@ public class PizzaDao {
         } else {
             pizza.setUpdatedAt(now);
             update(pizza);
-            jdbc.update(queries.get("deleteVariantsByPizzaId"), Map.of("pizzaId", pizza.getId()));
-            jdbc.update(queries.get("deleteToppingsByPizzaId"), Map.of("pizzaId", pizza.getId()));
-            jdbc.update(queries.get("deleteImagesByPizzaId"), Map.of("pizzaId", pizza.getId()));
+            jdbc.update(queries.require("deleteVariantsByPizzaId"), Map.of("pizzaId", pizza.getId()));
+            jdbc.update(queries.require("deleteToppingsByPizzaId"), Map.of("pizzaId", pizza.getId()));
+            jdbc.update(queries.require("deleteImagesByPizzaId"), Map.of("pizzaId", pizza.getId()));
         }
 
         saveVariants(pizza);
@@ -107,7 +102,7 @@ public class PizzaDao {
     }
 
     public void deactivate(UUID id) {
-        jdbc.update(queries.get("deactivate"), new MapSqlParameterSource()
+        jdbc.update(queries.require("deactivate"), new MapSqlParameterSource()
                 .addValue("id", id)
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }
@@ -124,23 +119,23 @@ public class PizzaDao {
 
     private void loadRelations(Pizza pizza) {
         pizza.setVariants(jdbc.query(
-                queries.get("findVariantsByPizzaId"),
+                queries.require("findVariantsByPizzaId"),
                 Map.of("pizzaId", pizza.getId()),
                 RowMappers.forEntity(PizzaVariant.class)));
         var toppings = jdbc.query(
-                queries.get("findToppingsByPizzaId"),
+                queries.require("findToppingsByPizzaId"),
                 Map.of("pizzaId", pizza.getId()),
                 RowMappers.forEntity(Topping.class));
         pizza.setToppings(toppings);
         pizza.setToppingIds(toppings.stream().map(t -> t.getId()).toList());
         pizza.setImages(jdbc.query(
-                queries.get("findImagesByPizzaId"),
+                queries.require("findImagesByPizzaId"),
                 Map.of("pizzaId", pizza.getId()),
                 RowMappers.forEntity(PizzaImage.class)));
     }
 
     private void insert(Pizza pizza) {
-        jdbc.update(queries.get("insert"), new MapSqlParameterSource()
+        jdbc.update(queries.require("insert"), new MapSqlParameterSource()
                 .addValue("id", pizza.getId())
                 .addValue("categoryId", pizza.getCategoryId())
                 .addValue("name", pizza.getName())
@@ -153,7 +148,7 @@ public class PizzaDao {
     }
 
     private void update(Pizza pizza) {
-        jdbc.update(queries.get("update"), new MapSqlParameterSource()
+        jdbc.update(queries.require("update"), new MapSqlParameterSource()
                 .addValue("id", pizza.getId())
                 .addValue("categoryId", pizza.getCategoryId())
                 .addValue("name", pizza.getName())
@@ -173,7 +168,7 @@ public class PizzaDao {
                 variant.setId(UUID.randomUUID());
             }
             variant.setPizzaId(pizza.getId());
-            jdbc.update(queries.get("insertVariant"), new MapSqlParameterSource()
+            jdbc.update(queries.require("insertVariant"), new MapSqlParameterSource()
                     .addValue("id", variant.getId())
                     .addValue("pizzaId", variant.getPizzaId())
                     .addValue("size", variant.getSize().name())
@@ -186,7 +181,7 @@ public class PizzaDao {
             return;
         }
         for (UUID toppingId : pizza.getToppingIds()) {
-            jdbc.update(queries.get("insertPizzaTopping"), Map.of("pizzaId", pizza.getId(), "toppingId", toppingId));
+            jdbc.update(queries.require("insertPizzaTopping"), Map.of("pizzaId", pizza.getId(), "toppingId", toppingId));
         }
     }
 
@@ -199,7 +194,7 @@ public class PizzaDao {
                 image.setId(UUID.randomUUID());
             }
             image.setPizzaId(pizza.getId());
-            jdbc.update(queries.get("insertImage"), new MapSqlParameterSource()
+            jdbc.update(queries.require("insertImage"), new MapSqlParameterSource()
                     .addValue("id", image.getId())
                     .addValue("pizzaId", image.getPizzaId())
                     .addValue("imageUrl", image.getImageUrl())

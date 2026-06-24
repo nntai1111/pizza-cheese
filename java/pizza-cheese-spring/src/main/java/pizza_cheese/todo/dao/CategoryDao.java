@@ -15,36 +15,31 @@ import org.springframework.stereotype.Repository;
 import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Category;
 import pizza_cheese.todo.util.JdbcTimeUtil;
-import pizza_cheese.todo.util.SqlLoader;
 
 @Repository
-public class CategoryDao {
-
-    private final NamedParameterJdbcTemplate jdbc;
-    private final Map<String, String> queries;
+public class CategoryDao extends SqlDaoSupport {
 
     public CategoryDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
-        this.jdbc = jdbc;
-        this.queries = SqlLoader.load(resourceLoader.getResource("classpath:sql/category.sql"));
+        super(jdbc, resourceLoader, "classpath:sql/category.sql");
     }
 
     public List<Category> findAll(boolean activeOnly) {
-        return jdbc.query(queries.get("findAll"), Map.of("activeOnly", activeOnly), RowMappers.forEntity(Category.class));
+        return jdbc.query(queries.require("findAll"), Map.of("activeOnly", activeOnly), RowMappers.forEntity(Category.class));
     }
 
     public Optional<Category> findById(UUID id) {
-        List<Category> categories = jdbc.query(queries.get("findById"), Map.of("id", id), RowMappers.forEntity(Category.class));
+        List<Category> categories = jdbc.query(queries.require("findById"), Map.of("id", id), RowMappers.forEntity(Category.class));
         return categories.isEmpty() ? Optional.empty() : Optional.of(categories.get(0));
     }
 
     public boolean existsBySlug(String slug) {
-        Boolean exists = jdbc.queryForObject(queries.get("existsBySlug"), Map.of("slug", slug), Boolean.class);
+        Boolean exists = jdbc.queryForObject(queries.require("existsBySlug"), Map.of("slug", slug), Boolean.class);
         return Boolean.TRUE.equals(exists);
     }
 
     public boolean existsBySlugExcludingId(String slug, UUID id) {
         Boolean exists = jdbc.queryForObject(
-                queries.get("existsBySlugExcludingId"),
+                queries.require("existsBySlugExcludingId"),
                 Map.of("slug", slug, "id", id),
                 Boolean.class);
         return Boolean.TRUE.equals(exists);
@@ -57,17 +52,17 @@ public class CategoryDao {
             category.setId(UUID.randomUUID());
             category.setCreatedAt(now);
             category.setUpdatedAt(now);
-            jdbc.update(queries.get("insert"), toParams(category));
+            jdbc.update(queries.require("insert"), toParams(category));
         } else {
             category.setUpdatedAt(now);
-            jdbc.update(queries.get("update"), toParams(category));
+            jdbc.update(queries.require("update"), toParams(category));
         }
 
         return category;
     }
 
     public void deactivate(UUID id) {
-        jdbc.update(queries.get("deactivate"), new MapSqlParameterSource()
+        jdbc.update(queries.require("deactivate"), new MapSqlParameterSource()
                 .addValue("id", id)
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }

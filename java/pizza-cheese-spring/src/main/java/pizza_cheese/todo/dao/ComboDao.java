@@ -16,22 +16,17 @@ import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Combo;
 import pizza_cheese.todo.domain.ComboItem;
 import pizza_cheese.todo.util.JdbcTimeUtil;
-import pizza_cheese.todo.util.SqlLoader;
 
 @Repository
-public class ComboDao {
-
-    private final NamedParameterJdbcTemplate jdbc;
-    private final Map<String, String> queries;
+public class ComboDao extends SqlDaoSupport {
 
     public ComboDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
-        this.jdbc = jdbc;
-        this.queries = SqlLoader.load(resourceLoader.getResource("classpath:sql/combo.sql"));
+        super(jdbc, resourceLoader, "classpath:sql/combo.sql");
     }
 
     public List<Combo> findAll(boolean activeOnly) {
         List<Combo> combos = jdbc.query(
-                queries.get("findAll"),
+                queries.require("findAll"),
                 Map.of("activeOnly", activeOnly),
                 RowMappers.forEntity(Combo.class));
         combos.forEach(this::loadItems);
@@ -40,7 +35,7 @@ public class ComboDao {
 
     public long countAll(boolean activeOnly) {
         Long count = jdbc.queryForObject(
-                queries.get("countAll"),
+                queries.require("countAll"),
                 Map.of("activeOnly", activeOnly),
                 Long.class);
         return count != null ? count : 0L;
@@ -51,13 +46,13 @@ public class ComboDao {
                 .addValue("activeOnly", activeOnly)
                 .addValue("limit", size)
                 .addValue("offset", (long) page * size);
-        List<Combo> combos = jdbc.query(queries.get("findPage"), params, RowMappers.forEntity(Combo.class));
+        List<Combo> combos = jdbc.query(queries.require("findPage"), params, RowMappers.forEntity(Combo.class));
         combos.forEach(this::loadItems);
         return combos;
     }
 
     public Optional<Combo> findById(UUID id) {
-        List<Combo> combos = jdbc.query(queries.get("findById"), Map.of("id", id), RowMappers.forEntity(Combo.class));
+        List<Combo> combos = jdbc.query(queries.require("findById"), Map.of("id", id), RowMappers.forEntity(Combo.class));
         if (combos.isEmpty()) {
             return Optional.empty();
         }
@@ -67,13 +62,13 @@ public class ComboDao {
     }
 
     public boolean existsBySlug(String slug) {
-        Boolean exists = jdbc.queryForObject(queries.get("existsBySlug"), Map.of("slug", slug), Boolean.class);
+        Boolean exists = jdbc.queryForObject(queries.require("existsBySlug"), Map.of("slug", slug), Boolean.class);
         return Boolean.TRUE.equals(exists);
     }
 
     public boolean existsBySlugExcludingId(String slug, UUID id) {
         Boolean exists = jdbc.queryForObject(
-                queries.get("existsBySlugExcludingId"),
+                queries.require("existsBySlugExcludingId"),
                 Map.of("slug", slug, "id", id),
                 Boolean.class);
         return Boolean.TRUE.equals(exists);
@@ -90,7 +85,7 @@ public class ComboDao {
         } else {
             combo.setUpdatedAt(now);
             update(combo);
-            jdbc.update(queries.get("deleteItemsByComboId"), Map.of("comboId", combo.getId()));
+            jdbc.update(queries.require("deleteItemsByComboId"), Map.of("comboId", combo.getId()));
         }
 
         saveItems(combo);
@@ -98,24 +93,24 @@ public class ComboDao {
     }
 
     public void deactivate(UUID id) {
-        jdbc.update(queries.get("deactivate"), new MapSqlParameterSource()
+        jdbc.update(queries.require("deactivate"), new MapSqlParameterSource()
                 .addValue("id", id)
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }
 
     private void loadItems(Combo combo) {
         combo.setItems(jdbc.query(
-                queries.get("findItemsByComboId"),
+                queries.require("findItemsByComboId"),
                 Map.of("comboId", combo.getId()),
                 RowMappers.forEntity(ComboItem.class)));
     }
 
     private void insert(Combo combo) {
-        jdbc.update(queries.get("insert"), toParams(combo));
+        jdbc.update(queries.require("insert"), toParams(combo));
     }
 
     private void update(Combo combo) {
-        jdbc.update(queries.get("update"), toParams(combo));
+        jdbc.update(queries.require("update"), toParams(combo));
     }
 
     private MapSqlParameterSource toParams(Combo combo) {
@@ -137,7 +132,7 @@ public class ComboDao {
             return;
         }
         for (ComboItem item : combo.getItems()) {
-            jdbc.update(queries.get("insertItem"), new MapSqlParameterSource()
+            jdbc.update(queries.require("insertItem"), new MapSqlParameterSource()
                     .addValue("comboId", combo.getId())
                     .addValue("pizzaId", item.getPizzaId())
                     .addValue("pizzaVariantId", item.getPizzaVariantId())

@@ -15,28 +15,20 @@ import org.springframework.stereotype.Repository;
 import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Topping;
 import pizza_cheese.todo.util.JdbcTimeUtil;
-import pizza_cheese.todo.util.SqlLoader;
 
-// báo cho Spring biết đây là bean truy cập dữ liệu.
 @Repository
-public class ToppingDao {
-
-    private final NamedParameterJdbcTemplate jdbc;
-    // thay vì WHERE id = ? thì dùng WHERE id = :id để đặt tên tham số
-    // và truyền Map.of("id", id)
-    private final Map<String, String> queries;
+public class ToppingDao extends SqlDaoSupport {
 
     public ToppingDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
-        this.jdbc = jdbc;
-        this.queries = SqlLoader.load(resourceLoader.getResource("classpath:sql/topping.sql"));
+        super(jdbc, resourceLoader, "classpath:sql/topping.sql");
     }
 
     public List<Topping> findAll(boolean activeOnly) {
-        return jdbc.query(queries.get("findAll"), Map.of("activeOnly", activeOnly), RowMappers.forEntity(Topping.class));
+        return jdbc.query(queries.require("findAll"), Map.of("activeOnly", activeOnly), RowMappers.forEntity(Topping.class));
     }
 
     public Optional<Topping> findById(UUID id) {
-        List<Topping> toppings = jdbc.query(queries.get("findById"), Map.of("id", id), RowMappers.forEntity(Topping.class));
+        List<Topping> toppings = jdbc.query(queries.require("findById"), Map.of("id", id), RowMappers.forEntity(Topping.class));
         return toppings.isEmpty() ? Optional.empty() : Optional.of(toppings.get(0));
     }
 
@@ -44,7 +36,7 @@ public class ToppingDao {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        return jdbc.query(queries.get("findByIds"), Map.of("ids", ids), RowMappers.forEntity(Topping.class));
+        return jdbc.query(queries.require("findByIds"), Map.of("ids", ids), RowMappers.forEntity(Topping.class));
     }
 
     // Chưa có id → tạo mới (INSERT)
@@ -56,17 +48,17 @@ public class ToppingDao {
             topping.setId(UUID.randomUUID());
             topping.setCreatedAt(now);
             topping.setUpdatedAt(now);
-            jdbc.update(queries.get("insert"), toParams(topping));
+            jdbc.update(queries.require("insert"), toParams(topping));
         } else {
             topping.setUpdatedAt(now);
-            jdbc.update(queries.get("update"), toParams(topping));
+            jdbc.update(queries.require("update"), toParams(topping));
         }
 
         return topping;
     }
 
     public void deactivate(UUID id) {
-        jdbc.update(queries.get("deactivate"), new MapSqlParameterSource()
+        jdbc.update(queries.require("deactivate"), new MapSqlParameterSource()
                 .addValue("id", id)
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }

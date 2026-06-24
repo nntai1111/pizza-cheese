@@ -15,21 +15,16 @@ import org.springframework.stereotype.Repository;
 import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Payment;
 import pizza_cheese.todo.util.JdbcTimeUtil;
-import pizza_cheese.todo.util.SqlLoader;
 
 @Repository
-public class PaymentDao {
-
-    private final NamedParameterJdbcTemplate jdbc;
-    private final Map<String, String> queries;
+public class PaymentDao extends SqlDaoSupport {
 
     public PaymentDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
-        this.jdbc = jdbc;
-        this.queries = SqlLoader.load(resourceLoader.getResource("classpath:sql/payment.sql"));
+        super(jdbc, resourceLoader, "classpath:sql/payment.sql");
     }
 
     public void insert(Payment payment) {
-        jdbc.update(queries.get("insert"), new MapSqlParameterSource()
+        jdbc.update(queries.require("insert"), new MapSqlParameterSource()
                 .addValue("id", payment.getId())
                 .addValue("orderId", payment.getOrderId())
                 .addValue("paymentMethod", payment.getPaymentMethod().name())
@@ -44,13 +39,13 @@ public class PaymentDao {
     }
 
     public Optional<Payment> findById(UUID id) {
-        List<Payment> payments = jdbc.query(queries.get("findById"), Map.of("id", id), RowMappers.forEntity(Payment.class));
+        List<Payment> payments = jdbc.query(queries.require("findById"), Map.of("id", id), RowMappers.forEntity(Payment.class));
         return payments.isEmpty() ? Optional.empty() : Optional.of(payments.get(0));
     }
 
     public Optional<Payment> findLatestByOrderId(UUID orderId) {
         List<Payment> payments = jdbc.query(
-                queries.get("findLatestByOrderId"),
+                queries.require("findLatestByOrderId"),
                 Map.of("orderId", orderId),
                 RowMappers.forEntity(Payment.class));
         return payments.isEmpty() ? Optional.empty() : Optional.of(payments.get(0));
@@ -58,7 +53,7 @@ public class PaymentDao {
 
     public Optional<Payment> findByTransactionId(String transactionId) {
         List<Payment> payments = jdbc.query(
-                queries.get("findByTransactionId"),
+                queries.require("findByTransactionId"),
                 Map.of("transactionId", transactionId),
                 RowMappers.forEntity(Payment.class));
         return payments.isEmpty() ? Optional.empty() : Optional.of(payments.get(0));
@@ -66,7 +61,7 @@ public class PaymentDao {
 
     public void updateStatus(Payment payment) {
         payment.setUpdatedAt(LocalDateTime.now());
-        jdbc.update(queries.get("updateStatus"), new MapSqlParameterSource()
+        jdbc.update(queries.require("updateStatus"), new MapSqlParameterSource()
                 .addValue("id", payment.getId())
                 .addValue("status", payment.getStatus().name())
                 .addValue("callbackData", payment.getCallbackData())
@@ -76,7 +71,7 @@ public class PaymentDao {
     }
 
     public void updatePaymentUrl(UUID paymentId, String paymentUrl) {
-        jdbc.update(queries.get("updatePaymentUrl"), new MapSqlParameterSource()
+        jdbc.update(queries.require("updatePaymentUrl"), new MapSqlParameterSource()
                 .addValue("id", paymentId)
                 .addValue("paymentUrl", paymentUrl)
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
