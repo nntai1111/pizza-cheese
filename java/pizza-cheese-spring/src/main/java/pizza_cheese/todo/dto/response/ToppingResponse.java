@@ -1,7 +1,7 @@
 package pizza_cheese.todo.dto.response;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -16,8 +16,8 @@ public class ToppingResponse {
     private String name;
     private BigDecimal price;
     private boolean active;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public static ToppingResponse from(Topping topping) {
         ToppingResponse response = new ToppingResponse();

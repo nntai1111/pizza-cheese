@@ -1,7 +1,7 @@
 package pizza_cheese.todo.dto.response;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,8 +24,8 @@ public class ComboResponse {
     private String imageUrl;
     private boolean active;
     private List<ComboItemResponse> items;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public static ComboResponse from(Combo combo) {
         ComboResponse response = new ComboResponse();

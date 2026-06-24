@@ -1,11 +1,11 @@
 -- name: findAll
-SELECT id, name, slug, description, image_url, sort_order, is_active, created_at, updated_at
+SELECT id, name, slug, description, image_url, sort_order, is_active AS active, created_at, updated_at
 FROM categories
 WHERE (:activeOnly = FALSE OR is_active = TRUE)
 ORDER BY sort_order, name
 
 -- name: findById
-SELECT id, name, slug, description, image_url, sort_order, is_active, created_at, updated_at
+SELECT id, name, slug, description, image_url, sort_order, is_active AS active, created_at, updated_at
 FROM categories
 WHERE id = :id
 

@@ -1,7 +1,7 @@
 package pizza_cheese.todo.dao;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +12,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import pizza_cheese.todo.dao.mapper.ToppingRowMapper;
+import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Topping;
 import pizza_cheese.todo.util.JdbcTimeUtil;
 import pizza_cheese.todo.util.SqlLoader;
@@ -25,8 +25,6 @@ public class ToppingDao {
     // thay vì WHERE id = ? thì dùng WHERE id = :id để đặt tên tham số
     // và truyền Map.of("id", id)
     private final Map<String, String> queries;
-    // gọi query từ topping.sql
-    private final ToppingRowMapper rowMapper = new ToppingRowMapper();
 
     public ToppingDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
         this.jdbc = jdbc;
@@ -34,11 +32,11 @@ public class ToppingDao {
     }
 
     public List<Topping> findAll(boolean activeOnly) {
-        return jdbc.query(queries.get("findAll"), Map.of("activeOnly", activeOnly), rowMapper);
+        return jdbc.query(queries.get("findAll"), Map.of("activeOnly", activeOnly), RowMappers.forEntity(Topping.class));
     }
 
     public Optional<Topping> findById(UUID id) {
-        List<Topping> toppings = jdbc.query(queries.get("findById"), Map.of("id", id), rowMapper);
+        List<Topping> toppings = jdbc.query(queries.get("findById"), Map.of("id", id), RowMappers.forEntity(Topping.class));
         return toppings.isEmpty() ? Optional.empty() : Optional.of(toppings.get(0));
     }
 
@@ -46,13 +44,13 @@ public class ToppingDao {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        return jdbc.query(queries.get("findByIds"), Map.of("ids", ids), rowMapper);
+        return jdbc.query(queries.get("findByIds"), Map.of("ids", ids), RowMappers.forEntity(Topping.class));
     }
 
     // Chưa có id → tạo mới (INSERT)
     // Có id → cập nhật (UPDATE)
     public Topping save(Topping topping) {
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
 
         if (topping.getId() == null) {
             topping.setId(UUID.randomUUID());
@@ -70,7 +68,7 @@ public class ToppingDao {
     public void deactivate(UUID id) {
         jdbc.update(queries.get("deactivate"), new MapSqlParameterSource()
                 .addValue("id", id)
-                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(Instant.now())));
+                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }
 
     // 👉 Chuyển object thành tham số SQL

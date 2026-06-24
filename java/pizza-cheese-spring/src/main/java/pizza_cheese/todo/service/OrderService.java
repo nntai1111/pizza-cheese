@@ -2,7 +2,7 @@ package pizza_cheese.todo.service;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
@@ -86,7 +86,7 @@ public class OrderService {
         BigDecimal discountAmount = BigDecimal.ZERO;
         BigDecimal finalAmount = totalAmount.subtract(discountAmount);
 
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
         Order order = new Order();
         order.setId(UUID.randomUUID());
         order.setOrderCode(generateOrderCode());
@@ -253,7 +253,7 @@ public class OrderService {
     }
 
     private String generateOrderCode() {
-        String datePart = ORDER_CODE_DATE.format(Instant.now().atZone(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
+        String datePart = ORDER_CODE_DATE.format(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
         for (int attempt = 0; attempt < 10; attempt++) {
             String code = "PC" + datePart + String.format("%04d", secureRandom.nextInt(10000));
             if (!orderDao.existsByOrderCode(code)) {

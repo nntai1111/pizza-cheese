@@ -1,7 +1,7 @@
 package pizza_cheese.todo.dao;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +12,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import pizza_cheese.todo.dao.mapper.PaymentRowMapper;
+import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Payment;
 import pizza_cheese.todo.util.JdbcTimeUtil;
 import pizza_cheese.todo.util.SqlLoader;
@@ -22,7 +22,6 @@ public class PaymentDao {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final Map<String, String> queries;
-    private final PaymentRowMapper paymentRowMapper = new PaymentRowMapper();
 
     public PaymentDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
         this.jdbc = jdbc;
@@ -45,7 +44,7 @@ public class PaymentDao {
     }
 
     public Optional<Payment> findById(UUID id) {
-        List<Payment> payments = jdbc.query(queries.get("findById"), Map.of("id", id), paymentRowMapper);
+        List<Payment> payments = jdbc.query(queries.get("findById"), Map.of("id", id), RowMappers.forEntity(Payment.class));
         return payments.isEmpty() ? Optional.empty() : Optional.of(payments.get(0));
     }
 
@@ -53,7 +52,7 @@ public class PaymentDao {
         List<Payment> payments = jdbc.query(
                 queries.get("findLatestByOrderId"),
                 Map.of("orderId", orderId),
-                paymentRowMapper);
+                RowMappers.forEntity(Payment.class));
         return payments.isEmpty() ? Optional.empty() : Optional.of(payments.get(0));
     }
 
@@ -61,12 +60,12 @@ public class PaymentDao {
         List<Payment> payments = jdbc.query(
                 queries.get("findByTransactionId"),
                 Map.of("transactionId", transactionId),
-                paymentRowMapper);
+                RowMappers.forEntity(Payment.class));
         return payments.isEmpty() ? Optional.empty() : Optional.of(payments.get(0));
     }
 
     public void updateStatus(Payment payment) {
-        payment.setUpdatedAt(Instant.now());
+        payment.setUpdatedAt(LocalDateTime.now());
         jdbc.update(queries.get("updateStatus"), new MapSqlParameterSource()
                 .addValue("id", payment.getId())
                 .addValue("status", payment.getStatus().name())
@@ -80,6 +79,6 @@ public class PaymentDao {
         jdbc.update(queries.get("updatePaymentUrl"), new MapSqlParameterSource()
                 .addValue("id", paymentId)
                 .addValue("paymentUrl", paymentUrl)
-                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(Instant.now())));
+                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }
 }

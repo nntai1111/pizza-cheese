@@ -1,6 +1,6 @@
 package pizza_cheese.todo.domain;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -14,7 +14,7 @@ public class Cart {
 
     private UUID id;
     private UUID userId;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private List<CartItem> items = new ArrayList<>();
 }

@@ -1,7 +1,7 @@
 package pizza_cheese.todo.dao;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +12,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import pizza_cheese.todo.dao.mapper.CategoryRowMapper;
+import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Category;
 import pizza_cheese.todo.util.JdbcTimeUtil;
 import pizza_cheese.todo.util.SqlLoader;
@@ -22,7 +22,6 @@ public class CategoryDao {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final Map<String, String> queries;
-    private final CategoryRowMapper rowMapper = new CategoryRowMapper();
 
     public CategoryDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
         this.jdbc = jdbc;
@@ -30,11 +29,11 @@ public class CategoryDao {
     }
 
     public List<Category> findAll(boolean activeOnly) {
-        return jdbc.query(queries.get("findAll"), Map.of("activeOnly", activeOnly), rowMapper);
+        return jdbc.query(queries.get("findAll"), Map.of("activeOnly", activeOnly), RowMappers.forEntity(Category.class));
     }
 
     public Optional<Category> findById(UUID id) {
-        List<Category> categories = jdbc.query(queries.get("findById"), Map.of("id", id), rowMapper);
+        List<Category> categories = jdbc.query(queries.get("findById"), Map.of("id", id), RowMappers.forEntity(Category.class));
         return categories.isEmpty() ? Optional.empty() : Optional.of(categories.get(0));
     }
 
@@ -52,7 +51,7 @@ public class CategoryDao {
     }
 
     public Category save(Category category) {
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
 
         if (category.getId() == null) {
             category.setId(UUID.randomUUID());
@@ -70,7 +69,7 @@ public class CategoryDao {
     public void deactivate(UUID id) {
         jdbc.update(queries.get("deactivate"), new MapSqlParameterSource()
                 .addValue("id", id)
-                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(Instant.now())));
+                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }
 
     private MapSqlParameterSource toParams(Category category) {

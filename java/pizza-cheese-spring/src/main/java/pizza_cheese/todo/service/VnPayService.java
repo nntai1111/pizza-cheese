@@ -3,6 +3,7 @@ package pizza_cheese.todo.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -181,7 +182,7 @@ public class VnPayService {
 
     private void markPaymentSuccess(Payment payment, Order order, Map<String, String> params, String callbackJson) {
         payment.setStatus(PaymentStatus.PAID);
-        payment.setPaidAt(Instant.now());
+        payment.setPaidAt(LocalDateTime.now());
         payment.setCallbackData(callbackJson);
         paymentDao.updateStatus(payment);
 

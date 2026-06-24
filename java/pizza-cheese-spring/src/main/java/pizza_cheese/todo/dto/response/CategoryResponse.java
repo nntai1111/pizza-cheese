@@ -1,6 +1,6 @@
 package pizza_cheese.todo.dto.response;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -18,8 +18,8 @@ public class CategoryResponse {
     private String imageUrl;
     private int sortOrder;
     private boolean active;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public static CategoryResponse from(Category category) {
         CategoryResponse response = new CategoryResponse();

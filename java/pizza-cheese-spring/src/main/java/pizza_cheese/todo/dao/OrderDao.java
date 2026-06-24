@@ -1,7 +1,7 @@
 package pizza_cheese.todo.dao;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,13 +12,11 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import pizza_cheese.todo.dao.mapper.OrderItemComboLineRowMapper;
-import pizza_cheese.todo.dao.mapper.OrderItemRowMapper;
-import pizza_cheese.todo.dao.mapper.OrderItemToppingRowMapper;
-import pizza_cheese.todo.dao.mapper.OrderRowMapper;
+import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Order;
 import pizza_cheese.todo.domain.OrderItem;
 import pizza_cheese.todo.domain.OrderItemComboLine;
+import pizza_cheese.todo.domain.OrderItemTopping;
 import pizza_cheese.todo.domain.OrderStatus;
 import pizza_cheese.todo.util.JdbcTimeUtil;
 import pizza_cheese.todo.util.SqlLoader;
@@ -28,10 +26,6 @@ public class OrderDao {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final Map<String, String> queries;
-    private final OrderRowMapper orderRowMapper = new OrderRowMapper();
-    private final OrderItemRowMapper orderItemRowMapper = new OrderItemRowMapper();
-    private final OrderItemToppingRowMapper toppingRowMapper = new OrderItemToppingRowMapper();
-    private final OrderItemComboLineRowMapper comboLineRowMapper = new OrderItemComboLineRowMapper();
 
     public OrderDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
         this.jdbc = jdbc;
@@ -60,7 +54,7 @@ public class OrderDao {
     }
 
     public Optional<Order> findById(UUID id) {
-        List<Order> orders = jdbc.query(queries.get("findById"), Map.of("id", id), orderRowMapper);
+        List<Order> orders = jdbc.query(queries.get("findById"), Map.of("id", id), RowMappers.forEntity(Order.class));
         return orders.isEmpty() ? Optional.empty() : Optional.of(loadDetails(orders.get(0)));
     }
 
@@ -68,18 +62,18 @@ public class OrderDao {
         List<Order> orders = jdbc.query(
                 queries.get("findByIdAndUserId"),
                 Map.of("id", id, "userId", userId),
-                orderRowMapper);
+                RowMappers.forEntity(Order.class));
         return orders.isEmpty() ? Optional.empty() : Optional.of(loadDetails(orders.get(0)));
     }
 
     public List<Order> findByUserId(UUID userId) {
-        List<Order> orders = jdbc.query(queries.get("findByUserId"), Map.of("userId", userId), orderRowMapper);
+        List<Order> orders = jdbc.query(queries.get("findByUserId"), Map.of("userId", userId), RowMappers.forEntity(Order.class));
         orders.forEach(this::loadItems);
         return orders;
     }
 
     public List<Order> findAll() {
-        return jdbc.query(queries.get("findAll"), Map.of(), orderRowMapper);
+        return jdbc.query(queries.get("findAll"), Map.of(), RowMappers.forEntity(Order.class));
     }
 
     public long countAll() {
@@ -93,11 +87,11 @@ public class OrderDao {
                 new MapSqlParameterSource()
                         .addValue("limit", size)
                         .addValue("offset", (long) page * size),
-                orderRowMapper);
+                RowMappers.forEntity(Order.class));
     }
 
     public List<Order> findByStatus(OrderStatus status) {
-        return jdbc.query(queries.get("findByStatus"), Map.of("status", status.name()), orderRowMapper);
+        return jdbc.query(queries.get("findByStatus"), Map.of("status", status.name()), RowMappers.forEntity(Order.class));
     }
 
     public long countByStatus(OrderStatus status) {
@@ -115,7 +109,7 @@ public class OrderDao {
                         .addValue("status", status.name())
                         .addValue("limit", size)
                         .addValue("offset", (long) page * size),
-                orderRowMapper);
+                RowMappers.forEntity(Order.class));
     }
 
     public boolean existsByOrderCode(String orderCode) {
@@ -130,7 +124,7 @@ public class OrderDao {
         jdbc.update(queries.get("updateStatus"), new MapSqlParameterSource()
                 .addValue("id", orderId)
                 .addValue("status", status.name())
-                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(Instant.now())));
+                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }
 
     public void insertStatusHistory(UUID orderId, OrderStatus status, UUID changedBy, String note) {
@@ -140,7 +134,7 @@ public class OrderDao {
                 .addValue("status", status.name())
                 .addValue("changedBy", changedBy)
                 .addValue("note", note)
-                .addValue("createdAt", JdbcTimeUtil.toTimestamp(Instant.now())));
+                .addValue("createdAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }
 
     public OrderItem insertItem(OrderItem item) {
@@ -190,7 +184,7 @@ public class OrderDao {
         List<OrderItem> items = jdbc.query(
                 queries.get("findItemsByOrderId"),
                 Map.of("orderId", order.getId()),
-                orderItemRowMapper);
+                RowMappers.forEntity(OrderItem.class));
         items.forEach(this::loadRelations);
         order.setItems(items);
     }
@@ -199,10 +193,10 @@ public class OrderDao {
         item.setToppings(jdbc.query(
                 queries.get("findToppingsByOrderItemId"),
                 Map.of("orderItemId", item.getId()),
-                toppingRowMapper));
+                RowMappers.forEntity(OrderItemTopping.class)));
         item.setComboLines(jdbc.query(
                 queries.get("findComboLinesByOrderItemId"),
                 Map.of("orderItemId", item.getId()),
-                comboLineRowMapper));
+                RowMappers.forEntity(OrderItemComboLine.class)));
     }
 }

@@ -1,6 +1,6 @@
 package pizza_cheese.todo.dto.response;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,8 +20,8 @@ public class UserProfileResponse {
     private String phone;
     private String avatarUrl;
     private Set<Role> roles;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public static UserProfileResponse from(User user) {
         UserProfileResponse response = new UserProfileResponse();

@@ -1,7 +1,7 @@
 package pizza_cheese.todo.dao;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +12,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import pizza_cheese.todo.dao.mapper.RefreshTokenRowMapper;
+import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.RefreshToken;
 import pizza_cheese.todo.domain.User;
 import pizza_cheese.todo.util.JdbcTimeUtil;
@@ -24,7 +24,6 @@ public class RefreshTokenDao {
     private final NamedParameterJdbcTemplate jdbc;
     private final UserDao userDao;
     private final Map<String, String> queries;
-    private final RefreshTokenRowMapper refreshTokenRowMapper = new RefreshTokenRowMapper();
 
     public RefreshTokenDao(
             NamedParameterJdbcTemplate jdbc,
@@ -39,7 +38,7 @@ public class RefreshTokenDao {
         List<RefreshToken> tokens = jdbc.query(
                 queries.get("findByToken"),
                 Map.of("token", token),
-                refreshTokenRowMapper);
+                RowMappers.forEntity(RefreshToken.class));
         if (tokens.isEmpty()) {
             return Optional.empty();
         }
@@ -50,7 +49,7 @@ public class RefreshTokenDao {
 
     public RefreshToken save(RefreshToken refreshToken) {
         if (refreshToken.getCreatedAt() == null) {
-            refreshToken.setCreatedAt(Instant.now());
+            refreshToken.setCreatedAt(LocalDateTime.now());
         }
 
         if (refreshToken.getId() == null) {

@@ -2,6 +2,8 @@ package pizza_cheese.todo.service;
 
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Set;
@@ -152,6 +154,8 @@ public class AuthService {
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user với email: " + email));
     }
 
+    private static final ZoneId APP_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
     private LoginResponse buildTokenResponse(Authentication authentication, User user) {
         Instant now = Instant.now();
         Instant accessExpiresAt = now.plus(accessTokenExpiration, ChronoUnit.SECONDS);
@@ -175,7 +179,7 @@ public class AuthService {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setToken(generateRefreshTokenValue());
         refreshToken.setUser(user);
-        refreshToken.setExpiresAt(expiresAt);
+        refreshToken.setExpiresAt(LocalDateTime.ofInstant(expiresAt, APP_ZONE));
         refreshTokenDao.save(refreshToken);
         return refreshToken.getToken();
     }

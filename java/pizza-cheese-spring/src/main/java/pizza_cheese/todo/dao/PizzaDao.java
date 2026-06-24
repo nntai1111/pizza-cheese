@@ -1,7 +1,7 @@
 package pizza_cheese.todo.dao;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,13 +12,11 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import pizza_cheese.todo.dao.mapper.PizzaImageRowMapper;
-import pizza_cheese.todo.dao.mapper.PizzaRowMapper;
-import pizza_cheese.todo.dao.mapper.PizzaVariantRowMapper;
-import pizza_cheese.todo.dao.mapper.ToppingRowMapper;
+import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Pizza;
 import pizza_cheese.todo.domain.PizzaImage;
 import pizza_cheese.todo.domain.PizzaVariant;
+import pizza_cheese.todo.domain.Topping;
 import pizza_cheese.todo.util.JdbcTimeUtil;
 import pizza_cheese.todo.util.SqlLoader;
 
@@ -27,10 +25,6 @@ public class PizzaDao {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final Map<String, String> queries;
-    private final PizzaRowMapper pizzaRowMapper = new PizzaRowMapper();
-    private final PizzaVariantRowMapper variantRowMapper = new PizzaVariantRowMapper();
-    private final ToppingRowMapper toppingRowMapper = new ToppingRowMapper();
-    private final PizzaImageRowMapper imageRowMapper = new PizzaImageRowMapper();
 
     public PizzaDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
         this.jdbc = jdbc;
@@ -41,7 +35,7 @@ public class PizzaDao {
         List<Pizza> pizzas = jdbc.query(
                 queries.get("findAll"),
                 pizzaQueryParams(activeOnly, categoryId),
-                pizzaRowMapper);
+                RowMappers.forEntity(Pizza.class));
         pizzas.forEach(this::loadRelations);
         return pizzas;
     }
@@ -61,7 +55,7 @@ public class PizzaDao {
         List<Pizza> pizzas = jdbc.query(
                 queries.get("findPage"),
                 params,
-                pizzaRowMapper);
+                RowMappers.forEntity(Pizza.class));
         pizzas.forEach(this::loadRelations);
         return pizzas;
     }
@@ -91,7 +85,7 @@ public class PizzaDao {
     }
 
     public Pizza save(Pizza pizza) {
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
 
         if (pizza.getId() == null) {
             pizza.setId(UUID.randomUUID());
@@ -115,11 +109,11 @@ public class PizzaDao {
     public void deactivate(UUID id) {
         jdbc.update(queries.get("deactivate"), new MapSqlParameterSource()
                 .addValue("id", id)
-                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(Instant.now())));
+                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }
 
     private Optional<Pizza> findOne(String sql, Map<String, ?> params) {
-        List<Pizza> pizzas = jdbc.query(sql, params, pizzaRowMapper);
+        List<Pizza> pizzas = jdbc.query(sql, params, RowMappers.forEntity(Pizza.class));
         if (pizzas.isEmpty()) {
             return Optional.empty();
         }
@@ -132,17 +126,17 @@ public class PizzaDao {
         pizza.setVariants(jdbc.query(
                 queries.get("findVariantsByPizzaId"),
                 Map.of("pizzaId", pizza.getId()),
-                variantRowMapper));
+                RowMappers.forEntity(PizzaVariant.class)));
         var toppings = jdbc.query(
                 queries.get("findToppingsByPizzaId"),
                 Map.of("pizzaId", pizza.getId()),
-                toppingRowMapper);
+                RowMappers.forEntity(Topping.class));
         pizza.setToppings(toppings);
         pizza.setToppingIds(toppings.stream().map(t -> t.getId()).toList());
         pizza.setImages(jdbc.query(
                 queries.get("findImagesByPizzaId"),
                 Map.of("pizzaId", pizza.getId()),
-                imageRowMapper));
+                RowMappers.forEntity(PizzaImage.class)));
     }
 
     private void insert(Pizza pizza) {

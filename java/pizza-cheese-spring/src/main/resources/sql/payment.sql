@@ -9,22 +9,22 @@ VALUES (
 )
 
 -- name: findById
-SELECT id, order_id, payment_method, amount, transaction_id,
-       status, payment_url, callback_data::text AS callback_data, paid_at, created_at, updated_at
+SELECT id, order_id, payment_method::text AS payment_method, amount, transaction_id,
+       status::text AS status, payment_url, callback_data::text AS callback_data, paid_at, created_at, updated_at
 FROM payments
 WHERE id = :id
 
 -- name: findLatestByOrderId
-SELECT id, order_id, payment_method, amount, transaction_id,
-       status, payment_url, callback_data::text AS callback_data, paid_at, created_at, updated_at
+SELECT id, order_id, payment_method::text AS payment_method, amount, transaction_id,
+       status::text AS status, payment_url, callback_data::text AS callback_data, paid_at, created_at, updated_at
 FROM payments
 WHERE order_id = :orderId
 ORDER BY created_at DESC
 LIMIT 1
 
 -- name: findByTransactionId
-SELECT id, order_id, payment_method, amount, transaction_id,
-       status, payment_url, callback_data::text AS callback_data, paid_at, created_at, updated_at
+SELECT id, order_id, payment_method::text AS payment_method, amount, transaction_id,
+       status::text AS status, payment_url, callback_data::text AS callback_data, paid_at, created_at, updated_at
 FROM payments
 WHERE transaction_id = :transactionId
 ORDER BY created_at DESC

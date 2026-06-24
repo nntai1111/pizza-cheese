@@ -1,6 +1,6 @@
 package pizza_cheese.todo.domain;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -17,6 +17,6 @@ public class Category {
     private String imageUrl;
     private int sortOrder;
     private boolean active = true;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

@@ -1,6 +1,6 @@
 package pizza_cheese.todo.service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -76,7 +76,7 @@ public class CashierService {
             throw ApiException.badRequest("Không thể xác nhận thanh toán ở trạng thái hiện tại");
         }
 
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
         payment.setStatus(PaymentStatus.PAID);
         payment.setPaidAt(now);
         paymentDao.updateStatus(payment);

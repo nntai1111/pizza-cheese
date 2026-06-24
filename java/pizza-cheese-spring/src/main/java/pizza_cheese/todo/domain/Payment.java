@@ -1,7 +1,7 @@
 package pizza_cheese.todo.domain;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -19,7 +19,7 @@ public class Payment {
     private PaymentStatus status;
     private String paymentUrl;
     private String callbackData;
-    private Instant paidAt;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime paidAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

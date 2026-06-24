@@ -1,7 +1,7 @@
 package pizza_cheese.todo.domain;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +21,7 @@ public class Combo {
     private BigDecimal discountPercent;
     private String imageUrl;
     private boolean active = true;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private List<ComboItem> items = new ArrayList<>();
 }

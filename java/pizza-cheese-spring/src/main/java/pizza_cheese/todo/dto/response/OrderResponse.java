@@ -1,7 +1,7 @@
 package pizza_cheese.todo.dto.response;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,8 +34,8 @@ public class OrderResponse {
     private String deliveryAddressSnapshot;
     private String paymentUrl;
     private String paymentTxnRef;
-    private Instant createdAt;
-    private Instant paidAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime paidAt;
     private List<OrderItemResponse> items;
     private String customerName;
     private String customerEmail;

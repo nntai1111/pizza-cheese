@@ -15,27 +15,27 @@ VALUES (
 )
 
 -- name: findById
-SELECT id, order_code, user_id, address_id, status,
+SELECT id, order_code, user_id, address_id, status::text AS status,
        total_amount, discount_amount, final_amount, coupon_id,
-       payment_method_selected, note, estimated_delivery_time,
+       payment_method_selected::text AS payment_method_selected, note, estimated_delivery_time,
        kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
        created_at, updated_at
 FROM orders
 WHERE id = :id
 
 -- name: findByIdAndUserId
-SELECT id, order_code, user_id, address_id, status,
+SELECT id, order_code, user_id, address_id, status::text AS status,
        total_amount, discount_amount, final_amount, coupon_id,
-       payment_method_selected, note, estimated_delivery_time,
+       payment_method_selected::text AS payment_method_selected, note, estimated_delivery_time,
        kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
        created_at, updated_at
 FROM orders
 WHERE id = :id AND user_id = :userId
 
 -- name: findByUserId
-SELECT id, order_code, user_id, address_id, status,
+SELECT id, order_code, user_id, address_id, status::text AS status,
        total_amount, discount_amount, final_amount, coupon_id,
-       payment_method_selected, note, estimated_delivery_time,
+       payment_method_selected::text AS payment_method_selected, note, estimated_delivery_time,
        kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
        created_at, updated_at
 FROM orders
@@ -43,9 +43,9 @@ WHERE user_id = :userId
 ORDER BY created_at DESC
 
 -- name: findAll
-SELECT id, order_code, user_id, address_id, status,
+SELECT id, order_code, user_id, address_id, status::text AS status,
        total_amount, discount_amount, final_amount, coupon_id,
-       payment_method_selected, note, estimated_delivery_time,
+       payment_method_selected::text AS payment_method_selected, note, estimated_delivery_time,
        kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
        created_at, updated_at
 FROM orders
@@ -55,9 +55,9 @@ ORDER BY created_at DESC
 SELECT COUNT(*) FROM orders
 
 -- name: findPage
-SELECT id, order_code, user_id, address_id, status,
+SELECT id, order_code, user_id, address_id, status::text AS status,
        total_amount, discount_amount, final_amount, coupon_id,
-       payment_method_selected, note, estimated_delivery_time,
+       payment_method_selected::text AS payment_method_selected, note, estimated_delivery_time,
        kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
        created_at, updated_at
 FROM orders
@@ -65,9 +65,9 @@ ORDER BY created_at DESC
 LIMIT :limit OFFSET :offset
 
 -- name: findByStatus
-SELECT id, order_code, user_id, address_id, status,
+SELECT id, order_code, user_id, address_id, status::text AS status,
        total_amount, discount_amount, final_amount, coupon_id,
-       payment_method_selected, note, estimated_delivery_time,
+       payment_method_selected::text AS payment_method_selected, note, estimated_delivery_time,
        kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
        created_at, updated_at
 FROM orders
@@ -78,9 +78,9 @@ ORDER BY created_at DESC
 SELECT COUNT(*) FROM orders WHERE status = CAST(:status AS order_status)
 
 -- name: findPageByStatus
-SELECT id, order_code, user_id, address_id, status,
+SELECT id, order_code, user_id, address_id, status::text AS status,
        total_amount, discount_amount, final_amount, coupon_id,
-       payment_method_selected, note, estimated_delivery_time,
+       payment_method_selected::text AS payment_method_selected, note, estimated_delivery_time,
        kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
        created_at, updated_at
 FROM orders
@@ -122,7 +122,7 @@ VALUES (:id, :orderItemId, :pizzaId, :pizzaVariantId, :quantity, :pizzaName, CAS
 -- name: findItemsByOrderId
 SELECT oi.id,
        oi.order_id,
-       oi.item_type,
+       oi.item_type::text AS item_type,
        oi.pizza_id,
        oi.pizza_variant_id,
        oi.combo_id,
@@ -131,7 +131,7 @@ SELECT oi.id,
        oi.line_total,
        p.name AS pizza_name,
        p.slug AS pizza_slug,
-       pv.size AS pizza_size,
+       pv.size::text AS pizza_size,
        (SELECT pi.image_url
         FROM pizza_images pi
         WHERE pi.pizza_id = p.id AND pi.is_main = TRUE
@@ -164,7 +164,7 @@ SELECT id,
        pizza_variant_id,
        quantity,
        pizza_name,
-       pizza_size
+       pizza_size::text AS pizza_size
 FROM order_item_combo_lines
 WHERE order_item_id = :orderItemId
 ORDER BY pizza_name, pizza_size

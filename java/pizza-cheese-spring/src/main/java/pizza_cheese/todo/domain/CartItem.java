@@ -1,7 +1,7 @@
 package pizza_cheese.todo.domain;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -22,8 +22,8 @@ public class CartItem {
     private int quantity;
     private BigDecimal unitPrice;
     private BigDecimal lineTotal;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     private String pizzaName;
     private String pizzaSlug;

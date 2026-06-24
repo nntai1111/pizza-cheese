@@ -1,6 +1,6 @@
 package pizza_cheese.todo.domain;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -14,8 +14,8 @@ public class RefreshToken {
     private String token;
     private UUID userId;
     private User user;
-    private Instant expiresAt;
-    private Instant createdAt;
+    private LocalDateTime expiresAt;
+    private LocalDateTime createdAt;
 
     public void setUser(User user) {
         this.user = user;
@@ -25,6 +25,6 @@ public class RefreshToken {
     }
 
     public boolean isExpired() {
-        return Instant.now().isAfter(expiresAt);
+        return LocalDateTime.now().isAfter(expiresAt);
     }
 }

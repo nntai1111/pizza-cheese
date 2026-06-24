@@ -1,7 +1,7 @@
 package pizza_cheese.todo.dao;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +14,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import pizza_cheese.todo.dao.mapper.UserRowMapper;
+import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Role;
 import pizza_cheese.todo.domain.User;
 import pizza_cheese.todo.util.JdbcTimeUtil;
@@ -25,7 +25,6 @@ public class UserDao {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final Map<String, String> queries;
-    private final UserRowMapper userRowMapper = new UserRowMapper();
 
     public UserDao(NamedParameterJdbcTemplate jdbc, ResourceLoader resourceLoader) throws IOException {
         this.jdbc = jdbc;
@@ -70,7 +69,7 @@ public class UserDao {
     }
 
     public User save(User user) {
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
 
         if (user.getId() == null) {
             user.setCreatedAt(now);
@@ -94,7 +93,7 @@ public class UserDao {
     }
 
     private Optional<User> findOne(String sql, Map<String, ?> params) {
-        List<User> users = jdbc.query(sql, params, userRowMapper);
+        List<User> users = jdbc.query(sql, params, RowMappers.forEntity(User.class));
         if (users.isEmpty()) {
             return Optional.empty();
         }

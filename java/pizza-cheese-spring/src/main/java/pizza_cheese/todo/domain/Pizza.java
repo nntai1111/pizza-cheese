@@ -1,7 +1,7 @@
 package pizza_cheese.todo.domain;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +26,6 @@ public class Pizza {
     private List<Topping> toppings = new ArrayList<>();
     private List<UUID> toppingIds = new ArrayList<>();
     private List<PizzaImage> images = new ArrayList<>();
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

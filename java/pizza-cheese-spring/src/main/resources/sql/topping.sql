@@ -1,16 +1,16 @@
 -- name: findAll
-SELECT id, name, price, is_active, created_at, updated_at
+SELECT id, name, price, is_active AS active, created_at, updated_at
 FROM toppings
 WHERE (:activeOnly = FALSE OR is_active = TRUE)
 ORDER BY name
 
 -- name: findById
-SELECT id, name, price, is_active, created_at, updated_at
+SELECT id, name, price, is_active AS active, created_at, updated_at
 FROM toppings
 WHERE id = :id
 
 -- name: findByIds
-SELECT id, name, price, is_active, created_at, updated_at
+SELECT id, name, price, is_active AS active, created_at, updated_at
 FROM toppings
 WHERE id IN (:ids)
 

@@ -1,7 +1,7 @@
 package pizza_cheese.todo.dto.response;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,8 +26,8 @@ public class PizzaResponse {
     private List<PizzaVariantResponse> variants;
     private List<ToppingResponse> toppings;
     private List<PizzaImageResponse> images;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public static PizzaResponse from(Pizza pizza) {
         PizzaResponse response = new PizzaResponse();

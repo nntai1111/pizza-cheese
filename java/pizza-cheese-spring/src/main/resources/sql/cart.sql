@@ -13,7 +13,7 @@ UPDATE carts SET updated_at = :updatedAt WHERE id = :id
 -- name: findItemsByCartId
 SELECT ci.id,
        ci.cart_id,
-       ci.item_type,
+       ci.item_type::text AS item_type,
        ci.pizza_id,
        ci.pizza_variant_id,
        ci.combo_id,
@@ -24,7 +24,7 @@ SELECT ci.id,
        ci.updated_at,
        p.name AS pizza_name,
        p.slug AS pizza_slug,
-       pv.size AS pizza_size,
+       pv.size::text AS pizza_size,
        (SELECT pi.image_url
         FROM pizza_images pi
         WHERE pi.pizza_id = p.id AND pi.is_main = TRUE
@@ -57,13 +57,13 @@ SELECT id,
        pizza_variant_id,
        quantity,
        pizza_name,
-       pizza_size
+       pizza_size::text AS pizza_size
 FROM cart_item_combo_lines
 WHERE cart_item_id = :cartItemId
 ORDER BY pizza_name, pizza_size
 
 -- name: findItemById
-SELECT id, cart_id, item_type, pizza_id, pizza_variant_id, combo_id, quantity, unit_price, line_total, created_at, updated_at
+SELECT id, cart_id, item_type::text AS item_type, pizza_id, pizza_variant_id, combo_id, quantity, unit_price, line_total, created_at, updated_at
 FROM cart_items
 WHERE id = :id
 

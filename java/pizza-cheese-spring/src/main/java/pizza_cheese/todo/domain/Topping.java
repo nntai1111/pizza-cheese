@@ -1,7 +1,7 @@
 package pizza_cheese.todo.domain;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -15,6 +15,6 @@ public class Topping {
     private String name;
     private BigDecimal price;
     private boolean active = true;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

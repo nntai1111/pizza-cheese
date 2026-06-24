@@ -1,5 +1,5 @@
 -- name: findAll
-SELECT id, name, slug, description, price, discount_percent, image_url, is_active, created_at, updated_at
+SELECT id, name, slug, description, price, discount_percent, image_url, is_active AS active, created_at, updated_at
 FROM combos
 WHERE (:activeOnly = FALSE OR is_active = TRUE)
 ORDER BY name
@@ -10,14 +10,14 @@ FROM combos
 WHERE (:activeOnly = FALSE OR is_active = TRUE)
 
 -- name: findPage
-SELECT id, name, slug, description, price, discount_percent, image_url, is_active, created_at, updated_at
+SELECT id, name, slug, description, price, discount_percent, image_url, is_active AS active, created_at, updated_at
 FROM combos
 WHERE (:activeOnly = FALSE OR is_active = TRUE)
 ORDER BY name
 LIMIT :limit OFFSET :offset
 
 -- name: findById
-SELECT id, name, slug, description, price, discount_percent, image_url, is_active, created_at, updated_at
+SELECT id, name, slug, description, price, discount_percent, image_url, is_active AS active, created_at, updated_at
 FROM combos
 WHERE id = :id
 
@@ -53,7 +53,7 @@ SELECT ci.combo_id,
        ci.quantity,
        p.name AS pizza_name,
        p.slug AS pizza_slug,
-       pv.size AS pizza_size
+       pv.size::text AS pizza_size
 FROM combo_items ci
 JOIN pizzas p ON p.id = ci.pizza_id
 JOIN pizza_variants pv ON pv.id = ci.pizza_variant_id

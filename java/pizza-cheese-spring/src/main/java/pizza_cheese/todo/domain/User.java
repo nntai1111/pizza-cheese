@@ -1,6 +1,6 @@
 package pizza_cheese.todo.domain;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -20,6 +20,6 @@ public class User {
     private String phone;
     private String avatarUrl;
     private Set<Role> roles = new HashSet<>();
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
