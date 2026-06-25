@@ -2,6 +2,9 @@ package pizza_cheese.todo.exception;
 
 public class ApiException extends RuntimeException {
 
+    @java.io.Serial
+    private static final long serialVersionUID = 1L;
+
     private final int statusCode;
     private final String statusMessage;
 
