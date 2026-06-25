@@ -14,7 +14,25 @@ import lombok.Setter;
 public class AppProperties {
 
 	private String frontendUrl;
+	private Jwt jwt = new Jwt();
+	private User user = new User();
 	private Cors cors = new Cors();
+
+	@Getter
+	@Setter
+	public static class Jwt {
+
+		private String base64Secret;
+		private long accessTokenValidityInSeconds;
+		private long refreshTokenValidityInSeconds;
+	}
+
+	@Getter
+	@Setter
+	public static class User {
+
+		private String defaultAvatarUrl;
+	}
 
 	@Getter
 	@Setter

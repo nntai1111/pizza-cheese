@@ -4,7 +4,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,10 +26,10 @@ public class DataInitializer implements CommandLineRunner {
     public DataInitializer(
             UserDao userDao,
             PasswordEncoder passwordEncoder,
-            @Value("${app.user.default-avatar-url}") String defaultAvatarUrl) {
+            AppProperties appProperties) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
-        this.defaultAvatarUrl = defaultAvatarUrl;
+        this.defaultAvatarUrl = appProperties.getUser().getDefaultAvatarUrl();
     }
 
     @Override

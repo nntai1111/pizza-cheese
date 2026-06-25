@@ -9,7 +9,6 @@ import java.util.Base64;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -31,6 +30,7 @@ import pizza_cheese.todo.dto.request.LoginRequest;
 import pizza_cheese.todo.dto.request.RegisterRequest;
 import pizza_cheese.todo.dto.response.LoginResponse;
 import pizza_cheese.todo.dto.response.UserProfileResponse;
+import pizza_cheese.todo.config.AppProperties;
 import pizza_cheese.todo.exception.ApiException;
 import pizza_cheese.todo.dao.RefreshTokenDao;
 import pizza_cheese.todo.dao.UserDao;
@@ -58,18 +58,16 @@ public class AuthService {
             UserDao userDao,
             RefreshTokenDao refreshTokenDao,
             CloudinaryService cloudinaryService,
-            @Value("${app.jwt.access-token-validity-in-seconds}") long accessTokenExpiration,
-            @Value("${app.jwt.refresh-token-validity-in-seconds}") long refreshTokenExpiration,
-            @Value("${app.user.default-avatar-url}") String defaultAvatarUrl) {
+            AppProperties appProperties) {
         this.authenticationManager = authenticationManager;
         this.jwtEncoder = jwtEncoder;
         this.passwordEncoder = passwordEncoder;
         this.userDao = userDao;
         this.refreshTokenDao = refreshTokenDao;
         this.cloudinaryService = cloudinaryService;
-        this.accessTokenExpiration = accessTokenExpiration;
-        this.refreshTokenExpiration = refreshTokenExpiration;
-        this.defaultAvatarUrl = defaultAvatarUrl;
+        this.accessTokenExpiration = appProperties.getJwt().getAccessTokenValidityInSeconds();
+        this.refreshTokenExpiration = appProperties.getJwt().getRefreshTokenValidityInSeconds();
+        this.defaultAvatarUrl = appProperties.getUser().getDefaultAvatarUrl();
     }
 
     @Transactional
