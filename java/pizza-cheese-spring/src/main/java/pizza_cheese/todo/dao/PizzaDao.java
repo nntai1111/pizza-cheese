@@ -176,7 +176,7 @@ public class PizzaDao {
             jdbc.update(queries.get("insertVariant"), new MapSqlParameterSource()
                     .addValue("id", variant.getId())
                     .addValue("pizzaId", variant.getPizzaId())
-                    .addValue("size", variant.getSize().name())
+                    .addValue("size", variant.getSize().getCode())
                     .addValue("price", variant.getPrice()));
         }
     }

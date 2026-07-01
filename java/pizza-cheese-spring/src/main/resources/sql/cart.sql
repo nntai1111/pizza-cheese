@@ -13,7 +13,7 @@ UPDATE carts SET updated_at = :updatedAt WHERE id = :id
 -- name: findItemsByCartId
 SELECT ci.id,
        ci.cart_id,
-       ci.item_type::text AS item_type,
+       ci.item_type,
        ci.pizza_id,
        ci.pizza_variant_id,
        ci.combo_id,
@@ -24,7 +24,7 @@ SELECT ci.id,
        ci.updated_at,
        p.name AS pizza_name,
        p.slug AS pizza_slug,
-       pv.size::text AS pizza_size,
+       pv.size AS pizza_size,
        (SELECT pi.image_url
         FROM pizza_images pi
         WHERE pi.pizza_id = p.id AND pi.is_main = TRUE
@@ -57,19 +57,19 @@ SELECT id,
        pizza_variant_id,
        quantity,
        pizza_name,
-       pizza_size::text AS pizza_size
+       pizza_size
 FROM cart_item_combo_lines
 WHERE cart_item_id = :cartItemId
 ORDER BY pizza_name, pizza_size
 
 -- name: findItemById
-SELECT id, cart_id, item_type::text AS item_type, pizza_id, pizza_variant_id, combo_id, quantity, unit_price, line_total, created_at, updated_at
+SELECT id, cart_id, item_type, pizza_id, pizza_variant_id, combo_id, quantity, unit_price, line_total, created_at, updated_at
 FROM cart_items
 WHERE id = :id
 
 -- name: insertItem
 INSERT INTO cart_items (id, cart_id, item_type, pizza_id, pizza_variant_id, combo_id, quantity, unit_price, line_total, created_at, updated_at)
-VALUES (:id, :cartId, CAST(:itemType AS line_item_type), :pizzaId, :pizzaVariantId, :comboId, :quantity, :unitPrice, :lineTotal, :createdAt, :updatedAt)
+VALUES (:id, :cartId, :itemType, :pizzaId, :pizzaVariantId, :comboId, :quantity, :unitPrice, :lineTotal, :createdAt, :updatedAt)
 
 -- name: insertItemTopping
 INSERT INTO cart_item_toppings (cart_item_id, topping_id, price)
@@ -77,7 +77,7 @@ VALUES (:cartItemId, :toppingId, :price)
 
 -- name: insertComboLine
 INSERT INTO cart_item_combo_lines (id, cart_item_id, pizza_id, pizza_variant_id, quantity, pizza_name, pizza_size)
-VALUES (:id, :cartItemId, :pizzaId, :pizzaVariantId, :quantity, :pizzaName, CAST(:pizzaSize AS pizza_size))
+VALUES (:id, :cartItemId, :pizzaId, :pizzaVariantId, :quantity, :pizzaName, :pizzaSize)
 
 -- name: updateItemQuantity
 UPDATE cart_items

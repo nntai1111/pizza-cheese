@@ -106,7 +106,7 @@ public class UserDao {
         List<Role> roles = jdbc.query(
                 queries.get("findRolesByUserId"),
                 Map.of("userId", userId),
-                (rs, rowNum) -> Role.valueOf(rs.getString("role")));
+                (rs, rowNum) -> Role.fromJson(rs.getString("role")));
         return new HashSet<>(roles);
     }
 

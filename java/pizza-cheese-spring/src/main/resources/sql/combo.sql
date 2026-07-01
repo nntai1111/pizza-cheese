@@ -53,7 +53,7 @@ SELECT ci.combo_id,
        ci.quantity,
        p.name AS pizza_name,
        p.slug AS pizza_slug,
-       pv.size::text AS pizza_size
+       pv.size AS pizza_size
 FROM combo_items ci
 JOIN pizzas p ON p.id = ci.pizza_id
 JOIN pizza_variants pv ON pv.id = ci.pizza_variant_id

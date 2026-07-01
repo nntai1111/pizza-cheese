@@ -38,12 +38,12 @@ public class OrderDao {
                 .addValue("orderCode", order.getOrderCode())
                 .addValue("userId", order.getUserId())
                 .addValue("addressId", order.getAddressId())
-                .addValue("status", order.getStatus().name())
+                .addValue("status", order.getStatus().getCode())
                 .addValue("totalAmount", order.getTotalAmount())
                 .addValue("discountAmount", order.getDiscountAmount())
                 .addValue("finalAmount", order.getFinalAmount())
                 .addValue("couponId", order.getCouponId())
-                .addValue("paymentMethodSelected", order.getPaymentMethodSelected().name())
+                .addValue("paymentMethodSelected", order.getPaymentMethodSelected().getCode())
                 .addValue("note", order.getNote())
                 .addValue("estimatedDeliveryTime", JdbcTimeUtil.toTimestamp(order.getEstimatedDeliveryTime()))
                 .addValue("kitchenStaffId", order.getKitchenStaffId())
@@ -91,13 +91,13 @@ public class OrderDao {
     }
 
     public List<Order> findByStatus(OrderStatus status) {
-        return jdbc.query(queries.get("findByStatus"), Map.of("status", status.name()), RowMappers.forEntity(Order.class));
+        return jdbc.query(queries.get("findByStatus"), Map.of("status", status.getCode()), RowMappers.forEntity(Order.class));
     }
 
     public long countByStatus(OrderStatus status) {
         Long count = jdbc.queryForObject(
                 queries.get("countByStatus"),
-                Map.of("status", status.name()),
+                Map.of("status", status.getCode()),
                 Long.class);
         return count != null ? count : 0L;
     }
@@ -106,7 +106,7 @@ public class OrderDao {
         return jdbc.query(
                 queries.get("findPageByStatus"),
                 new MapSqlParameterSource()
-                        .addValue("status", status.name())
+                        .addValue("status", status.getCode())
                         .addValue("limit", size)
                         .addValue("offset", (long) page * size),
                 RowMappers.forEntity(Order.class));
@@ -123,7 +123,7 @@ public class OrderDao {
     public void updateStatus(UUID orderId, OrderStatus status) {
         jdbc.update(queries.get("updateStatus"), new MapSqlParameterSource()
                 .addValue("id", orderId)
-                .addValue("status", status.name())
+                .addValue("status", status.getCode())
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
     }
 
@@ -131,7 +131,7 @@ public class OrderDao {
         jdbc.update(queries.get("insertStatusHistory"), new MapSqlParameterSource()
                 .addValue("id", UUID.randomUUID())
                 .addValue("orderId", orderId)
-                .addValue("status", status.name())
+                .addValue("status", status.getCode())
                 .addValue("changedBy", changedBy)
                 .addValue("note", note)
                 .addValue("createdAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
@@ -144,7 +144,7 @@ public class OrderDao {
         jdbc.update(queries.get("insertItem"), new MapSqlParameterSource()
                 .addValue("id", item.getId())
                 .addValue("orderId", item.getOrderId())
-                .addValue("itemType", item.getItemType().name())
+                .addValue("itemType", item.getItemType().getCode())
                 .addValue("pizzaId", item.getPizzaId())
                 .addValue("pizzaVariantId", item.getPizzaVariantId())
                 .addValue("comboId", item.getComboId())
@@ -172,7 +172,7 @@ public class OrderDao {
                 .addValue("pizzaVariantId", line.getPizzaVariantId())
                 .addValue("quantity", line.getQuantity())
                 .addValue("pizzaName", line.getPizzaName())
-                .addValue("pizzaSize", line.getPizzaSize().name()));
+                .addValue("pizzaSize", line.getPizzaSize().getCode()));
     }
 
     private Order loadDetails(Order order) {

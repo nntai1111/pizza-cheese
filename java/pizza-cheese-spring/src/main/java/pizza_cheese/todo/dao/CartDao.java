@@ -74,7 +74,7 @@ public class CartDao {
         jdbc.update(queries.get("insertItem"), new MapSqlParameterSource()
                 .addValue("id", item.getId())
                 .addValue("cartId", item.getCartId())
-                .addValue("itemType", item.getItemType().name())
+                .addValue("itemType", item.getItemType().getCode())
                 .addValue("pizzaId", item.getPizzaId())
                 .addValue("pizzaVariantId", item.getPizzaVariantId())
                 .addValue("comboId", item.getComboId())
@@ -105,7 +105,7 @@ public class CartDao {
                 .addValue("pizzaVariantId", line.getPizzaVariantId())
                 .addValue("quantity", line.getQuantity())
                 .addValue("pizzaName", line.getPizzaName())
-                .addValue("pizzaSize", line.getPizzaSize().name()));
+                .addValue("pizzaSize", line.getPizzaSize().getCode()));
     }
 
     public void updateItemQuantity(CartItem item) {

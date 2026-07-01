@@ -3,7 +3,6 @@ package pizza_cheese.todo.dao.mapper;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.RowMapper;
 
 public final class RowMappers {
@@ -15,6 +14,6 @@ public final class RowMappers {
 
     @SuppressWarnings("unchecked")
     public static <T> RowMapper<T> forEntity(Class<T> type) {
-        return (RowMapper<T>) CACHE.computeIfAbsent(type, BeanPropertyRowMapper::newInstance);
+        return (RowMapper<T>) CACHE.computeIfAbsent(type, CodedEnumBeanPropertyRowMapper::newInstance);
     }
 }

@@ -58,7 +58,7 @@ WHERE id = :id
 UPDATE pizzas SET is_active = FALSE, updated_at = :updatedAt WHERE id = :id
 
 -- name: findVariantsByPizzaId
-SELECT id, pizza_id, size::text AS size, price
+SELECT id, pizza_id, size, price
 FROM pizza_variants
 WHERE pizza_id = :pizzaId
 ORDER BY size
@@ -68,7 +68,7 @@ DELETE FROM pizza_variants WHERE pizza_id = :pizzaId
 
 -- name: insertVariant
 INSERT INTO pizza_variants (id, pizza_id, size, price)
-VALUES (:id, :pizzaId, CAST(:size AS pizza_size), :price)
+VALUES (:id, :pizzaId, :size, :price)
 
 -- name: findToppingsByPizzaId
 SELECT t.id, t.name, t.price, t.is_active AS active, t.created_at, t.updated_at
