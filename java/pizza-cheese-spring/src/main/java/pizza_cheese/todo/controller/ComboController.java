@@ -2,6 +2,7 @@ package pizza_cheese.todo.controller;
 
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,11 +37,12 @@ import pizza_cheese.todo.service.ComboService;
 @RequestMapping("/api/v1")
 public class ComboController {
 
-    private final ComboService comboService;
+    @Autowired
+    private ComboService comboService;
 
-    public ComboController(ComboService comboService) {
-        this.comboService = comboService;
-    }
+    // public ComboController(ComboService comboService) {
+    // this.comboService = comboService;
+    // }
 
     @Operation(summary = "Danh sách combo (phân trang)")
     @GetMapping("/combos")
