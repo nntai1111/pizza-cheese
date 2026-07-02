@@ -1,3 +1,4 @@
+import { ApiEnumField } from './coded-enum.model';
 import { PizzaSize } from './pizza.model';
 
 export type LineItemType = 'PIZZA' | 'COMBO';
@@ -13,12 +14,12 @@ export interface CartItemComboLine {
   pizzaVariantId: string;
   quantity: number;
   pizzaName: string;
-  pizzaSize: PizzaSize;
+  pizzaSize: ApiEnumField<PizzaSize>;
 }
 
 export interface CartItem {
   id: string;
-  itemType: LineItemType;
+  itemType: ApiEnumField<LineItemType>;
   pizzaId: string | null;
   pizzaVariantId: string | null;
   comboId: string | null;
@@ -27,7 +28,7 @@ export interface CartItem {
   lineTotal: number;
   pizzaName: string | null;
   pizzaSlug: string | null;
-  pizzaSize: PizzaSize | null;
+  pizzaSize: ApiEnumField<PizzaSize> | null;
   pizzaImageUrl: string | null;
   comboName: string | null;
   comboSlug: string | null;

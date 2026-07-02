@@ -10,6 +10,8 @@ import {
   getCartItemTitle,
 } from '../../../core/utils/cart-display.util';
 import { formatVnd } from '../../../core/utils/pizza.util';
+import { enumEquals } from '../../../core/utils/coded-enum.util';
+import { CartItem } from '../../../core/models/cart.model';
 import { UserAvatarComponent } from '../../../shared/components';
 
 @Component({
@@ -34,6 +36,7 @@ export class CustomerLayoutComponent implements OnInit {
   readonly formatPrice = formatVnd;
   readonly getItemTitle = getCartItemTitle;
   readonly getItemImage = getCartItemImage;
+  readonly isComboItem = (item: CartItem) => enumEquals(item.itemType, 'COMBO');
 
   ngOnInit(): void {
     this.shopContext.setBasePath('/customer');

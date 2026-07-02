@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import pizza_cheese.todo.domain.Combo;
 import pizza_cheese.todo.domain.ComboItem;
-import pizza_cheese.todo.domain.PizzaSize;
+import pizza_cheese.todo.dto.CodedEnumValue;
 
 @Getter
 @Setter
@@ -49,7 +49,7 @@ public class ComboResponse {
 
         private UUID pizzaId;
         private UUID pizzaVariantId;
-        private PizzaSize pizzaSize;
+        private CodedEnumValue pizzaSize;
         private String pizzaName;
         private String pizzaSlug;
         private int quantity;
@@ -58,7 +58,7 @@ public class ComboResponse {
             ComboItemResponse response = new ComboItemResponse();
             response.setPizzaId(item.getPizzaId());
             response.setPizzaVariantId(item.getPizzaVariantId());
-            response.setPizzaSize(item.getPizzaSize());
+            response.setPizzaSize(CodedEnumValue.from(item.getPizzaSize()));
             response.setPizzaName(item.getPizzaName());
             response.setPizzaSlug(item.getPizzaSlug());
             response.setQuantity(item.getQuantity());

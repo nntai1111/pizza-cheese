@@ -10,6 +10,7 @@ import {
 } from '../../../core/utils/cart-display.util';
 import { formatVnd, getPizzaSizeLabel } from '../../../core/utils/pizza.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
+import { enumEquals } from '../../../core/utils/coded-enum.util';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
@@ -37,6 +38,8 @@ export class CartComponent {
   readonly getSizeLabel = getPizzaSizeLabel;
   readonly getItemTitle = getCartItemTitle;
   readonly getItemImage = getCartItemImage;
+  readonly isComboItem = (item: CartItem) => enumEquals(item.itemType, 'COMBO');
+  readonly isPizzaItem = (item: CartItem) => enumEquals(item.itemType, 'PIZZA');
 
   constructor() {
     this.cartService.loadCart().subscribe({

@@ -6,8 +6,8 @@ import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
-import pizza_cheese.todo.domain.Role;
 import pizza_cheese.todo.domain.User;
+import pizza_cheese.todo.dto.CodedEnumValue;
 
 @Getter
 @Setter
@@ -19,7 +19,7 @@ public class UserProfileResponse {
     private String name;
     private String phone;
     private String avatarUrl;
-    private Set<Role> roles;
+    private Set<CodedEnumValue> roles;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -31,7 +31,7 @@ public class UserProfileResponse {
         response.setName(user.getFullName());
         response.setPhone(user.getPhone());
         response.setAvatarUrl(user.getAvatarUrl());
-        response.setRoles(user.getRoles());
+        response.setRoles(CodedEnumValue.fromSet(user.getRoles()));
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
         return response;

@@ -94,7 +94,7 @@
                       @if (getItemImage(item); as imageUrl) {
                         <img [src]="imageUrl" [alt]="getItemTitle(item)" />
                       } @else {
-                        <span>{{ item.itemType === 'COMBO' ? '🎁' : '🍕' }}</span>
+                        <span>{{ isComboItem(item) ? '🎁' : '🍕' }}</span>
                       }
                     </div>
                     <div class="sidebar-item__info">

@@ -13,6 +13,7 @@ import {
 } from '../../../core/models/order.model';
 import { formatVnd, getPizzaSizeLabel } from '../../../core/utils/pizza.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
+import { codedEnumLabel, enumEquals, getEnumLabel } from '../../../core/utils/coded-enum.util';
 
 @Component({
   selector: 'app-cashier-order-detail',
@@ -40,6 +41,10 @@ export class CashierOrderDetailComponent {
   readonly statusLabels = ORDER_STATUS_LABELS;
   readonly paymentLabels = PAYMENT_METHOD_LABELS;
   readonly paymentStatusLabels = PAYMENT_STATUS_LABELS;
+  readonly getStatusLabel = (order: Order) => getEnumLabel(order.status, ORDER_STATUS_LABELS);
+  readonly getPaymentLabel = (order: Order) => getEnumLabel(order.paymentMethod, PAYMENT_METHOD_LABELS);
+  readonly getPaymentStatusLabel = (order: Order) =>
+    order.paymentStatus ? getEnumLabel(order.paymentStatus, PAYMENT_STATUS_LABELS) : '';
 
   constructor() {
     const orderId = this.route.snapshot.paramMap.get('id');
@@ -53,13 +58,13 @@ export class CashierOrderDetailComponent {
   }
 
   canConfirmPayment(order: Order): boolean {
-    return order.paymentStatus === 'PENDING'
-      && (order.status === 'PENDING_PAYMENT' || order.status === 'CONFIRMED');
+    return enumEquals(order.paymentStatus, 'PENDING')
+      && (enumEquals(order.status, 'PENDING_PAYMENT') || enumEquals(order.status, 'CONFIRMED'));
   }
 
   canCancel(order: Order): boolean {
-    return order.status === 'PENDING_PAYMENT'
-      || (order.status === 'CONFIRMED' && order.paymentStatus === 'PENDING');
+    return enumEquals(order.status, 'PENDING_PAYMENT')
+      || (enumEquals(order.status, 'CONFIRMED') && enumEquals(order.paymentStatus, 'PENDING'));
   }
 
   confirmPayment(): void {
@@ -132,7 +137,7 @@ export class CashierOrderDetailComponent {
   }
 
   getItemTitle(item: NonNullable<Order['items']>[number]): string {
-    if (item.itemType === 'COMBO') {
+    if (enumEquals(item.itemType, 'COMBO')) {
       return item.comboName ?? 'Combo';
     }
     const size = item.pizzaSize ? getPizzaSizeLabel(item.pizzaSize) : '';

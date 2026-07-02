@@ -11,12 +11,8 @@ import pizza_cheese.todo.domain.Order;
 import pizza_cheese.todo.domain.OrderItem;
 import pizza_cheese.todo.domain.OrderItemComboLine;
 import pizza_cheese.todo.domain.OrderItemTopping;
-import pizza_cheese.todo.domain.OrderStatus;
 import pizza_cheese.todo.domain.Payment;
-import pizza_cheese.todo.domain.PaymentMethod;
-import pizza_cheese.todo.domain.PaymentStatus;
-import pizza_cheese.todo.domain.LineItemType;
-import pizza_cheese.todo.domain.PizzaSize;
+import pizza_cheese.todo.dto.CodedEnumValue;
 
 @Getter
 @Setter
@@ -24,9 +20,9 @@ public class OrderResponse {
 
     private UUID id;
     private String orderCode;
-    private OrderStatus status;
-    private PaymentMethod paymentMethod;
-    private PaymentStatus paymentStatus;
+    private CodedEnumValue status;
+    private CodedEnumValue paymentMethod;
+    private CodedEnumValue paymentStatus;
     private BigDecimal totalAmount;
     private BigDecimal discountAmount;
     private BigDecimal finalAmount;
@@ -44,8 +40,8 @@ public class OrderResponse {
         OrderResponse response = new OrderResponse();
         response.setId(order.getId());
         response.setOrderCode(order.getOrderCode());
-        response.setStatus(order.getStatus());
-        response.setPaymentMethod(order.getPaymentMethodSelected());
+        response.setStatus(CodedEnumValue.from(order.getStatus()));
+        response.setPaymentMethod(CodedEnumValue.from(order.getPaymentMethodSelected()));
         response.setTotalAmount(order.getTotalAmount());
         response.setDiscountAmount(order.getDiscountAmount());
         response.setFinalAmount(order.getFinalAmount());
@@ -55,7 +51,7 @@ public class OrderResponse {
         response.setItems(order.getItems().stream().map(OrderItemResponse::from).toList());
 
         if (payment != null) {
-            response.setPaymentStatus(payment.getStatus());
+            response.setPaymentStatus(CodedEnumValue.from(payment.getStatus()));
             response.setPaymentUrl(payment.getPaymentUrl());
             response.setPaymentTxnRef(payment.getTransactionId());
             response.setPaidAt(payment.getPaidAt());
@@ -75,12 +71,12 @@ public class OrderResponse {
     public static class OrderItemResponse {
 
         private UUID id;
-        private LineItemType itemType;
+        private CodedEnumValue itemType;
         private int quantity;
         private BigDecimal unitPrice;
         private BigDecimal lineTotal;
         private String pizzaName;
-        private PizzaSize pizzaSize;
+        private CodedEnumValue pizzaSize;
         private String pizzaImageUrl;
         private String comboName;
         private String comboImageUrl;
@@ -90,12 +86,12 @@ public class OrderResponse {
         public static OrderItemResponse from(OrderItem item) {
             OrderItemResponse response = new OrderItemResponse();
             response.setId(item.getId());
-            response.setItemType(item.getItemType());
+            response.setItemType(CodedEnumValue.from(item.getItemType()));
             response.setQuantity(item.getQuantity());
             response.setUnitPrice(item.getUnitPrice());
             response.setLineTotal(item.getLineTotal());
             response.setPizzaName(item.getPizzaName());
-            response.setPizzaSize(item.getPizzaSize());
+            response.setPizzaSize(CodedEnumValue.from(item.getPizzaSize()));
             response.setPizzaImageUrl(item.getPizzaImageUrl());
             response.setComboName(item.getComboName());
             response.setComboImageUrl(item.getComboImageUrl());
@@ -128,13 +124,13 @@ public class OrderResponse {
 
         private int quantity;
         private String pizzaName;
-        private PizzaSize pizzaSize;
+        private CodedEnumValue pizzaSize;
 
         public static OrderItemComboLineResponse from(OrderItemComboLine line) {
             OrderItemComboLineResponse response = new OrderItemComboLineResponse();
             response.setQuantity(line.getQuantity());
             response.setPizzaName(line.getPizzaName());
-            response.setPizzaSize(line.getPizzaSize());
+            response.setPizzaSize(CodedEnumValue.from(line.getPizzaSize()));
             return response;
         }
     }

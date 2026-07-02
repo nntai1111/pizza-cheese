@@ -1,3 +1,4 @@
+import { ApiEnumField } from './coded-enum.model';
 import { PizzaSize } from './pizza.model';
 
 export type PaymentMethod = 'COD' | 'VNPAY' | 'MOMO' | 'STRIPE';
@@ -41,17 +42,17 @@ export interface OrderItemTopping {
 export interface OrderItemComboLine {
   quantity: number;
   pizzaName: string;
-  pizzaSize: PizzaSize;
+  pizzaSize: ApiEnumField<PizzaSize>;
 }
 
 export interface OrderItem {
   id: string;
-  itemType: 'PIZZA' | 'COMBO';
+  itemType: ApiEnumField<'PIZZA' | 'COMBO'>;
   quantity: number;
   unitPrice: number;
   lineTotal: number;
   pizzaName: string | null;
-  pizzaSize: PizzaSize | null;
+  pizzaSize: ApiEnumField<PizzaSize> | null;
   pizzaImageUrl: string | null;
   comboName: string | null;
   comboImageUrl: string | null;
@@ -62,9 +63,9 @@ export interface OrderItem {
 export interface Order {
   id: string;
   orderCode: string;
-  status: OrderStatus;
-  paymentMethod: PaymentMethod;
-  paymentStatus: PaymentStatus | null;
+  status: ApiEnumField<OrderStatus>;
+  paymentMethod: ApiEnumField<PaymentMethod>;
+  paymentStatus: ApiEnumField<PaymentStatus> | null;
   totalAmount: number;
   discountAmount: number;
   finalAmount: number;

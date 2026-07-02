@@ -9,8 +9,8 @@ import lombok.Getter;
 import lombok.Setter;
 import pizza_cheese.todo.domain.Pizza;
 import pizza_cheese.todo.domain.PizzaImage;
-import pizza_cheese.todo.domain.PizzaSize;
 import pizza_cheese.todo.domain.PizzaVariant;
+import pizza_cheese.todo.dto.CodedEnumValue;
 
 @Getter
 @Setter
@@ -66,13 +66,13 @@ public class PizzaResponse {
     public static class PizzaVariantResponse {
 
         private UUID id;
-        private PizzaSize size;
+        private CodedEnumValue size;
         private BigDecimal price;
 
         public static PizzaVariantResponse from(PizzaVariant variant) {
             PizzaVariantResponse response = new PizzaVariantResponse();
             response.setId(variant.getId());
-            response.setSize(variant.getSize());
+            response.setSize(CodedEnumValue.from(variant.getSize()));
             response.setPrice(variant.getPrice());
             return response;
         }

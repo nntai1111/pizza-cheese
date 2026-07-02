@@ -6,6 +6,7 @@ import { OrderService } from '../../../core/services/order.service';
 import { Order, ORDER_STATUS_LABELS } from '../../../core/models/order.model';
 import { formatVnd } from '../../../core/utils/pizza.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
+import { enumEquals, getEnumLabel } from '../../../core/utils/coded-enum.util';
 import { PENDING_ORDER_KEY } from '../checkout/checkout.component';
 
 @Component({
@@ -25,6 +26,7 @@ export class PaymentReturnComponent implements OnInit {
 
   readonly formatPrice = formatVnd;
   readonly statusLabels = ORDER_STATUS_LABELS;
+  readonly getStatusLabel = (order: Order) => getEnumLabel(order.status, ORDER_STATUS_LABELS);
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParamMap;
@@ -54,7 +56,7 @@ export class PaymentReturnComponent implements OnInit {
 
   get isSuccess(): boolean {
     const order = this.order();
-    return this.responseCode() === '00' || order?.paymentStatus === 'PAID';
+    return this.responseCode() === '00' || enumEquals(order?.paymentStatus, 'PAID');
   }
 
   private loadByOrderId(orderId: string | null): void {

@@ -1,8 +1,9 @@
 import { CartItem } from '../models/cart.model';
 import { getPizzaSizeLabel } from './pizza.util';
+import { normalizeCodedEnum } from './coded-enum.util';
 
 export function getCartItemTitle(item: CartItem): string {
-  if (item.itemType === 'PIZZA') {
+  if (normalizeCodedEnum(item.itemType) === 'PIZZA') {
     const size = item.pizzaSize ? ` (${getPizzaSizeLabel(item.pizzaSize)})` : '';
     return `${item.pizzaName ?? 'Pizza'}${size}`;
   }
@@ -10,7 +11,7 @@ export function getCartItemTitle(item: CartItem): string {
 }
 
 export function getCartItemImage(item: CartItem): string | null {
-  if (item.itemType === 'PIZZA') {
+  if (normalizeCodedEnum(item.itemType) === 'PIZZA') {
     return item.pizzaImageUrl;
   }
   return item.comboImageUrl;

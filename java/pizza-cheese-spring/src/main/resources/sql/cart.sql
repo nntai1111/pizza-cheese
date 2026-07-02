@@ -50,6 +50,16 @@ JOIN toppings t ON t.id = cit.topping_id
 WHERE cit.cart_item_id = :cartItemId
 ORDER BY t.name
 
+-- name: findToppingsByCartItemIds
+SELECT cit.cart_item_id,
+       cit.topping_id,
+       cit.price,
+       t.name AS topping_name
+FROM cart_item_toppings cit
+JOIN toppings t ON t.id = cit.topping_id
+WHERE cit.cart_item_id IN (:cartItemIds)
+ORDER BY cit.cart_item_id, t.name
+
 -- name: findComboLinesByCartItemId
 SELECT id,
        cart_item_id,
@@ -61,6 +71,18 @@ SELECT id,
 FROM cart_item_combo_lines
 WHERE cart_item_id = :cartItemId
 ORDER BY pizza_name, pizza_size
+
+-- name: findComboLinesByCartItemIds
+SELECT id,
+       cart_item_id,
+       pizza_id,
+       pizza_variant_id,
+       quantity,
+       pizza_name,
+       pizza_size
+FROM cart_item_combo_lines
+WHERE cart_item_id IN (:cartItemIds)
+ORDER BY cart_item_id, pizza_name, pizza_size
 
 -- name: findItemById
 SELECT id, cart_id, item_type, pizza_id, pizza_variant_id, combo_id, quantity, unit_price, line_total, created_at, updated_at
@@ -88,6 +110,9 @@ WHERE id = :id
 
 -- name: deleteItemById
 DELETE FROM cart_items WHERE id = :id
+
+-- name: deleteItemsByIds
+DELETE FROM cart_items WHERE id IN (:ids)
 
 -- name: deleteItemsByCartId
 DELETE FROM cart_items WHERE cart_id = :cartId

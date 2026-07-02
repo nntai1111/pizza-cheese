@@ -83,11 +83,11 @@
                   </button>
                 </div>
 
-                @if (item.itemType === 'PIZZA' && getToppingSummary(item); as toppings) {
+                @if (isPizzaItem(item) && getToppingSummary(item); as toppings) {
                   <p class="cart-item__meta">Topping: {{ toppings }}</p>
                 }
 
-                @if (item.itemType === 'COMBO' && getComboLineSummary(item); as comboLines) {
+                @if (isComboItem(item) && getComboLineSummary(item); as comboLines) {
                   <p class="cart-item__meta">{{ comboLines }}</p>
                 }
 

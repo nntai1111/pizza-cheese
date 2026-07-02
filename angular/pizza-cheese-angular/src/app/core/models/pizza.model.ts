@@ -1,3 +1,5 @@
+import { ApiEnumField } from './coded-enum.model';
+
 export type PizzaSize = 'SMALL' | 'MEDIUM' | 'LARGE';
 
 export interface CategorySummary {
@@ -8,7 +10,7 @@ export interface CategorySummary {
 
 export interface PizzaVariant {
   id?: string;
-  size: PizzaSize;
+  size: ApiEnumField<PizzaSize>;
   price: number;
 }
 

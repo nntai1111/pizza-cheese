@@ -1,3 +1,6 @@
+import { AppRole } from '../enums/role.enum';
+import { CodedEnumValue } from './coded-enum.model';
+
 export interface ApiResponse<T> {
   statusCode: number;
   message: string;
@@ -29,7 +32,7 @@ export interface User {
   name: string;
   phone: string | null;
   avatarUrl: string | null;
-  roles: string[];
+  roles: CodedEnumValue<AppRole>[];
   createdAt: string;
   updatedAt: string;
 }

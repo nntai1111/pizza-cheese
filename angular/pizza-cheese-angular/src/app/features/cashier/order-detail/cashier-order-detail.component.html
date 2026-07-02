@@ -23,7 +23,7 @@
           </p>
         }
       </div>
-      <span class="order-detail-hero__status">{{ statusLabels[currentOrder.status] }}</span>
+      <span class="order-detail-hero__status">{{ getStatusLabel(currentOrder) }}</span>
     </header>
 
     <div class="order-detail-grid">
@@ -35,11 +35,11 @@
         }
 
         <h2>Thanh toán</h2>
-        <p>{{ paymentLabels[currentOrder.paymentMethod] }}</p>
+        <p>{{ getPaymentLabel(currentOrder) }}</p>
         @if (currentOrder.paymentStatus) {
           <p>
             Trạng thái thanh toán:
-            <strong>{{ paymentStatusLabels[currentOrder.paymentStatus] }}</strong>
+            <strong>{{ getPaymentStatusLabel(currentOrder) }}</strong>
           </p>
         }
         @if (currentOrder.paidAt) {

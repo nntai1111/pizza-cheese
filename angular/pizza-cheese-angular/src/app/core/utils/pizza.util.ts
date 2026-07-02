@@ -1,5 +1,6 @@
 import { Pizza, PizzaImage, PizzaSize, PizzaVariant } from '../models/pizza.model';
-
+import { ApiEnumField } from '../models/coded-enum.model';
+import { normalizeCodedEnum } from './coded-enum.util';
 const SIZE_ORDER: PizzaSize[] = ['SMALL', 'MEDIUM', 'LARGE'];
 
 const SIZE_LABELS: Record<PizzaSize, string> = {
@@ -46,11 +47,16 @@ export function getPizzaSortedImages(pizza: Pizza): PizzaImage[] {
 
 export function sortPizzaVariants(variants: PizzaVariant[]): PizzaVariant[] {
   return [...variants].sort(
-    (a, b) => SIZE_ORDER.indexOf(a.size) - SIZE_ORDER.indexOf(b.size),
+    (a, b) =>
+      SIZE_ORDER.indexOf(normalizeCodedEnum(a.size) ?? 'SMALL')
+      - SIZE_ORDER.indexOf(normalizeCodedEnum(b.size) ?? 'SMALL'),
   );
 }
 
-export function getPizzaSizeLabel(size: PizzaSize): string {
+export function getPizzaSizeLabel(size: ApiEnumField<PizzaSize>): string {
+  if (typeof size === 'object' && size !== null) {
+    return size.label;
+  }
   return SIZE_LABELS[size];
 }
 

@@ -12,6 +12,7 @@ import { Category } from '../../../core/models/category.model';
 import { Pizza, PizzaSize } from '../../../core/models/pizza.model';
 import { Topping } from '../../../core/models/topping.model';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
+import { normalizeCodedEnum } from '../../../core/utils/coded-enum.util';
 import {
   getPizzaMainImage,
   getPizzaSecondaryImages,
@@ -111,7 +112,7 @@ export class PizzaAdminListComponent {
     );
 
     const variantMap = Object.fromEntries(
-      pizza.variants.map((v) => [v.size, v.price]),
+      pizza.variants.map((v) => [normalizeCodedEnum(v.size), v.price]),
     ) as Record<PizzaSize, number>;
 
     this.form.patchValue({

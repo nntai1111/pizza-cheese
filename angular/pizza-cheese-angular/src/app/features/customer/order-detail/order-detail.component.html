@@ -14,7 +14,7 @@
         <h1>{{ currentOrder.orderCode }}</h1>
         <p>Đặt lúc {{ currentOrder.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
       </div>
-      <span class="order-detail-hero__status">{{ statusLabels[currentOrder.status] }}</span>
+      <span class="order-detail-hero__status">{{ getStatusLabel(currentOrder) }}</span>
     </header>
 
     <div class="order-detail-grid">
@@ -26,9 +26,9 @@
         }
 
         <h2>Thanh toán</h2>
-        <p>{{ paymentLabels[currentOrder.paymentMethod] }}</p>
+        <p>{{ getPaymentLabel(currentOrder) }}</p>
         @if (currentOrder.paymentStatus) {
-          <p>Trạng thái thanh toán: <strong>{{ currentOrder.paymentStatus }}</strong></p>
+          <p>Trạng thái thanh toán: <strong>{{ getPaymentStatusLabel(currentOrder) }}</strong></p>
         }
       </div>
 

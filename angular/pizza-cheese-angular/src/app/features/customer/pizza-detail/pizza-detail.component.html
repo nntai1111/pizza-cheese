@@ -71,7 +71,7 @@
               <button
                 type="button"
                 class="size-option"
-                [class.size-option--active]="selectedVariant()?.size === variant.size"
+                [class.size-option--active]="isSameSize(selectedVariant()?.size, variant.size)"
                 (click)="selectVariant(variant)"
               >
                 <span class="size-option__label">{{ getSizeLabel(variant.size) }}</span>

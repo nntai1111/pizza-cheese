@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -121,6 +122,13 @@ public class CartDao {
         jdbc.update(queries.get("deleteItemById"), Map.of("id", itemId));
     }
 
+    public void deleteItemsByIds(List<UUID> itemIds) {
+        if (itemIds == null || itemIds.isEmpty()) {
+            return;
+        }
+        jdbc.update(queries.get("deleteItemsByIds"), Map.of("ids", itemIds));
+    }
+
     public void deleteItemsByCartId(UUID cartId) {
         jdbc.update(queries.get("deleteItemsByCartId"), Map.of("cartId", cartId));
     }
@@ -136,18 +144,41 @@ public class CartDao {
                 queries.get("findItemsByCartId"),
                 Map.of("cartId", cart.getId()),
                 RowMappers.forEntity(CartItem.class));
-        items.forEach(this::loadRelations);
+        if (items.isEmpty()) {
+            cart.setItems(items);
+            return;
+        }
+
+        List<UUID> itemIds = items.stream().map(CartItem::getId).toList();
+        Map<UUID, List<CartItemTopping>> toppingsByItem = loadToppingsByItemIds(itemIds);
+        Map<UUID, List<CartItemComboLine>> comboLinesByItem = loadComboLinesByItemIds(itemIds);
+
+        for (CartItem item : items) {
+            item.setToppings(toppingsByItem.getOrDefault(item.getId(), List.of()));
+            item.setComboLines(comboLinesByItem.getOrDefault(item.getId(), List.of()));
+        }
         cart.setItems(items);
     }
 
-    private void loadRelations(CartItem item) {
-        item.setToppings(jdbc.query(
-                queries.get("findToppingsByCartItemId"),
-                Map.of("cartItemId", item.getId()),
-                RowMappers.forEntity(CartItemTopping.class)));
-        item.setComboLines(jdbc.query(
-                queries.get("findComboLinesByCartItemId"),
-                Map.of("cartItemId", item.getId()),
-                RowMappers.forEntity(CartItemComboLine.class)));
+    private Map<UUID, List<CartItemTopping>> loadToppingsByItemIds(List<UUID> itemIds) {
+        if (itemIds.isEmpty()) {
+            return Map.of();
+        }
+        List<CartItemTopping> toppings = jdbc.query(
+                queries.get("findToppingsByCartItemIds"),
+                Map.of("cartItemIds", itemIds),
+                RowMappers.forEntity(CartItemTopping.class));
+        return toppings.stream().collect(Collectors.groupingBy(CartItemTopping::getCartItemId));
+    }
+
+    private Map<UUID, List<CartItemComboLine>> loadComboLinesByItemIds(List<UUID> itemIds) {
+        if (itemIds.isEmpty()) {
+            return Map.of();
+        }
+        List<CartItemComboLine> comboLines = jdbc.query(
+                queries.get("findComboLinesByCartItemIds"),
+                Map.of("cartItemIds", itemIds),
+                RowMappers.forEntity(CartItemComboLine.class));
+        return comboLines.stream().collect(Collectors.groupingBy(CartItemComboLine::getCartItemId));
     }
 }

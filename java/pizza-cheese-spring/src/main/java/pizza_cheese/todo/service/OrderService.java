@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +30,7 @@ import pizza_cheese.todo.domain.CartItemTopping;
 import pizza_cheese.todo.domain.Order;
 import pizza_cheese.todo.domain.OrderItem;
 import pizza_cheese.todo.domain.OrderItemComboLine;
+import pizza_cheese.todo.domain.OrderItemTopping;
 import pizza_cheese.todo.domain.OrderStatus;
 import pizza_cheese.todo.domain.Payment;
 import pizza_cheese.todo.domain.PaymentMethod;
@@ -108,7 +110,8 @@ public class OrderService {
                 userId,
                 paymentMethod == PaymentMethod.VNPAY ? "Tao don cho thanh toan VNPay" : "Tao don COD");
 
-        snapshotCartItems(selectedItems, order.getId());
+        List<OrderItem> orderItems = snapshotCartItems(selectedItems, order.getId());
+        order.setItems(orderItems);
 
         Payment payment = new Payment();
         payment.setId(UUID.randomUUID());
@@ -126,14 +129,10 @@ public class OrderService {
             vnPayService.createPaymentUrl(order, payment, clientIp);
         }
 
-        for (CartItem selectedItem : selectedItems) {
-            cartDao.deleteItemById(selectedItem.getId());
-        }
+        cartDao.deleteItemsByIds(selectedItems.stream().map(CartItem::getId).toList());
         cartDao.touchUpdatedAt(cart.getId());
 
-        Order savedOrder = orderDao.findById(order.getId()).orElse(order);
-        Payment latestPayment = paymentDao.findLatestByOrderId(order.getId()).orElse(payment);
-        return OrderResponse.from(savedOrder, latestPayment);
+        return OrderResponse.from(order, payment);
     }
 
     public OrderResponse getOrder(String userEmail, UUID orderId) {
@@ -221,7 +220,8 @@ public class OrderService {
                 .toList();
     }
 
-    private void snapshotCartItems(List<CartItem> cartItems, UUID orderId) {
+    private List<OrderItem> snapshotCartItems(List<CartItem> cartItems, UUID orderId) {
+        List<OrderItem> orderItems = new ArrayList<>();
         for (CartItem cartItem : cartItems) {
             OrderItem orderItem = new OrderItem();
             orderItem.setOrderId(orderId);
@@ -232,13 +232,29 @@ public class OrderService {
             orderItem.setQuantity(cartItem.getQuantity());
             orderItem.setUnitPrice(cartItem.getUnitPrice());
             orderItem.setLineTotal(cartItem.getLineTotal());
+            orderItem.setPizzaName(cartItem.getPizzaName());
+            orderItem.setPizzaSlug(cartItem.getPizzaSlug());
+            orderItem.setPizzaSize(cartItem.getPizzaSize());
+            orderItem.setPizzaImageUrl(cartItem.getPizzaImageUrl());
+            orderItem.setComboName(cartItem.getComboName());
+            orderItem.setComboSlug(cartItem.getComboSlug());
+            orderItem.setComboImageUrl(cartItem.getComboImageUrl());
 
             OrderItem savedItem = orderDao.insertItem(orderItem);
 
+            List<OrderItemTopping> toppings = new ArrayList<>();
             for (CartItemTopping topping : cartItem.getToppings()) {
                 orderDao.insertItemTopping(savedItem.getId(), topping.getToppingId(), topping.getPrice());
+                OrderItemTopping orderTopping = new OrderItemTopping();
+                orderTopping.setOrderItemId(savedItem.getId());
+                orderTopping.setToppingId(topping.getToppingId());
+                orderTopping.setToppingName(topping.getToppingName());
+                orderTopping.setPrice(topping.getPrice());
+                toppings.add(orderTopping);
             }
+            savedItem.setToppings(toppings);
 
+            List<OrderItemComboLine> comboLines = new ArrayList<>();
             for (CartItemComboLine comboLine : cartItem.getComboLines()) {
                 OrderItemComboLine line = new OrderItemComboLine();
                 line.setOrderItemId(savedItem.getId());
@@ -248,8 +264,12 @@ public class OrderService {
                 line.setPizzaName(comboLine.getPizzaName());
                 line.setPizzaSize(comboLine.getPizzaSize());
                 orderDao.insertComboLine(line);
+                comboLines.add(line);
             }
+            savedItem.setComboLines(comboLines);
+            orderItems.add(savedItem);
         }
+        return orderItems;
     }
 
     private String generateOrderCode() {

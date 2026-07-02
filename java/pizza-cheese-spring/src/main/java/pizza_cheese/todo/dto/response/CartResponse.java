@@ -10,8 +10,7 @@ import pizza_cheese.todo.domain.Cart;
 import pizza_cheese.todo.domain.CartItem;
 import pizza_cheese.todo.domain.CartItemComboLine;
 import pizza_cheese.todo.domain.CartItemTopping;
-import pizza_cheese.todo.domain.LineItemType;
-import pizza_cheese.todo.domain.PizzaSize;
+import pizza_cheese.todo.dto.CodedEnumValue;
 
 @Getter
 @Setter
@@ -57,7 +56,7 @@ public class CartResponse {
     public static class CartItemResponse {
 
         private UUID id;
-        private LineItemType itemType;
+        private CodedEnumValue itemType;
         private UUID pizzaId;
         private UUID pizzaVariantId;
         private UUID comboId;
@@ -66,7 +65,7 @@ public class CartResponse {
         private BigDecimal lineTotal;
         private String pizzaName;
         private String pizzaSlug;
-        private PizzaSize pizzaSize;
+        private CodedEnumValue pizzaSize;
         private String pizzaImageUrl;
         private String comboName;
         private String comboSlug;
@@ -77,7 +76,7 @@ public class CartResponse {
         public static CartItemResponse from(CartItem item) {
             CartItemResponse response = new CartItemResponse();
             response.setId(item.getId());
-            response.setItemType(item.getItemType());
+            response.setItemType(CodedEnumValue.from(item.getItemType()));
             response.setPizzaId(item.getPizzaId());
             response.setPizzaVariantId(item.getPizzaVariantId());
             response.setComboId(item.getComboId());
@@ -86,7 +85,7 @@ public class CartResponse {
             response.setLineTotal(item.getLineTotal());
             response.setPizzaName(item.getPizzaName());
             response.setPizzaSlug(item.getPizzaSlug());
-            response.setPizzaSize(item.getPizzaSize());
+            response.setPizzaSize(CodedEnumValue.from(item.getPizzaSize()));
             response.setPizzaImageUrl(item.getPizzaImageUrl());
             response.setComboName(item.getComboName());
             response.setComboSlug(item.getComboSlug());
@@ -122,7 +121,7 @@ public class CartResponse {
         private UUID pizzaVariantId;
         private int quantity;
         private String pizzaName;
-        private PizzaSize pizzaSize;
+        private CodedEnumValue pizzaSize;
 
         public static CartItemComboLineResponse from(CartItemComboLine line) {
             CartItemComboLineResponse response = new CartItemComboLineResponse();
@@ -130,7 +129,7 @@ public class CartResponse {
             response.setPizzaVariantId(line.getPizzaVariantId());
             response.setQuantity(line.getQuantity());
             response.setPizzaName(line.getPizzaName());
-            response.setPizzaSize(line.getPizzaSize());
+            response.setPizzaSize(CodedEnumValue.from(line.getPizzaSize()));
             return response;
         }
     }

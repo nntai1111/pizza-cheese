@@ -37,27 +37,47 @@ public final class CodedEnums {
         if (raw == null) {
             return null;
         }
+        if (raw instanceof Map<?, ?> map) {
+            Object name = map.get("name");
+            if (name != null) {
+                return parseByText(type, name.toString());
+            }
+            Object code = map.get("code");
+            if (code instanceof Number number) {
+                return fromCode(type, number.intValue());
+            }
+            Object label = map.get("label");
+            if (label != null) {
+                return parseByText(type, label.toString());
+            }
+            return null;
+        }
         if (raw instanceof Number number) {
             return fromCode(type, number.intValue());
         }
-        String text = raw.toString().trim();
-        if (text.isEmpty()) {
+        return parseByText(type, raw.toString());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends Enum<E> & CodedEnum> E parseByText(Class<E> type, String text) {
+        String trimmed = text.trim();
+        if (trimmed.isEmpty()) {
             return null;
         }
-        if (text.chars().allMatch(Character::isDigit)) {
-            return fromCode(type, Integer.parseInt(text));
+        if (trimmed.chars().allMatch(Character::isDigit)) {
+            return fromCode(type, Integer.parseInt(trimmed));
         }
         Map<String, E> byName = (Map<String, E>) BY_NAME.computeIfAbsent(type, CodedEnums::buildNameLookup);
-        E byConstant = byName.get(text.toUpperCase());
+        E byConstant = byName.get(trimmed.toUpperCase());
         if (byConstant != null) {
             return byConstant;
         }
         Map<String, E> byLabel = (Map<String, E>) BY_LABEL.computeIfAbsent(type, CodedEnums::buildLabelLookup);
-        E byLabelValue = byLabel.get(text);
+        E byLabelValue = byLabel.get(trimmed);
         if (byLabelValue != null) {
             return byLabelValue;
         }
-        throw new IllegalArgumentException("Unknown value '" + text + "' for enum " + type.getSimpleName());
+        throw new IllegalArgumentException("Unknown value '" + trimmed + "' for enum " + type.getSimpleName());
     }
 
     private static <E extends Enum<E> & CodedEnum> Map<Integer, E> buildCodeLookup(Class<? extends CodedEnum> type) {

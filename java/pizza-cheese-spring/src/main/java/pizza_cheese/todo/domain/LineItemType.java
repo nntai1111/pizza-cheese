@@ -1,7 +1,6 @@
 package pizza_cheese.todo.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
 
 import pizza_cheese.todo.util.CodedEnums;
 
@@ -24,7 +23,6 @@ public enum LineItemType implements CodedEnum {
     }
 
     @Override
-    @JsonValue
     public String getLabel() {
         return label;
     }

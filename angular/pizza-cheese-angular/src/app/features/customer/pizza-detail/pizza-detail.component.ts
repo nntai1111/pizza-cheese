@@ -12,6 +12,7 @@ import {
   getPizzaSortedImages,
   sortPizzaVariants,
 } from '../../../core/utils/pizza.util';
+import { codedEnumSame } from '../../../core/utils/coded-enum.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
 
 @Component({
@@ -43,6 +44,7 @@ export class PizzaDetailComponent {
   readonly formatPrice = formatVnd;
   readonly getSizeLabel = getPizzaSizeLabel;
   readonly sortVariants = sortPizzaVariants;
+  readonly isSameSize = codedEnumSame;
 
   readonly sortedImages = computed(() => {
     const current = this.pizza();

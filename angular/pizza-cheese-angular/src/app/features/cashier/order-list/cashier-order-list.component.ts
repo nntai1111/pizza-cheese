@@ -14,6 +14,7 @@ import {
 } from '../../../core/models/order.model';
 import { formatVnd } from '../../../core/utils/pizza.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
+import { enumEquals, getEnumLabel } from '../../../core/utils/coded-enum.util';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 type StatusFilter = OrderStatus | 'ALL';
@@ -42,6 +43,10 @@ export class CashierOrderListComponent {
   readonly statusLabels = ORDER_STATUS_LABELS;
   readonly paymentLabels = PAYMENT_METHOD_LABELS;
   readonly paymentStatusLabels = PAYMENT_STATUS_LABELS;
+  readonly getStatusLabel = (order: Order) => getEnumLabel(order.status, ORDER_STATUS_LABELS);
+  readonly getPaymentLabel = (order: Order) => getEnumLabel(order.paymentMethod, PAYMENT_METHOD_LABELS);
+  readonly getPaymentStatusLabel = (order: Order) =>
+    order.paymentStatus ? getEnumLabel(order.paymentStatus, PAYMENT_STATUS_LABELS) : '';
 
   readonly filters: { value: StatusFilter; label: string }[] = [
     { value: 'ALL', label: 'Tất cả' },
@@ -66,8 +71,8 @@ export class CashierOrderListComponent {
   }
 
   needsPaymentAction(order: Order): boolean {
-    return order.paymentStatus === 'PENDING'
-      && (order.status === 'PENDING_PAYMENT' || order.status === 'CONFIRMED');
+    return enumEquals(order.paymentStatus, 'PENDING')
+      && (enumEquals(order.status, 'PENDING_PAYMENT') || enumEquals(order.status, 'CONFIRMED'));
   }
 
   private loadOrders(filter: StatusFilter, page: number): void {

@@ -13,6 +13,7 @@ import {
   formatVnd,
   getPizzaMainImage,
   getPizzaMinPrice,
+  getPizzaSizeLabel,
   sortPizzaVariants,
 } from '../../../core/utils/pizza.util';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
@@ -46,6 +47,7 @@ export class PizzaListComponent {
   readonly getMainImage = getPizzaMainImage;
   readonly getMinPrice = getPizzaMinPrice;
   readonly sortVariants = sortPizzaVariants;
+  readonly getSizeLabel = getPizzaSizeLabel;
 
   readonly selectedCategoryName = computed(() => {
     const id = this.selectedCategoryId();

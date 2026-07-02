@@ -1,9 +1,10 @@
+import { ApiEnumField } from './coded-enum.model';
 import { PizzaSize } from './pizza.model';
 
 export interface ComboItem {
   pizzaId: string;
   pizzaVariantId: string;
-  pizzaSize: PizzaSize;
+  pizzaSize: ApiEnumField<PizzaSize>;
   pizzaName: string;
   pizzaSlug: string;
   quantity: number;

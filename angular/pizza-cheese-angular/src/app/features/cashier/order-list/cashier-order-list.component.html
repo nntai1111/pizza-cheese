@@ -45,14 +45,14 @@
                 <span class="order-card__customer">{{ order.customerName }}</span>
               }
             </div>
-            <span class="order-card__status">{{ statusLabels[order.status] }}</span>
+            <span class="order-card__status">{{ getStatusLabel(order) }}</span>
           </div>
           <div class="order-card__body">
             <div>
-              <span>{{ paymentLabels[order.paymentMethod] }}</span>
+              <span>{{ getPaymentLabel(order) }}</span>
               @if (order.paymentStatus) {
                 <span class="order-card__payment">
-                  {{ paymentStatusLabels[order.paymentStatus] }}
+                  {{ getPaymentStatusLabel(order) }}
                 </span>
               }
             </div>

@@ -93,7 +93,7 @@
             @if (pizza.variants.length) {
               <div class="pizza-card__sizes">
                 @for (variant of sortVariants(pizza.variants); track variant.id ?? variant.size) {
-                  <span class="size-tag">{{ variant.size }}</span>
+                  <span class="size-tag">{{ getSizeLabel(variant.size) }}</span>
                 }
               </div>
             }

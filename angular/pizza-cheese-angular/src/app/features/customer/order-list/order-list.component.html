@@ -29,10 +29,10 @@
               <strong>{{ order.orderCode }}</strong>
               <span>{{ order.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
             </div>
-            <span class="order-card__status">{{ statusLabels[order.status] }}</span>
+            <span class="order-card__status">{{ getStatusLabel(order) }}</span>
           </div>
           <div class="order-card__body">
-            <span>{{ paymentLabels[order.paymentMethod] }}</span>
+            <span>{{ getPaymentLabel(order) }}</span>
             <strong>{{ formatPrice(order.finalAmount) }}</strong>
           </div>
           <a [routerLink]="['/customer/orders', order.id]" class="order-card__link">Xem chi tiết</a>

@@ -172,7 +172,7 @@ public class OrderDao {
                 .addValue("pizzaVariantId", line.getPizzaVariantId())
                 .addValue("quantity", line.getQuantity())
                 .addValue("pizzaName", line.getPizzaName())
-                .addValue("pizzaSize", line.getPizzaSize().getCode()));
+                .addValue("pizzaSize", line.getPizzaSize() != null ? line.getPizzaSize().getCode() : null));
     }
 
     private Order loadDetails(Order order) {
