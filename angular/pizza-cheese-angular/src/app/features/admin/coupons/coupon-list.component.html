@@ -1,0 +1,114 @@
+<div class="admin-page">
+  <div class="admin-page__header">
+    <h1>Quản lý Coupon</h1>
+    <button type="button" class="btn-primary" (click)="openCreate()">+ Thêm coupon</button>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (showForm()) {
+    <div class="form-card">
+      <h2>{{ editingId() ? 'Sửa coupon' : 'Thêm coupon' }}</h2>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <label>Mã *</label>
+          <input formControlName="code" placeholder="WELCOME10" />
+        </div>
+        <div class="form-row">
+          <label>Mô tả</label>
+          <input formControlName="description" />
+        </div>
+        <div class="form-row">
+          <label>Loại giảm *</label>
+          <select formControlName="discountType">
+            @for (type of discountTypes; track type) {
+              <option [value]="type">{{ discountTypeLabels[type] }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Giá trị giảm *</label>
+          <input type="number" formControlName="discountValue" min="0.01" step="0.01" />
+        </div>
+        <div class="form-row">
+          <label>Đơn tối thiểu</label>
+          <input type="number" formControlName="minOrderValue" min="0" step="1000" />
+        </div>
+        <div class="form-row">
+          <label>Giảm tối đa</label>
+          <input type="number" formControlName="maxDiscount" min="0" step="1000" />
+        </div>
+        <div class="form-row">
+          <label>Giới hạn lượt dùng</label>
+          <input type="number" formControlName="usageLimit" min="1" step="1" />
+        </div>
+        <div class="form-row">
+          <label>Giới hạn / user</label>
+          <input type="number" formControlName="perUserLimit" min="1" step="1" />
+        </div>
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="isActive" />
+          Hoạt động
+        </label>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancelForm()">Hủy</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Đang lưu...' : 'Lưu' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="loading-text">Đang tải...</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Mã</th>
+            <th>Giảm giá</th>
+            <th>Đơn tối thiểu</th>
+            <th>Đã dùng</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (coupon of coupons(); track coupon.id) {
+            <tr>
+              <td>
+                <strong>{{ coupon.code }}</strong>
+                @if (coupon.description) {
+                  <div class="coupon-desc">{{ coupon.description }}</div>
+                }
+              </td>
+              <td>{{ getDiscountLabel(coupon) }}</td>
+              <td>{{ formatPrice(coupon.minOrderValue) }}</td>
+              <td>
+                {{ coupon.usedCount }}
+                @if (coupon.usageLimit) {
+                  / {{ coupon.usageLimit }}
+                }
+              </td>
+              <td>
+                <span class="badge" [class.badge--active]="coupon.active">
+                  {{ coupon.active ? 'Hoạt động' : 'Ẩn' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button type="button" class="btn-link" (click)="openEdit(coupon)">Sửa</button>
+                <button type="button" class="btn-link btn-link--danger" (click)="deleteCoupon(coupon)">
+                  Xóa
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

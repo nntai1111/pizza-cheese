@@ -26,6 +26,7 @@ public class OrderResponse {
     private BigDecimal totalAmount;
     private BigDecimal discountAmount;
     private BigDecimal finalAmount;
+    private String couponCode;
     private String note;
     private String deliveryAddressSnapshot;
     private String paymentUrl;

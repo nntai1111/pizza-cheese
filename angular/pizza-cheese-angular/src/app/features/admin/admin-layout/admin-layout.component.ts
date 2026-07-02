@@ -27,6 +27,8 @@ export class AdminLayoutComponent {
     { label: 'Topping', icon: '🧀', route: '/admin/toppings' },
     { label: 'Pizza', icon: '🍕', route: '/admin/pizzas' },
     { label: 'Combo', icon: '🎁', route: '/admin/combos' },
+    { label: 'Coupon', icon: '🎟️', route: '/admin/coupons' },
+    { label: 'Đơn hàng', icon: '📦', route: '/admin/orders' },
   ];
 
   logout(): void {

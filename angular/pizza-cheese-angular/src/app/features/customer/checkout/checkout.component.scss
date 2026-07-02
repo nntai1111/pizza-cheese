@@ -188,6 +188,24 @@
     }
   }
 
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--pc-crust-muted);
+    font-size: 0.9375rem;
+
+    strong {
+      color: var(--pc-crust);
+      white-space: nowrap;
+    }
+
+    &--discount strong {
+      color: var(--pc-danger);
+    }
+  }
+
   .btn-primary {
     @include customer-theme.pc-btn-primary;
     width: 100%;
@@ -198,5 +216,133 @@
     @include customer-theme.pc-btn-outline;
     width: 100%;
     text-decoration: none;
+  }
+}
+
+.coupon-section {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed var(--pc-border);
+}
+
+.coupon-toggle,
+.coupon-option {
+  width: 100%;
+  border-radius: var(--pc-radius-sm);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.coupon-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1.5px dashed var(--pc-yellow-dark);
+  background: var(--pc-cream);
+
+  &__icon { font-size: 1.25rem; }
+  &__text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    strong { color: var(--pc-crust); font-size: 0.9375rem; }
+    small { color: var(--pc-crust-muted); font-size: 0.8125rem; }
+  }
+  &__chevron {
+    color: var(--pc-crust-muted);
+    transform: rotate(90deg);
+    &--open { transform: rotate(-90deg); }
+  }
+}
+
+.coupon-panel {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--pc-border);
+  border-radius: var(--pc-radius-sm);
+  &__hint,
+  &__status {
+    margin: 0 0 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--pc-crust-muted);
+  }
+  &__status { text-align: center; padding: 0.5rem 0; }
+}
+
+.coupon-list { display: flex; flex-direction: column; gap: 0.625rem; }
+
+.coupon-option {
+  padding: 0.875rem;
+  border: 1.5px solid var(--pc-border);
+  background: var(--pc-white);
+  &:hover { border-color: var(--pc-yellow); background: var(--pc-cream); }
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+  }
+  &__code {
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: var(--pc-yellow);
+    color: var(--pc-crust);
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+  &__save { color: var(--pc-danger); white-space: nowrap; }
+  &__label,
+  &__desc,
+  &__meta {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--pc-crust-muted);
+  }
+  &__label { color: var(--pc-crust); font-weight: 600; }
+  &__meta { margin-top: 0.35rem; }
+}
+
+.coupon-applied {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1.5px solid var(--pc-yellow);
+  border-radius: var(--pc-radius-sm);
+  background: var(--pc-cream);
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    strong { color: var(--pc-crust); }
+    span { font-size: 0.8125rem; color: var(--pc-crust-muted); }
+    em {
+      font-style: normal;
+      font-weight: 600;
+      color: var(--pc-danger);
+    }
+  }
+  &__badge {
+    width: fit-content;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(34, 139, 34, 0.12);
+    color: #1f7a1f;
+    font-size: 0.6875rem;
+    font-weight: 700;
+  }
+  &__actions { display: flex; flex-direction: column; gap: 0.25rem; }
+  .btn-link {
+    border: 0;
+    background: transparent;
+    color: var(--pc-crust);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.8125rem;
+    &--danger { color: var(--pc-danger); }
   }
 }

@@ -91,9 +91,81 @@
               </li>
             }
           </ul>
+
+          @if (!isCashierMode()) {
+            <div class="coupon-section">
+              @if (appliedCoupon(); as coupon) {
+                <div class="coupon-applied">
+                  <div class="coupon-applied__main">
+                    <span class="coupon-applied__badge">Đã áp dụng</span>
+                    <strong>{{ coupon.code }}</strong>
+                    @if (coupon.description) {
+                      <span>{{ coupon.description }}</span>
+                    }
+                    <em>Tiết kiệm {{ formatPrice(coupon.discountAmount) }}</em>
+                  </div>
+                  <div class="coupon-applied__actions">
+                    <button type="button" class="btn-link" (click)="changeCoupon()">Đổi mã</button>
+                    <button type="button" class="btn-link btn-link--danger" (click)="removeCoupon()">Gỡ</button>
+                  </div>
+                </div>
+              } @else {
+                <button type="button" class="coupon-toggle" (click)="toggleCouponPanel()">
+                  <span class="coupon-toggle__icon">🎟️</span>
+                  <span class="coupon-toggle__text">
+                    <strong>Áp dụng mã giảm giá</strong>
+                    <small>Chọn mã phù hợp với đơn hàng của bạn</small>
+                  </span>
+                  <span class="coupon-toggle__chevron" [class.coupon-toggle__chevron--open]="couponPanelOpen()">›</span>
+                </button>
+              }
+
+              @if (couponPanelOpen() && !appliedCoupon()) {
+                <div class="coupon-panel">
+                  @if (availableCouponsLoading()) {
+                    <p class="coupon-panel__status">Đang tải mã giảm giá...</p>
+                  } @else if (!availableCoupons().length) {
+                    <p class="coupon-panel__status">
+                      Hiện chưa có mã nào phù hợp với đơn {{ formatPrice(selectedSubtotal()) }}.
+                    </p>
+                  } @else {
+                    <p class="coupon-panel__hint">{{ availableCoupons().length }} mã có thể dùng</p>
+                    <div class="coupon-list">
+                      @for (coupon of availableCoupons(); track coupon.id) {
+                        <button type="button" class="coupon-option" (click)="selectCoupon(coupon)">
+                          <div class="coupon-option__head">
+                            <span class="coupon-option__code">{{ coupon.code }}</span>
+                            <strong class="coupon-option__save">-{{ formatPrice(coupon.discountAmount) }}</strong>
+                          </div>
+                          <p class="coupon-option__label">{{ coupon.discountLabel }}</p>
+                          @if (coupon.description) {
+                            <p class="coupon-option__desc">{{ coupon.description }}</p>
+                          }
+                          @if (coupon.minOrderValue) {
+                            <p class="coupon-option__meta">Áp dụng cho đơn từ {{ formatPrice(coupon.minOrderValue) }}</p>
+                          }
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <div class="checkout-summary__row">
+            <span>Tạm tính</span>
+            <strong>{{ formatPrice(selectedSubtotal()) }}</strong>
+          </div>
+          @if (checkoutDiscount() > 0) {
+            <div class="checkout-summary__row checkout-summary__row--discount">
+              <span>Giảm giá</span>
+              <strong>-{{ formatPrice(checkoutDiscount()) }}</strong>
+            </div>
+          }
           <div class="checkout-summary__total">
             <span>Tổng thanh toán</span>
-            <strong>{{ formatPrice(selectedSubtotal()) }}</strong>
+            <strong>{{ formatPrice(checkoutTotal()) }}</strong>
           </div>
           <button type="submit" class="btn-primary" [disabled]="loading()">
             @if (loading()) {

@@ -42,6 +42,27 @@ export const ADMIN_ROUTES: Routes = [
             (m) => m.ComboListComponent,
           ),
       },
+      {
+        path: 'coupons',
+        loadComponent: () =>
+          import('./coupons/coupon-list.component').then(
+            (m) => m.CouponListComponent,
+          ),
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./orders/admin-order-list.component').then(
+            (m) => m.AdminOrderListComponent,
+          ),
+      },
+      {
+        path: 'orders/:id',
+        loadComponent: () =>
+          import('./orders/admin-order-detail.component').then(
+            (m) => m.AdminOrderDetailComponent,
+          ),
+      },
     ],
   },
 ];

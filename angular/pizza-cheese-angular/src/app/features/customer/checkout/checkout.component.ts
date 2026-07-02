@@ -6,9 +6,14 @@ import { Observable } from 'rxjs';
 
 import { CartService } from '../../../core/services/cart.service';
 import { CashierService } from '../../../core/services/cashier.service';
+import { CouponService } from '../../../core/services/coupon.service';
 import { OrderService } from '../../../core/services/order.service';
 import { ShopContextService } from '../../../core/services/shop-context.service';
 import { Order, PaymentMethod } from '../../../core/models/order.model';
+import {
+  AvailableCoupon,
+  ValidateCouponResponse,
+} from '../../../core/models/coupon.model';
 import { formatVnd } from '../../../core/utils/pizza.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
 import {
@@ -28,6 +33,7 @@ export class CheckoutComponent {
   private readonly fb = inject(FormBuilder);
   private readonly cartService = inject(CartService);
   private readonly orderService = inject(OrderService);
+  private readonly couponService = inject(CouponService);
   private readonly cashierService = inject(CashierService);
   private readonly shopContext = inject(ShopContextService);
   private readonly router = inject(Router);
@@ -38,6 +44,11 @@ export class CheckoutComponent {
   readonly selectedSubtotal = this.cartService.selectedSubtotal;
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly appliedCoupon = signal<ValidateCouponResponse | null>(null);
+  readonly couponPanelOpen = signal(false);
+  readonly availableCoupons = signal<AvailableCoupon[]>([]);
+  readonly availableCouponsLoading = signal(false);
+  readonly availableCouponsLoaded = signal(false);
   readonly isCashierMode = signal(this.shopContext.basePath() === '/cashier');
 
   readonly formatPrice = formatVnd;
@@ -83,6 +94,41 @@ export class CheckoutComponent {
     }
   }
 
+  readonly checkoutTotal = () => this.appliedCoupon()?.finalAmount ?? this.selectedSubtotal();
+  readonly checkoutDiscount = () => this.appliedCoupon()?.discountAmount ?? 0;
+
+  toggleCouponPanel(): void {
+    const nextOpen = !this.couponPanelOpen();
+    this.couponPanelOpen.set(nextOpen);
+
+    if (nextOpen && !this.availableCouponsLoaded()) {
+      this.loadAvailableCoupons();
+    }
+  }
+
+  selectCoupon(coupon: AvailableCoupon): void {
+    this.appliedCoupon.set({
+      couponId: coupon.id,
+      code: coupon.code,
+      description: coupon.description,
+      discountType: coupon.discountType,
+      orderAmount: coupon.orderAmount,
+      discountAmount: coupon.discountAmount,
+      finalAmount: coupon.finalAmount,
+    });
+    this.couponPanelOpen.set(false);
+  }
+
+  removeCoupon(): void {
+    this.appliedCoupon.set(null);
+  }
+
+  changeCoupon(): void {
+    this.appliedCoupon.set(null);
+    this.couponPanelOpen.set(true);
+    this.loadAvailableCoupons();
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -114,6 +160,7 @@ export class CheckoutComponent {
       cartItemIds: selectedItems.map((item) => item.id),
       paymentMethod: value.paymentMethod,
       note: value.note || undefined,
+      couponCode: this.appliedCoupon()?.code ?? undefined,
       deliveryAddress: {
         recipientName,
         phone,
@@ -147,6 +194,24 @@ export class CheckoutComponent {
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         this.errorMessage.set(getHttpErrorMessage(err, 'Không thể tạo đơn hàng.'));
+      },
+    });
+  }
+
+  private loadAvailableCoupons(): void {
+    this.availableCouponsLoading.set(true);
+    this.availableCouponsLoaded.set(false);
+
+    this.couponService.listAvailable(this.selectedSubtotal()).subscribe({
+      next: (coupons) => {
+        this.availableCoupons.set(coupons);
+        this.availableCouponsLoading.set(false);
+        this.availableCouponsLoaded.set(true);
+      },
+      error: () => {
+        this.availableCoupons.set([]);
+        this.availableCouponsLoading.set(false);
+        this.availableCouponsLoaded.set(true);
       },
     });
   }

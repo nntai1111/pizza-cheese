@@ -50,6 +50,7 @@ public class OrderService {
     private final CartDao cartDao;
     private final UserDao userDao;
     private final VnPayService vnPayService;
+    private final CouponService couponService;
     private final ObjectMapper objectMapper;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -59,12 +60,14 @@ public class OrderService {
             CartDao cartDao,
             UserDao userDao,
             VnPayService vnPayService,
+            CouponService couponService,
             ObjectMapper objectMapper) {
         this.orderDao = orderDao;
         this.paymentDao = paymentDao;
         this.cartDao = cartDao;
         this.userDao = userDao;
         this.vnPayService = vnPayService;
+        this.couponService = couponService;
         this.objectMapper = objectMapper;
     }
 
@@ -85,8 +88,10 @@ public class OrderService {
         BigDecimal totalAmount = selectedItems.stream()
                 .map(CartItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        BigDecimal finalAmount = totalAmount.subtract(discountAmount);
+        CouponService.CouponApplyResult couponResult =
+                couponService.applyCoupon(userEmail, request.getCouponCode(), totalAmount);
+        BigDecimal discountAmount = couponResult.getDiscountAmount();
+        BigDecimal finalAmount = couponResult.getFinalAmount();
 
         LocalDateTime now = LocalDateTime.now();
         Order order = new Order();
@@ -97,6 +102,7 @@ public class OrderService {
         order.setTotalAmount(totalAmount);
         order.setDiscountAmount(discountAmount);
         order.setFinalAmount(finalAmount);
+        order.setCouponId(couponResult.getCouponId());
         order.setPaymentMethodSelected(paymentMethod);
         order.setNote(request.getNote());
         order.setDeliveryAddressSnapshot(toAddressSnapshot(request.getDeliveryAddress()));
@@ -109,6 +115,10 @@ public class OrderService {
                 order.getStatus(),
                 userId,
                 paymentMethod == PaymentMethod.VNPAY ? "Tao don cho thanh toan VNPay" : "Tao don COD");
+
+        if (couponResult.getCouponId() != null) {
+            couponService.recordUsage(couponResult.getCouponId(), userId, order.getId());
+        }
 
         List<OrderItem> orderItems = snapshotCartItems(selectedItems, order.getId());
         order.setItems(orderItems);
@@ -132,7 +142,7 @@ public class OrderService {
         cartDao.deleteItemsByIds(selectedItems.stream().map(CartItem::getId).toList());
         cartDao.touchUpdatedAt(cart.getId());
 
-        return OrderResponse.from(order, payment);
+        return toOrderResponse(order, payment);
     }
 
     public OrderResponse getOrder(String userEmail, UUID orderId) {
@@ -140,7 +150,7 @@ public class OrderService {
         Order order = orderDao.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
         Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
-        return OrderResponse.from(order, payment);
+        return toOrderResponse(order, payment);
     }
 
     public OrderResponse getOrderByPaymentTxnRef(String userEmail, String txnRef) {
@@ -152,7 +162,9 @@ public class OrderService {
     public List<OrderResponse> getMyOrders(String userEmail) {
         UUID userId = resolveUserId(userEmail);
         return orderDao.findByUserId(userId).stream()
-                .map(order -> OrderResponse.summary(order, paymentDao.findLatestByOrderId(order.getId()).orElse(null)))
+                .map(order -> toOrderResponse(
+                        order,
+                        paymentDao.findLatestByOrderId(order.getId()).orElse(null)))
                 .toList();
     }
 
@@ -164,7 +176,7 @@ public class OrderService {
         Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
-            return OrderResponse.from(order, payment);
+            return toOrderResponse(order, payment);
         }
 
         if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
@@ -172,7 +184,7 @@ public class OrderService {
             orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
             orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, userId, "Khach huy don truoc thanh toan");
             order.setStatus(OrderStatus.CANCELLED);
-            return OrderResponse.from(order, payment);
+            return toOrderResponse(order, payment);
         }
 
         if (order.getStatus() != OrderStatus.CONFIRMED) {
@@ -189,7 +201,7 @@ public class OrderService {
             orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
             orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, userId, "Khach huy don");
             order.setStatus(OrderStatus.CANCELLED);
-            return OrderResponse.from(order, payment);
+            return toOrderResponse(order, payment);
         }
 
         throw ApiException.badRequest("Không thể hủy đơn ở trạng thái hiện tại");
@@ -303,5 +315,15 @@ public class OrderService {
         }
         payment.setStatus(PaymentStatus.FAILED);
         paymentDao.updateStatus(payment);
+    }
+
+    private OrderResponse toOrderResponse(Order order, Payment payment) {
+        OrderResponse response = order.getItems() == null || order.getItems().isEmpty()
+                ? OrderResponse.summary(order, payment)
+                : OrderResponse.from(order, payment);
+        if (order.getCouponId() != null) {
+            response.setCouponCode(couponService.findCodeById(order.getCouponId()));
+        }
+        return response;
     }
 }

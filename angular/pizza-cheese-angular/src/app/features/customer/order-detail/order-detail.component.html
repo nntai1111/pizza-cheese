@@ -38,6 +38,12 @@
           <span>Tạm tính</span>
           <strong>{{ formatPrice(currentOrder.totalAmount) }}</strong>
         </div>
+        @if (currentOrder.couponCode) {
+          <div class="order-detail-summary__row">
+            <span>Mã giảm giá</span>
+            <strong>{{ currentOrder.couponCode }}</strong>
+          </div>
+        }
         <div class="order-detail-summary__row">
           <span>Giảm giá</span>
           <strong>{{ formatPrice(currentOrder.discountAmount) }}</strong>

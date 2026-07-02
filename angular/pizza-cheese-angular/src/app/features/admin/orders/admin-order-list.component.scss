@@ -1,0 +1,42 @@
+@import '../admin-shared';
+
+.order-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter-chip {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  font-size: 0.8125rem;
+
+  &--active {
+    background: #e94560;
+    border-color: #e94560;
+    color: #fff;
+    font-weight: 600;
+  }
+}
+
+.order-email,
+.order-payment-status {
+  margin-top: 0.15rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.actions .btn-link {
+  color: #e94560;
+  text-decoration: none;
+  font-weight: 600;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

@@ -25,6 +25,9 @@ public class CreateOrderRequest {
     @Size(max = 500, message = "Ghi chú quá dài")
     private String note;
 
+    @Size(max = 50, message = "Mã giảm giá quá dài")
+    private String couponCode;
+
     @NotEmpty(message = "Phải chọn ít nhất một món trong giỏ hàng")
     private List<UUID> cartItemIds;
 }

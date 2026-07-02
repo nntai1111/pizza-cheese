@@ -30,6 +30,7 @@ export interface CreateOrderRequest {
   paymentMethod: PaymentMethod;
   deliveryAddress: DeliveryAddress;
   note?: string;
+  couponCode?: string;
   cartItemIds: string[];
 }
 
@@ -69,6 +70,7 @@ export interface Order {
   totalAmount: number;
   discountAmount: number;
   finalAmount: number;
+  couponCode: string | null;
   note: string | null;
   deliveryAddressSnapshot: string;
   paymentUrl: string | null;

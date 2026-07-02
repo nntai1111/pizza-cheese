@@ -27,11 +27,17 @@ public class CashierService {
     private final OrderDao orderDao;
     private final PaymentDao paymentDao;
     private final UserDao userDao;
+    private final CouponService couponService;
 
-    public CashierService(OrderDao orderDao, PaymentDao paymentDao, UserDao userDao) {
+    public CashierService(
+            OrderDao orderDao,
+            PaymentDao paymentDao,
+            UserDao userDao,
+            CouponService couponService) {
         this.orderDao = orderDao;
         this.paymentDao = paymentDao;
         this.userDao = userDao;
+        this.couponService = couponService;
     }
 
     public PageResponse<OrderResponse> getOrders(OrderStatus status, int page, int size) {
@@ -42,9 +48,9 @@ public class CashierService {
                 ? orderDao.findPage(safePage, safeSize)
                 : orderDao.findPageByStatus(status, safePage, safeSize);
         List<OrderResponse> content = orders.stream()
-                .map(order -> enrichWithCustomer(
+                .map(order -> enrich(
                         OrderResponse.summary(order, paymentDao.findLatestByOrderId(order.getId()).orElse(null)),
-                        order.getUserId()))
+                        order))
                 .toList();
         return PageResponse.of(content, safePage, safeSize, total);
     }
@@ -53,7 +59,7 @@ public class CashierService {
         Order order = orderDao.findById(orderId)
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
         Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
-        return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
+        return enrich(OrderResponse.from(order, payment), order);
     }
 
     @Transactional
@@ -91,7 +97,7 @@ public class CashierService {
             throw ApiException.badRequest("Không thể xác nhận thanh toán ở trạng thái đơn hiện tại");
         }
 
-        return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
+        return enrich(OrderResponse.from(order, payment), order);
     }
 
     @Transactional
@@ -102,7 +108,7 @@ public class CashierService {
         Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
-            return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
+            return enrich(OrderResponse.from(order, payment), order);
         }
 
         if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
@@ -110,7 +116,7 @@ public class CashierService {
             orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
             orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, staffId, "Thu ngan huy don chua thanh toan");
             order.setStatus(OrderStatus.CANCELLED);
-            return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
+            return enrich(OrderResponse.from(order, payment), order);
         }
 
         if (order.getStatus() != OrderStatus.CONFIRMED) {
@@ -127,7 +133,7 @@ public class CashierService {
             orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
             orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, staffId, "Thu ngan huy don");
             order.setStatus(OrderStatus.CANCELLED);
-            return enrichWithCustomer(OrderResponse.from(order, payment), order.getUserId());
+            return enrich(OrderResponse.from(order, payment), order);
         }
 
         throw ApiException.badRequest("Không thể hủy đơn ở trạng thái hiện tại");
@@ -141,8 +147,11 @@ public class CashierService {
         paymentDao.updateStatus(payment);
     }
 
-    private OrderResponse enrichWithCustomer(OrderResponse response, UUID userId) {
-        userDao.findById(userId).ifPresent(user -> applyCustomerInfo(response, user));
+    private OrderResponse enrich(OrderResponse response, Order order) {
+        userDao.findById(order.getUserId()).ifPresent(user -> applyCustomerInfo(response, user));
+        if (order.getCouponId() != null) {
+            response.setCouponCode(couponService.findCodeById(order.getCouponId()));
+        }
         return response;
     }
 

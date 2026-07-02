@@ -1,0 +1,85 @@
+<div class="admin-page">
+  <div class="admin-page__header">
+    <h1>Quản lý đơn hàng</h1>
+  </div>
+
+  <div class="order-filters">
+    @for (filter of filters; track filter.value) {
+      <button
+        type="button"
+        class="filter-chip"
+        [class.filter-chip--active]="activeFilter() === filter.value"
+        (click)="setFilter(filter.value)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="loading-text">Đang tải...</p>
+  } @else if (!orders().length) {
+    <p class="loading-text">Không có đơn hàng nào trong bộ lọc này.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Mã đơn</th>
+            <th>Khách hàng</th>
+            <th>Thời gian</th>
+            <th>Thanh toán</th>
+            <th>Trạng thái</th>
+            <th>Tổng tiền</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of orders(); track order.id) {
+            <tr>
+              <td><strong>{{ order.orderCode }}</strong></td>
+              <td>
+                @if (order.customerName || order.customerEmail) {
+                  <div>{{ order.customerName ?? '—' }}</div>
+                  @if (order.customerEmail) {
+                    <div class="order-email">{{ order.customerEmail }}</div>
+                  }
+                } @else {
+                  —
+                }
+              </td>
+              <td>{{ order.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <div>{{ getPaymentLabel(order) }}</div>
+                @if (order.paymentStatus) {
+                  <div class="order-payment-status">{{ getPaymentStatusLabel(order) }}</div>
+                }
+              </td>
+              <td>
+                <span class="badge" [class.badge--active]="!isCancelled(order)">
+                  {{ getStatusLabel(order) }}
+                </span>
+              </td>
+              <td>{{ formatPrice(order.finalAmount) }}</td>
+              <td class="actions">
+                <a [routerLink]="['/admin/orders', order.id]" class="btn-link">Chi tiết</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [page]="page()"
+      [totalPages]="totalPages()"
+      [totalElements]="totalElements()"
+      [disabled]="loading()"
+      (pageChange)="onPageChange($event)"
+    />
+  }
+</div>

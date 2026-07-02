@@ -32,7 +32,6 @@ import pizza_cheese.todo.service.OrderService;
 
 @RestController
 @RequestMapping("/api/v1/cashier/orders")
-@PreAuthorize("hasRole('CASHIER')")
 public class CashierController {
 
     private final CashierService cashierService;
@@ -46,6 +45,7 @@ public class CashierController {
     @Operation(summary = "Danh sách đơn hàng (phân trang)")
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping
+    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<RestResponse<PageResponse<OrderResponse>>> getOrders(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
@@ -56,6 +56,7 @@ public class CashierController {
     @Operation(summary = "Tạo đơn hàng tại quầy")
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping
+    @PreAuthorize("hasRole('CASHIER')")
     public ResponseEntity<RestResponse<OrderResponse>> createOrder(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody CreateOrderRequest request,
@@ -67,6 +68,7 @@ public class CashierController {
     @Operation(summary = "Chi tiết đơn hàng")
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<RestResponse<OrderResponse>> getOrder(@PathVariable UUID id) {
         return ResponseEntity.ok(RestResponse.success(cashierService.getOrder(id)));
     }
@@ -74,6 +76,7 @@ public class CashierController {
     @Operation(summary = "Xác nhận đã thu tiền / chuyển khoản")
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/{id}/confirm-payment")
+    @PreAuthorize("hasRole('CASHIER')")
     public ResponseEntity<RestResponse<OrderResponse>> confirmPayment(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID id) {
@@ -83,6 +86,7 @@ public class CashierController {
     @Operation(summary = "Hủy đơn hàng")
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('CASHIER')")
     public ResponseEntity<RestResponse<OrderResponse>> cancelOrder(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID id) {
