@@ -2,10 +2,12 @@ package pizza_cheese.todo.dao;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -36,6 +38,20 @@ public class CouponDao {
     public Optional<Coupon> findById(UUID id) {
         List<Coupon> coupons = jdbc.query(queries.get("findById"), Map.of("id", id), RowMappers.forEntity(Coupon.class));
         return coupons.isEmpty() ? Optional.empty() : Optional.of(coupons.get(0));
+    }
+
+    public Map<UUID, String> findCodesByIds(Collection<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Map.of();
+        }
+        return jdbc.query(
+                queries.get("findCodesByIds"),
+                Map.of("ids", ids),
+                (rs, rowNum) -> Map.entry(
+                        rs.getObject("id", UUID.class),
+                        rs.getString("code")))
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     public Optional<Coupon> findByCode(String code) {

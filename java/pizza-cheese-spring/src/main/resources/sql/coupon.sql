@@ -13,6 +13,11 @@ SELECT id, code, description, discount_type, discount_value, min_order_value, ma
 FROM coupons
 WHERE id = :id
 
+-- name: findCodesByIds
+SELECT id, code
+FROM coupons
+WHERE id IN (:ids)
+
 -- name: findByCode
 SELECT id, code, description, discount_type, discount_value, min_order_value, max_discount,
        start_date, end_date, usage_limit, used_count, per_user_limit,

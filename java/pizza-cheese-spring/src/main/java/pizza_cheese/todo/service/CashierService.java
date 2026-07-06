@@ -27,17 +27,17 @@ public class CashierService {
     private final OrderDao orderDao;
     private final PaymentDao paymentDao;
     private final UserDao userDao;
-    private final CouponService couponService;
+    private final OrderResponseEnricher orderResponseEnricher;
 
     public CashierService(
             OrderDao orderDao,
             PaymentDao paymentDao,
             UserDao userDao,
-            CouponService couponService) {
+            OrderResponseEnricher orderResponseEnricher) {
         this.orderDao = orderDao;
         this.paymentDao = paymentDao;
         this.userDao = userDao;
-        this.couponService = couponService;
+        this.orderResponseEnricher = orderResponseEnricher;
     }
 
     public PageResponse<OrderResponse> getOrders(OrderStatus status, int page, int size) {
@@ -47,19 +47,14 @@ public class CashierService {
         List<Order> orders = status == null
                 ? orderDao.findPage(safePage, safeSize)
                 : orderDao.findPageByStatus(status, safePage, safeSize);
-        List<OrderResponse> content = orders.stream()
-                .map(order -> enrich(
-                        OrderResponse.summary(order, paymentDao.findLatestByOrderId(order.getId()).orElse(null)),
-                        order))
-                .toList();
+        List<OrderResponse> content = orderResponseEnricher.toListResponses(orders, false, false);
         return PageResponse.of(content, safePage, safeSize, total);
     }
 
     public OrderResponse getOrder(UUID orderId) {
         Order order = orderDao.findById(orderId)
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
-        Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
-        return enrich(OrderResponse.from(order, payment), order);
+        return orderResponseEnricher.toDetailResponse(order, false);
     }
 
     @Transactional
@@ -97,7 +92,7 @@ public class CashierService {
             throw ApiException.badRequest("Không thể xác nhận thanh toán ở trạng thái đơn hiện tại");
         }
 
-        return enrich(OrderResponse.from(order, payment), order);
+        return orderResponseEnricher.toDetailResponse(order, false);
     }
 
     @Transactional
@@ -108,7 +103,7 @@ public class CashierService {
         Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
-            return enrich(OrderResponse.from(order, payment), order);
+            return orderResponseEnricher.toDetailResponse(order, false);
         }
 
         if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
@@ -116,7 +111,7 @@ public class CashierService {
             orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
             orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, staffId, "Thu ngan huy don chua thanh toan");
             order.setStatus(OrderStatus.CANCELLED);
-            return enrich(OrderResponse.from(order, payment), order);
+            return orderResponseEnricher.toDetailResponse(order, false);
         }
 
         if (order.getStatus() != OrderStatus.CONFIRMED) {
@@ -133,7 +128,7 @@ public class CashierService {
             orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
             orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, staffId, "Thu ngan huy don");
             order.setStatus(OrderStatus.CANCELLED);
-            return enrich(OrderResponse.from(order, payment), order);
+            return orderResponseEnricher.toDetailResponse(order, false);
         }
 
         throw ApiException.badRequest("Không thể hủy đơn ở trạng thái hiện tại");
@@ -145,19 +140,6 @@ public class CashierService {
         }
         payment.setStatus(PaymentStatus.FAILED);
         paymentDao.updateStatus(payment);
-    }
-
-    private OrderResponse enrich(OrderResponse response, Order order) {
-        userDao.findById(order.getUserId()).ifPresent(user -> applyCustomerInfo(response, user));
-        if (order.getCouponId() != null) {
-            response.setCouponCode(couponService.findCodeById(order.getCouponId()));
-        }
-        return response;
-    }
-
-    private void applyCustomerInfo(OrderResponse response, User user) {
-        response.setCustomerName(user.getFullName());
-        response.setCustomerEmail(user.getEmail());
     }
 
     private UUID resolveUserId(String userEmail) {

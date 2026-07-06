@@ -2,10 +2,13 @@ package pizza_cheese.todo.dao;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -54,6 +57,18 @@ public class PaymentDao {
                 Map.of("orderId", orderId),
                 RowMappers.forEntity(Payment.class));
         return payments.isEmpty() ? Optional.empty() : Optional.of(payments.get(0));
+    }
+
+    public Map<UUID, Payment> findLatestByOrderIds(Collection<UUID> orderIds) {
+        if (orderIds == null || orderIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Payment> payments = jdbc.query(
+                queries.get("findLatestByOrderIds"),
+                Map.of("orderIds", orderIds),
+                RowMappers.forEntity(Payment.class));
+        return payments.stream()
+                .collect(Collectors.toMap(Payment::getOrderId, Function.identity(), (left, right) -> left));
     }
 
     public Optional<Payment> findByTransactionId(String transactionId) {

@@ -2,12 +2,15 @@ package pizza_cheese.todo.dao;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -45,6 +48,21 @@ public class UserDao {
 
     public Optional<User> findById(UUID id) {
         return findOne(queries.get("findById"), Map.of("id", id));
+    }
+
+    public Map<UUID, UserDisplayInfo> findDisplayInfoByIds(Collection<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Map.of();
+        }
+        List<UserDisplayInfo> users = jdbc.query(
+                queries.get("findDisplayInfoByIds"),
+                Map.of("ids", ids),
+                (rs, rowNum) -> new UserDisplayInfo(
+                        rs.getObject("id", UUID.class),
+                        rs.getString("full_name"),
+                        rs.getString("email")));
+        return users.stream()
+                .collect(Collectors.toMap(UserDisplayInfo::id, Function.identity()));
     }
 
     public boolean existsByEmail(String email) {
@@ -133,5 +151,8 @@ public class UserDao {
         for (Role role : roles) {
             jdbc.update(queries.get("insertRole"), Map.of("userId", userId, "role", role.name()));
         }
+    }
+
+    public record UserDisplayInfo(UUID id, String fullName, String email) {
     }
 }

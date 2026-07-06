@@ -51,6 +51,7 @@ public class OrderService {
     private final UserDao userDao;
     private final VnPayService vnPayService;
     private final CouponService couponService;
+    private final OrderResponseEnricher orderResponseEnricher;
     private final ObjectMapper objectMapper;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -61,6 +62,7 @@ public class OrderService {
             UserDao userDao,
             VnPayService vnPayService,
             CouponService couponService,
+            OrderResponseEnricher orderResponseEnricher,
             ObjectMapper objectMapper) {
         this.orderDao = orderDao;
         this.paymentDao = paymentDao;
@@ -68,6 +70,7 @@ public class OrderService {
         this.userDao = userDao;
         this.vnPayService = vnPayService;
         this.couponService = couponService;
+        this.orderResponseEnricher = orderResponseEnricher;
         this.objectMapper = objectMapper;
     }
 
@@ -161,11 +164,7 @@ public class OrderService {
 
     public List<OrderResponse> getMyOrders(String userEmail) {
         UUID userId = resolveUserId(userEmail);
-        return orderDao.findByUserId(userId).stream()
-                .map(order -> toOrderResponse(
-                        order,
-                        paymentDao.findLatestByOrderId(order.getId()).orElse(null)))
-                .toList();
+        return orderResponseEnricher.toListResponses(orderDao.findByUserId(userId), true, false);
     }
 
     @Transactional
@@ -321,9 +320,6 @@ public class OrderService {
         OrderResponse response = order.getItems() == null || order.getItems().isEmpty()
                 ? OrderResponse.summary(order, payment)
                 : OrderResponse.from(order, payment);
-        if (order.getCouponId() != null) {
-            response.setCouponCode(couponService.findCodeById(order.getCouponId()));
-        }
-        return response;
+        return orderResponseEnricher.enrichExisting(response, order, false);
     }
 }

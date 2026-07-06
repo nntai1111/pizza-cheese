@@ -22,6 +22,14 @@ WHERE order_id = :orderId
 ORDER BY created_at DESC
 LIMIT 1
 
+-- name: findLatestByOrderIds
+SELECT DISTINCT ON (order_id)
+       id, order_id, payment_method, amount, transaction_id,
+       status, payment_url, callback_data::text AS callback_data, paid_at, created_at, updated_at
+FROM payments
+WHERE order_id IN (:orderIds)
+ORDER BY order_id, created_at DESC
+
 -- name: findByTransactionId
 SELECT id, order_id, payment_method, amount, transaction_id,
        status, payment_url, callback_data::text AS callback_data, paid_at, created_at, updated_at

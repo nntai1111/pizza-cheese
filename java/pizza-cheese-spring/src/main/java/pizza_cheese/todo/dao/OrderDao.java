@@ -2,10 +2,12 @@ package pizza_cheese.todo.dao;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -67,9 +69,7 @@ public class OrderDao {
     }
 
     public List<Order> findByUserId(UUID userId) {
-        List<Order> orders = jdbc.query(queries.get("findByUserId"), Map.of("userId", userId), RowMappers.forEntity(Order.class));
-        orders.forEach(this::loadItems);
-        return orders;
+        return jdbc.query(queries.get("findByUserId"), Map.of("userId", userId), RowMappers.forEntity(Order.class));
     }
 
     public List<Order> findAll() {
@@ -112,6 +112,47 @@ public class OrderDao {
                 RowMappers.forEntity(Order.class));
     }
 
+    public void loadOrderItems(Order order) {
+        loadOrderItemsBatch(List.of(order));
+    }
+
+    public void loadOrderItemsBatch(Collection<Order> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return;
+        }
+
+        List<UUID> orderIds = orders.stream().map(Order::getId).distinct().toList();
+        if (orderIds.isEmpty()) {
+            return;
+        }
+
+        List<OrderItem> allItems = jdbc.query(
+                queries.get("findItemsByOrderIds"),
+                Map.of("orderIds", orderIds),
+                RowMappers.forEntity(OrderItem.class));
+
+        if (allItems.isEmpty()) {
+            orders.forEach(order -> order.setItems(List.of()));
+            return;
+        }
+
+        List<UUID> itemIds = allItems.stream().map(OrderItem::getId).toList();
+        Map<UUID, List<OrderItemTopping>> toppingsByItem = loadToppingsByOrderItemIds(itemIds);
+        Map<UUID, List<OrderItemComboLine>> comboLinesByItem = loadComboLinesByOrderItemIds(itemIds);
+
+        for (OrderItem item : allItems) {
+            item.setToppings(toppingsByItem.getOrDefault(item.getId(), List.of()));
+            item.setComboLines(comboLinesByItem.getOrDefault(item.getId(), List.of()));
+        }
+
+        Map<UUID, List<OrderItem>> itemsByOrder = allItems.stream()
+                .collect(Collectors.groupingBy(OrderItem::getOrderId));
+
+        for (Order order : orders) {
+            order.setItems(itemsByOrder.getOrDefault(order.getId(), List.of()));
+        }
+    }
+
     public boolean existsByOrderCode(String orderCode) {
         Integer count = jdbc.queryForObject(
                 queries.get("existsByOrderCode"),
@@ -125,6 +166,25 @@ public class OrderDao {
                 .addValue("id", orderId)
                 .addValue("status", status.getCode())
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
+    }
+
+    public boolean claimForPreparing(UUID orderId, UUID kitchenStaffId) {
+        int updated = jdbc.update(queries.get("claimForPreparing"), new MapSqlParameterSource()
+                .addValue("id", orderId)
+                .addValue("expectedStatus", OrderStatus.CONFIRMED.getCode())
+                .addValue("newStatus", OrderStatus.PREPARING.getCode())
+                .addValue("kitchenStaffId", kitchenStaffId)
+                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
+        return updated > 0;
+    }
+
+    public boolean updateStatusIfCurrent(UUID orderId, OrderStatus expected, OrderStatus next) {
+        int updated = jdbc.update(queries.get("updateStatusIfCurrent"), new MapSqlParameterSource()
+                .addValue("id", orderId)
+                .addValue("expectedStatus", expected.getCode())
+                .addValue("newStatus", next.getCode())
+                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
+        return updated > 0;
     }
 
     public void insertStatusHistory(UUID orderId, OrderStatus status, UUID changedBy, String note) {
@@ -176,27 +236,29 @@ public class OrderDao {
     }
 
     private Order loadDetails(Order order) {
-        loadItems(order);
+        loadOrderItems(order);
         return order;
     }
 
-    private void loadItems(Order order) {
-        List<OrderItem> items = jdbc.query(
-                queries.get("findItemsByOrderId"),
-                Map.of("orderId", order.getId()),
-                RowMappers.forEntity(OrderItem.class));
-        items.forEach(this::loadRelations);
-        order.setItems(items);
+    private Map<UUID, List<OrderItemTopping>> loadToppingsByOrderItemIds(List<UUID> orderItemIds) {
+        if (orderItemIds.isEmpty()) {
+            return Map.of();
+        }
+        List<OrderItemTopping> toppings = jdbc.query(
+                queries.get("findToppingsByOrderItemIds"),
+                Map.of("orderItemIds", orderItemIds),
+                RowMappers.forEntity(OrderItemTopping.class));
+        return toppings.stream().collect(Collectors.groupingBy(OrderItemTopping::getOrderItemId));
     }
 
-    private void loadRelations(OrderItem item) {
-        item.setToppings(jdbc.query(
-                queries.get("findToppingsByOrderItemId"),
-                Map.of("orderItemId", item.getId()),
-                RowMappers.forEntity(OrderItemTopping.class)));
-        item.setComboLines(jdbc.query(
-                queries.get("findComboLinesByOrderItemId"),
-                Map.of("orderItemId", item.getId()),
-                RowMappers.forEntity(OrderItemComboLine.class)));
+    private Map<UUID, List<OrderItemComboLine>> loadComboLinesByOrderItemIds(List<UUID> orderItemIds) {
+        if (orderItemIds.isEmpty()) {
+            return Map.of();
+        }
+        List<OrderItemComboLine> comboLines = jdbc.query(
+                queries.get("findComboLinesByOrderItemIds"),
+                Map.of("orderItemIds", orderItemIds),
+                RowMappers.forEntity(OrderItemComboLine.class));
+        return comboLines.stream().collect(Collectors.groupingBy(OrderItemComboLine::getOrderItemId));
     }
 }

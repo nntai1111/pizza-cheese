@@ -9,34 +9,24 @@
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
       <div class="form-group">
         <label for="login">Email hoặc tên đăng nhập</label>
-        <input
-          id="login"
-          type="text"
-          formControlName="login"
-          placeholder="user hoặc user@hoidanit.vn"
-          autocomplete="username"
-        />
+        <input id="login" type="text" formControlName="login" placeholder="user hoặc user@gmail.com"
+          autocomplete="username" />
         @if (form.controls.login.touched && form.controls.login.errors?.['required']) {
-          <span class="error">Email hoặc tên đăng nhập là bắt buộc</span>
+        <span class="error">Email hoặc tên đăng nhập là bắt buộc</span>
         }
       </div>
 
       <div class="form-group">
         <label for="password">Mật khẩu</label>
-        <input
-          id="password"
-          type="password"
-          formControlName="password"
-          placeholder="••••••"
-          autocomplete="current-password"
-        />
+        <input id="password" type="password" formControlName="password" placeholder="••••••"
+          autocomplete="current-password" />
         @if (form.controls.password.touched && form.controls.password.errors?.['required']) {
-          <span class="error">Mật khẩu là bắt buộc</span>
+        <span class="error">Mật khẩu là bắt buộc</span>
         }
       </div>
 
       @if (errorMessage()) {
-        <div class="alert">{{ errorMessage() }}</div>
+      <div class="alert">{{ errorMessage() }}</div>
       }
 
       <button type="submit" class="btn-primary" [disabled]="loading()">

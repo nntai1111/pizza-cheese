@@ -36,6 +36,7 @@ public class OrderResponse {
     private List<OrderItemResponse> items;
     private String customerName;
     private String customerEmail;
+    private String kitchenStaffName;
 
     public static OrderResponse from(Order order, Payment payment) {
         OrderResponse response = new OrderResponse();

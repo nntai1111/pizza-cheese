@@ -42,10 +42,14 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (userDao.count() == 0) {
-            seedUser("admin", "admin@hoidanit.vn", "Admin User", "123456", Set.of(Role.ADMIN));
-            seedUser("cashier", "cashier@hoidanit.vn", "Cashier User", "123456", Set.of(Role.CASHIER));
-            seedUser("user", "user@hoidanit.vn", "Normal User", "123456", Set.of(Role.CUSTOMER));
+            seedUser("admin", "admin@gmail.com", "Admin User", "123456", Set.of(Role.ADMIN));
+            seedUser("cashier", "cashier@gmail.com", "Cashier User", "123456", Set.of(Role.CASHIER));
+            seedUser("kitchen", "kitchen@gmail.com", "Kitchen User", "123456", Set.of(Role.KITCHEN));
+            seedUser("user", "user@gmail.com", "Normal User", "123456", Set.of(Role.CUSTOMER));
             log.info("Seeded default users into database");
+        } else if (userDao.findByEmail("kitchen@gmail.com").isEmpty()) {
+            seedUser("kitchen", "kitchen@gmail.com", "Kitchen User", "123456", Set.of(Role.KITCHEN));
+            log.info("Seeded kitchen user into database");
         }
 
         if (couponDao.count() == 0) {

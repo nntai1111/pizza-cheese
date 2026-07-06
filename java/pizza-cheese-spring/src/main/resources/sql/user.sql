@@ -18,6 +18,11 @@ SELECT id, username, email, password_hash, full_name, phone, avatar_url, created
 FROM users
 WHERE id = :id
 
+-- name: findDisplayInfoByIds
+SELECT id, full_name, email
+FROM users
+WHERE id IN (:ids)
+
 -- name: findRolesByUserId
 SELECT r.name AS role
 FROM user_roles ur

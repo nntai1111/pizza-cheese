@@ -56,9 +56,8 @@ class ComboControllerTest {
                 deletedId = id;
             }
         };
-        controller = new ComboController(); // lúc này controller.service == null; -> chưa dùng được
-        ReflectionTestUtils.setField(controller, "comboService", comboService);// phụ thuộc spring boot test, setField
-                                                                               // để inject service vào controller
+        controller = new ComboController();
+        ReflectionTestUtils.setField(controller, "comboService", comboService);
     }
 
     @Test

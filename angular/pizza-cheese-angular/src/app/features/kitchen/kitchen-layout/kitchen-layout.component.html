@@ -1,0 +1,46 @@
+<div class="kitchen-layout-container">
+  <aside class="kitchen-left-sidebar">
+    <a routerLink="/kitchen/orders" class="sidebar-brand">
+      <span class="sidebar-brand__logo">👨‍🍳</span>
+      <div class="sidebar-brand__text">
+        <strong>Pizza Cheese</strong>
+        <span>Bếp</span>
+      </div>
+    </a>
+
+    <nav class="sidebar-nav">
+      <a
+        routerLink="/kitchen/orders"
+        routerLinkActive="sidebar-nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="sidebar-nav__link"
+      >
+        <span class="link-icon">📋</span>
+        <span>Đơn cần chế biến</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <app-user-avatar [user]="user()" size="sm" />
+        <div class="sidebar-user__info">
+          <span class="sidebar-user__name">{{ user()?.name }}</span>
+          <span class="sidebar-user__role">Nhân viên bếp</span>
+        </div>
+      </div>
+      <button type="button" class="btn-logout" (click)="logout()">
+        <span class="logout-icon">🚪</span>
+        <span>Đăng xuất</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="kitchen-main-container">
+    <main class="kitchen-content">
+      <router-outlet />
+    </main>
+    <footer class="kitchen-footer">
+      <p>© {{ currentYear }} Pizza Cheese — Bếp</p>
+    </footer>
+  </div>
+</div>

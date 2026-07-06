@@ -80,6 +80,7 @@ export interface Order {
   items: OrderItem[] | null;
   customerName?: string | null;
   customerEmail?: string | null;
+  kitchenStaffName?: string | null;
 }
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
