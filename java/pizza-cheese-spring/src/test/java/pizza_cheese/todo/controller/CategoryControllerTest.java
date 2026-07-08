@@ -24,7 +24,7 @@ class CategoryControllerTest {
 
     @BeforeEach
     void setUp() {
-        categoryService = new CategoryService(null, null) {
+        categoryService = new CategoryService(null, null, null) {
             @Override
             public List<CategoryResponse> findAll(boolean activeOnly) {
                 CategoryResponse category = new CategoryResponse();

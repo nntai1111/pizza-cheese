@@ -3,10 +3,12 @@ package pizza_cheese.todo.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import pizza_cheese.todo.config.MenuCacheNames;
 import pizza_cheese.todo.dao.ComboDao;
 import pizza_cheese.todo.dao.PizzaDao;
 import pizza_cheese.todo.domain.Combo;
@@ -27,11 +29,17 @@ public class ComboService {
     private final ComboDao comboDao;
     private final PizzaDao pizzaDao;
     private final CloudinaryService cloudinaryService;
+    private final MenuCacheEvictor menuCacheEvictor;
 
-    public ComboService(ComboDao comboDao, PizzaDao pizzaDao, CloudinaryService cloudinaryService) {
+    public ComboService(
+            ComboDao comboDao,
+            PizzaDao pizzaDao,
+            CloudinaryService cloudinaryService,
+            MenuCacheEvictor menuCacheEvictor) {
         this.comboDao = comboDao;
         this.pizzaDao = pizzaDao;
         this.cloudinaryService = cloudinaryService;
+        this.menuCacheEvictor = menuCacheEvictor;
     }
 
     public PageResponse<ComboResponse> findPage(boolean activeOnly, int page, int size) {
@@ -45,6 +53,7 @@ public class ComboService {
         return PageResponse.of(content, safePage, safeSize, total);
     }
 
+    @Cacheable(cacheNames = MenuCacheNames.COMBOS, key = "'id:' + #id")
     public ComboResponse findById(UUID id) {
         return comboDao.findById(id)
                 .map(ComboResponse::from)
@@ -76,6 +85,7 @@ public class ComboService {
         combo.setItems(toComboItems(request.getItems()));
 
         Combo saved = comboDao.save(combo);
+        menuCacheEvictor.evictCombos();
         return ComboResponse.from(comboDao.findById(saved.getId()).orElse(saved));
     }
 
@@ -125,6 +135,7 @@ public class ComboService {
         }
 
         Combo saved = comboDao.save(combo);
+        menuCacheEvictor.evictCombos();
         return ComboResponse.from(comboDao.findById(saved.getId()).orElse(saved));
     }
 
@@ -134,6 +145,7 @@ public class ComboService {
             throw ApiException.notFound("Không tìm thấy combo");
         }
         comboDao.deactivate(id);
+        menuCacheEvictor.evictCombos();
     }
 
     private void validateComboItems(List<ComboItemRequest> items) {

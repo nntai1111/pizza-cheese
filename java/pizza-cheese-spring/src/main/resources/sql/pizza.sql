@@ -63,6 +63,12 @@ FROM pizza_variants
 WHERE pizza_id = :pizzaId
 ORDER BY size
 
+-- name: findVariantsByPizzaIds
+SELECT id, pizza_id, size, price
+FROM pizza_variants
+WHERE pizza_id IN (:pizzaIds)
+ORDER BY pizza_id, size
+
 -- name: deleteVariantsByPizzaId
 DELETE FROM pizza_variants WHERE pizza_id = :pizzaId
 
@@ -77,6 +83,14 @@ JOIN toppings t ON t.id = pt.topping_id
 WHERE pt.pizza_id = :pizzaId
 ORDER BY t.name
 
+-- name: findToppingsByPizzaIds
+SELECT pt.pizza_id,
+       t.id, t.name, t.price, t.is_active AS active, t.created_at, t.updated_at
+FROM pizza_toppings pt
+JOIN toppings t ON t.id = pt.topping_id
+WHERE pt.pizza_id IN (:pizzaIds)
+ORDER BY pt.pizza_id, t.name
+
 -- name: deleteToppingsByPizzaId
 DELETE FROM pizza_toppings WHERE pizza_id = :pizzaId
 
@@ -89,6 +103,12 @@ SELECT id, pizza_id, image_url, is_main AS main, sort_order
 FROM pizza_images
 WHERE pizza_id = :pizzaId
 ORDER BY sort_order
+
+-- name: findImagesByPizzaIds
+SELECT id, pizza_id, image_url, is_main AS main, sort_order
+FROM pizza_images
+WHERE pizza_id IN (:pizzaIds)
+ORDER BY pizza_id, sort_order
 
 -- name: deleteImagesByPizzaId
 DELETE FROM pizza_images WHERE pizza_id = :pizzaId

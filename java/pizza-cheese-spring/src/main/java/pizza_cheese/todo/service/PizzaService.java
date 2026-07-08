@@ -6,10 +6,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import pizza_cheese.todo.config.MenuCacheNames;
 import pizza_cheese.todo.dao.PizzaDao;
 import pizza_cheese.todo.domain.Pizza;
 import pizza_cheese.todo.domain.PizzaImage;
@@ -31,20 +33,19 @@ public class PizzaService {
     private final CategoryService categoryService;
     private final ToppingService toppingService;
     private final CloudinaryService cloudinaryService;
+    private final MenuCacheEvictor menuCacheEvictor;
 
     public PizzaService(
             PizzaDao pizzaDao,
             CategoryService categoryService,
             ToppingService toppingService,
-            CloudinaryService cloudinaryService) {
+            CloudinaryService cloudinaryService,
+            MenuCacheEvictor menuCacheEvictor) {
         this.pizzaDao = pizzaDao;
         this.categoryService = categoryService;
         this.toppingService = toppingService;
         this.cloudinaryService = cloudinaryService;
-    }
-
-    public List<PizzaResponse> findAll(boolean activeOnly, UUID categoryId) {
-        return pizzaDao.findAll(activeOnly, categoryId).stream().map(PizzaResponse::from).toList();
+        this.menuCacheEvictor = menuCacheEvictor;
     }
 
     public PageResponse<PizzaResponse> findPage(boolean activeOnly, UUID categoryId, int page, int size) {
@@ -58,6 +59,7 @@ public class PizzaService {
         return PageResponse.of(content, safePage, safeSize, total);
     }
 
+    @Cacheable(cacheNames = MenuCacheNames.PIZZAS, key = "'id:' + #id")
     public PizzaResponse findById(UUID id) {
         return pizzaDao.findById(id)
                 .map(PizzaResponse::from)
@@ -104,6 +106,7 @@ public class PizzaService {
         pizza.setImages(buildImagesFromUploads(request.getImages(), mainImage, secondaryImages, List.of()));
 
         Pizza saved = pizzaDao.save(pizza);
+        menuCacheEvictor.evictPizzas();
         return PizzaResponse.from(pizzaDao.findById(saved.getId()).orElse(saved));
     }
 
@@ -183,6 +186,7 @@ public class PizzaService {
         }
 
         Pizza saved = pizzaDao.save(pizza);
+        menuCacheEvictor.evictPizzas();
         return PizzaResponse.from(pizzaDao.findById(saved.getId()).orElse(saved));
     }
 
@@ -192,6 +196,7 @@ public class PizzaService {
             throw ApiException.notFound("Không tìm thấy pizza");
         }
         pizzaDao.deactivate(id);
+        menuCacheEvictor.evictPizzas();
     }
 
     private void validateUniqueVariantSizes(List<PizzaVariantRequest> variants) {

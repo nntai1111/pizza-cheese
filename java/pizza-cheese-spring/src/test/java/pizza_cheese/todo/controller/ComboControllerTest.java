@@ -27,7 +27,7 @@ class ComboControllerTest {
 
     @BeforeEach
     void setUp() {
-        comboService = new ComboService(null, null, null) {
+        comboService = new ComboService(null, null, null, null) {
             @Override
             public PageResponse<ComboResponse> findPage(boolean activeOnly, int page, int size) {
                 ComboResponse combo = new ComboResponse();

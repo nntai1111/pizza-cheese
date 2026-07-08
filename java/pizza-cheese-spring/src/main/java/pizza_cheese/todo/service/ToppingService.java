@@ -1,11 +1,14 @@
 package pizza_cheese.todo.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import pizza_cheese.todo.config.MenuCacheNames;
 import pizza_cheese.todo.dao.ToppingDao;
 import pizza_cheese.todo.domain.Topping;
 import pizza_cheese.todo.dto.request.CreateToppingRequest;
@@ -17,15 +20,19 @@ import pizza_cheese.todo.exception.ApiException;
 public class ToppingService {
 
     private final ToppingDao toppingDao;
+    private final MenuCacheEvictor menuCacheEvictor;
 
-    public ToppingService(ToppingDao toppingDao) {
+    public ToppingService(ToppingDao toppingDao, MenuCacheEvictor menuCacheEvictor) {
         this.toppingDao = toppingDao;
+        this.menuCacheEvictor = menuCacheEvictor;
     }
 
+    @Cacheable(cacheNames = MenuCacheNames.TOPPINGS, key = "'all:' + #activeOnly")
     public List<ToppingResponse> findAll(boolean activeOnly) {
-        return toppingDao.findAll(activeOnly).stream().map(ToppingResponse::from).toList();
+        return new ArrayList<>(toppingDao.findAll(activeOnly).stream().map(ToppingResponse::from).toList());
     }
 
+    @Cacheable(cacheNames = MenuCacheNames.TOPPINGS, key = "'id:' + #id")
     public ToppingResponse findById(UUID id) {
         return toppingDao.findById(id)
                 .map(ToppingResponse::from)
@@ -40,7 +47,9 @@ public class ToppingService {
         topping.setPrice(request.getPrice());
         topping.setActive(request.getIsActive() == null || request.getIsActive());
 
-        return ToppingResponse.from(toppingDao.save(topping));
+        Topping saved = toppingDao.save(topping);
+        menuCacheEvictor.evictToppingsAndPizzas();
+        return ToppingResponse.from(saved);
     }
 
     @Transactional
@@ -58,7 +67,9 @@ public class ToppingService {
             topping.setActive(request.getIsActive());
         }
 
-        return ToppingResponse.from(toppingDao.save(topping));
+        Topping saved = toppingDao.save(topping);
+        menuCacheEvictor.evictToppingsAndPizzas();
+        return ToppingResponse.from(saved);
     }
 
     @Transactional
@@ -67,6 +78,7 @@ public class ToppingService {
             throw ApiException.notFound("Không tìm thấy topping");
         }
         toppingDao.deactivate(id);
+        menuCacheEvictor.evictToppingsAndPizzas();
     }
 
     public void validateToppingIds(List<UUID> toppingIds) {

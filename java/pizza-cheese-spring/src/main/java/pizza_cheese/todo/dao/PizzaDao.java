@@ -2,12 +2,17 @@ package pizza_cheese.todo.dao;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -36,7 +41,7 @@ public class PizzaDao {
                 queries.get("findAll"),
                 pizzaQueryParams(activeOnly, categoryId),
                 RowMappers.forEntity(Pizza.class));
-        pizzas.forEach(this::loadRelations);
+        loadRelationsBatch(pizzas);
         return pizzas;
     }
 
@@ -56,7 +61,7 @@ public class PizzaDao {
                 queries.get("findPage"),
                 params,
                 RowMappers.forEntity(Pizza.class));
-        pizzas.forEach(this::loadRelations);
+        loadRelationsBatch(pizzas);
         return pizzas;
     }
 
@@ -118,25 +123,71 @@ public class PizzaDao {
             return Optional.empty();
         }
         Pizza pizza = pizzas.get(0);
-        loadRelations(pizza);
+        loadRelationsBatch(List.of(pizza));
         return Optional.of(pizza);
     }
 
-    private void loadRelations(Pizza pizza) {
-        pizza.setVariants(jdbc.query(
-                queries.get("findVariantsByPizzaId"),
-                Map.of("pizzaId", pizza.getId()),
-                RowMappers.forEntity(PizzaVariant.class)));
-        var toppings = jdbc.query(
-                queries.get("findToppingsByPizzaId"),
-                Map.of("pizzaId", pizza.getId()),
-                RowMappers.forEntity(Topping.class));
-        pizza.setToppings(toppings);
-        pizza.setToppingIds(toppings.stream().map(t -> t.getId()).toList());
-        pizza.setImages(jdbc.query(
-                queries.get("findImagesByPizzaId"),
-                Map.of("pizzaId", pizza.getId()),
-                RowMappers.forEntity(PizzaImage.class)));
+    private void loadRelationsBatch(Collection<Pizza> pizzas) {
+        if (pizzas == null || pizzas.isEmpty()) {
+            return;
+        }
+
+        List<UUID> pizzaIds = pizzas.stream().map(Pizza::getId).distinct().toList();
+        if (pizzaIds.isEmpty()) {
+            return;
+        }
+
+        Map<UUID, List<PizzaVariant>> variantsByPizza = loadVariantsByPizzaIds(pizzaIds);
+        Map<UUID, List<Topping>> toppingsByPizza = loadToppingsByPizzaIds(pizzaIds);
+        Map<UUID, List<PizzaImage>> imagesByPizza = loadImagesByPizzaIds(pizzaIds);
+
+        for (Pizza pizza : pizzas) {
+            UUID pizzaId = pizza.getId();
+            List<Topping> toppings = toppingsByPizza.getOrDefault(pizzaId, List.of());
+            pizza.setVariants(variantsByPizza.getOrDefault(pizzaId, List.of()));
+            pizza.setToppings(toppings);
+            pizza.setToppingIds(toppings.stream().map(Topping::getId).toList());
+            pizza.setImages(imagesByPizza.getOrDefault(pizzaId, List.of()));
+        }
+    }
+
+    private Map<UUID, List<PizzaVariant>> loadVariantsByPizzaIds(List<UUID> pizzaIds) {
+        if (pizzaIds.isEmpty()) {
+            return Map.of();
+        }
+        List<PizzaVariant> variants = jdbc.query(
+                queries.get("findVariantsByPizzaIds"),
+                Map.of("pizzaIds", pizzaIds),
+                RowMappers.forEntity(PizzaVariant.class));
+        return variants.stream().collect(Collectors.groupingBy(PizzaVariant::getPizzaId));
+    }
+
+    private Map<UUID, List<Topping>> loadToppingsByPizzaIds(List<UUID> pizzaIds) {
+        if (pizzaIds.isEmpty()) {
+            return Map.of();
+        }
+        RowMapper<Topping> toppingMapper = RowMappers.forEntity(Topping.class);
+        return jdbc.query(queries.get("findToppingsByPizzaIds"), Map.of("pizzaIds", pizzaIds), rs -> {
+            Map<UUID, List<Topping>> result = new HashMap<>();
+            int rowNum = 0;
+            while (rs.next()) {
+                UUID pizzaId = rs.getObject("pizza_id", UUID.class);
+                Topping topping = toppingMapper.mapRow(rs, rowNum++);
+                result.computeIfAbsent(pizzaId, ignored -> new ArrayList<>()).add(topping);
+            }
+            return result;
+        });
+    }
+
+    private Map<UUID, List<PizzaImage>> loadImagesByPizzaIds(List<UUID> pizzaIds) {
+        if (pizzaIds.isEmpty()) {
+            return Map.of();
+        }
+        List<PizzaImage> images = jdbc.query(
+                queries.get("findImagesByPizzaIds"),
+                Map.of("pizzaIds", pizzaIds),
+                RowMappers.forEntity(PizzaImage.class));
+        return images.stream().collect(Collectors.groupingBy(PizzaImage::getPizzaId));
     }
 
     private void insert(Pizza pizza) {

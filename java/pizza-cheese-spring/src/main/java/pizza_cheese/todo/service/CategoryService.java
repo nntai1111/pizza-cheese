@@ -1,12 +1,15 @@
 package pizza_cheese.todo.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import pizza_cheese.todo.config.MenuCacheNames;
 import pizza_cheese.todo.dao.CategoryDao;
 import pizza_cheese.todo.domain.Category;
 import pizza_cheese.todo.dto.request.CreateCategoryRequest;
@@ -20,16 +23,23 @@ public class CategoryService {
 
     private final CategoryDao categoryDao;
     private final CloudinaryService cloudinaryService;
+    private final MenuCacheEvictor menuCacheEvictor;
 
-    public CategoryService(CategoryDao categoryDao, CloudinaryService cloudinaryService) {
+    public CategoryService(
+            CategoryDao categoryDao,
+            CloudinaryService cloudinaryService,
+            MenuCacheEvictor menuCacheEvictor) {
         this.categoryDao = categoryDao;
         this.cloudinaryService = cloudinaryService;
+        this.menuCacheEvictor = menuCacheEvictor;
     }
 
+    @Cacheable(cacheNames = MenuCacheNames.CATEGORIES, key = "'all:' + #activeOnly")
     public List<CategoryResponse> findAll(boolean activeOnly) {
-        return categoryDao.findAll(activeOnly).stream().map(CategoryResponse::from).toList();
+        return new ArrayList<>(categoryDao.findAll(activeOnly).stream().map(CategoryResponse::from).toList());
     }
 
+    @Cacheable(cacheNames = MenuCacheNames.CATEGORIES, key = "'id:' + #id")
     public CategoryResponse findById(UUID id) {
         return categoryDao.findById(id)
                 .map(CategoryResponse::from)
@@ -56,7 +66,9 @@ public class CategoryService {
         category.setSortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0);
         category.setActive(request.getIsActive() == null || request.getIsActive());
 
-        return CategoryResponse.from(categoryDao.save(category));
+        Category saved = categoryDao.save(category);
+        menuCacheEvictor.evictCategoriesAndPizzas();
+        return CategoryResponse.from(saved);
     }
 
     @Transactional
@@ -96,7 +108,9 @@ public class CategoryService {
             category.setActive(request.getIsActive());
         }
 
-        return CategoryResponse.from(categoryDao.save(category));
+        Category saved = categoryDao.save(category);
+        menuCacheEvictor.evictCategoriesAndPizzas();
+        return CategoryResponse.from(saved);
     }
 
     @Transactional
@@ -105,6 +119,7 @@ public class CategoryService {
             throw ApiException.notFound("Không tìm thấy danh mục");
         }
         categoryDao.deactivate(id);
+        menuCacheEvictor.evictCategoriesAndPizzas();
     }
 
     public void requireActiveCategory(UUID categoryId) {
