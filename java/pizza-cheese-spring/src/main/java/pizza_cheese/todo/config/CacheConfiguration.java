@@ -44,10 +44,14 @@ public class CacheConfiguration {
                 RedisConnectionFactory connectionFactory,
                 CacheProperties cacheProperties,
                 ObjectMapper objectMapper) {
-            GenericJackson2JsonRedisSerializer serializer =
-                    new GenericJackson2JsonRedisSerializer(objectMapper.copy());
+            // Must enable defaultTyping; otherwise Redis JSON comes back as LinkedHashMap.
+            GenericJackson2JsonRedisSerializer serializer = GenericJackson2JsonRedisSerializer.builder()
+                    .objectMapper(objectMapper.copy())
+                    .defaultTyping(true)
+                    .build();
 
             RedisCacheConfiguration defaults = RedisCacheConfiguration.defaultCacheConfig()
+                    .prefixCacheNameWith("menu:v2:")
                     .entryTtl(Duration.ofSeconds(cacheProperties.getMenuTtlSeconds()))
                     .disableCachingNullValues()
                     .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
