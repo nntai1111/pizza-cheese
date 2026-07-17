@@ -8,6 +8,7 @@
             "mainClass": "pizza_cheese.todo.TodoApplication",
             "projectName": "todo",
             "args": "",
+            "vmArgs": "-Duser.timezone=Asia/Ho_Chi_Minh",
             "envFile": "${workspaceFolder}/.env"
         }
     ]
