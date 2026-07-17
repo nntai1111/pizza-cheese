@@ -37,35 +37,18 @@
 
           @if (!isCashierMode()) {
             <label>
-              <span>Địa chỉ *</span>
-              <input type="text" formControlName="addressLine1" placeholder="Số nhà, tên đường" />
-            </label>
-
-            <label>
-              <span>Địa chỉ bổ sung</span>
-              <input type="text" formControlName="addressLine2" placeholder="Tòa nhà, căn hộ..." />
-            </label>
-
-            <div class="checkout-form__row">
-              <label>
-                <span>Phường / Xã</span>
-                <input type="text" formControlName="ward" />
-              </label>
-              <label>
-                <span>Quận / Huyện</span>
-                <input type="text" formControlName="district" />
-              </label>
-            </div>
-
-            <label>
-              <span>Thành phố *</span>
-              <input type="text" formControlName="city" placeholder="Hà Nội" />
+              <span>Địa chỉ giao hàng *</span>
+              <textarea
+                formControlName="addressLine1"
+                rows="2"
+                placeholder="Số nhà, đường, phường/xã, quận/huyện, thành phố"
+              ></textarea>
             </label>
           }
 
           <label>
             <span>Ghi chú</span>
-            <textarea formControlName="note" rows="3" [placeholder]="isCashierMode() ? 'Yêu cầu chế biến (ví dụ: ít cay, không hành...)' : 'Ghi chú cho shipper...'"></textarea>
+            <textarea formControlName="note" rows="2" [placeholder]="isCashierMode() ? 'Yêu cầu chế biến (ví dụ: ít cay, không hành...)' : 'Ghi chú cho shipper (tùy chọn)'"></textarea>
           </label>
 
           <h2>Phương thức thanh toán</h2>

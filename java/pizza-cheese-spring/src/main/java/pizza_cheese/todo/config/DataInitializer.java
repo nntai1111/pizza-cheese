@@ -45,11 +45,18 @@ public class DataInitializer implements CommandLineRunner {
             seedUser("admin", "admin@gmail.com", "Admin User", "123456", Set.of(Role.ADMIN));
             seedUser("cashier", "cashier@gmail.com", "Cashier User", "123456", Set.of(Role.CASHIER));
             seedUser("kitchen", "kitchen@gmail.com", "Kitchen User", "123456", Set.of(Role.KITCHEN));
+            seedUser("delivery", "delivery@gmail.com", "Delivery User", "123456", Set.of(Role.DELIVERY));
             seedUser("user", "user@gmail.com", "Normal User", "123456", Set.of(Role.CUSTOMER));
             log.info("Seeded default users into database");
-        } else if (userDao.findByEmail("kitchen@gmail.com").isEmpty()) {
-            seedUser("kitchen", "kitchen@gmail.com", "Kitchen User", "123456", Set.of(Role.KITCHEN));
-            log.info("Seeded kitchen user into database");
+        } else {
+            if (userDao.findByEmail("kitchen@gmail.com").isEmpty()) {
+                seedUser("kitchen", "kitchen@gmail.com", "Kitchen User", "123456", Set.of(Role.KITCHEN));
+                log.info("Seeded kitchen user into database");
+            }
+            if (userDao.findByEmail("delivery@gmail.com").isEmpty()) {
+                seedUser("delivery", "delivery@gmail.com", "Delivery User", "123456", Set.of(Role.DELIVERY));
+                log.info("Seeded delivery user into database");
+            }
         }
 
         if (couponDao.count() == 0) {

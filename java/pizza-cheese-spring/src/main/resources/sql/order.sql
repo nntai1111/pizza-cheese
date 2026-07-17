@@ -88,6 +88,81 @@ WHERE status = :status
 ORDER BY created_at DESC
 LIMIT :limit OFFSET :offset
 
+-- name: findPageByStatusAndDeliveryStaff
+SELECT id, order_code, user_id, address_id, status,
+       total_amount, discount_amount, final_amount, coupon_id,
+       payment_method_selected, note, estimated_delivery_time,
+       kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
+       created_at, updated_at
+FROM orders
+WHERE status = :status AND delivery_staff_id = :deliveryStaffId
+ORDER BY created_at DESC
+LIMIT :limit OFFSET :offset
+
+-- name: countByStatusAndDeliveryStaff
+SELECT COUNT(*) FROM orders
+WHERE status = :status AND delivery_staff_id = :deliveryStaffId
+
+-- name: findPageForDeliveryStaff
+SELECT id, order_code, user_id, address_id, status,
+       total_amount, discount_amount, final_amount, coupon_id,
+       payment_method_selected, note, estimated_delivery_time,
+       kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
+       created_at, updated_at
+FROM orders
+WHERE status = :readyStatus
+   OR (delivery_staff_id = :deliveryStaffId AND status IN (:outStatus, :deliveredStatus))
+ORDER BY created_at DESC
+LIMIT :limit OFFSET :offset
+
+-- name: countForDeliveryStaff
+SELECT COUNT(*) FROM orders
+WHERE status = :readyStatus
+   OR (delivery_staff_id = :deliveryStaffId AND status IN (:outStatus, :deliveredStatus))
+
+-- name: findPageByStatusAndKitchenStaff
+SELECT id, order_code, user_id, address_id, status,
+       total_amount, discount_amount, final_amount, coupon_id,
+       payment_method_selected, note, estimated_delivery_time,
+       kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
+       created_at, updated_at
+FROM orders
+WHERE status = :status AND kitchen_staff_id = :kitchenStaffId
+ORDER BY created_at DESC
+LIMIT :limit OFFSET :offset
+
+-- name: countByStatusAndKitchenStaff
+SELECT COUNT(*) FROM orders
+WHERE status = :status AND kitchen_staff_id = :kitchenStaffId
+
+-- name: findPageForKitchenStaff
+SELECT id, order_code, user_id, address_id, status,
+       total_amount, discount_amount, final_amount, coupon_id,
+       payment_method_selected, note, estimated_delivery_time,
+       kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
+       created_at, updated_at
+FROM orders
+WHERE status = :confirmedStatus
+   OR (kitchen_staff_id = :kitchenStaffId AND status IN (:preparingStatus, :readyStatus))
+ORDER BY created_at DESC
+LIMIT :limit OFFSET :offset
+
+-- name: countForKitchenStaff
+SELECT COUNT(*) FROM orders
+WHERE status = :confirmedStatus
+   OR (kitchen_staff_id = :kitchenStaffId AND status IN (:preparingStatus, :readyStatus))
+
+-- name: findUpdatedSince
+SELECT id, order_code, user_id, address_id, status,
+       total_amount, discount_amount, final_amount, coupon_id,
+       payment_method_selected, note, estimated_delivery_time,
+       kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
+       created_at, updated_at
+FROM orders
+WHERE updated_at > :updatedSince
+ORDER BY updated_at ASC
+LIMIT :limit
+
 -- name: existsByOrderCode
 SELECT COUNT(*) FROM orders WHERE order_code = :orderCode
 
@@ -101,6 +176,13 @@ WHERE id = :id
 UPDATE orders
 SET status = :newStatus,
     kitchen_staff_id = :kitchenStaffId,
+    updated_at = :updatedAt
+WHERE id = :id AND status = :expectedStatus
+
+-- name: claimForDelivery
+UPDATE orders
+SET status = :newStatus,
+    delivery_staff_id = :deliveryStaffId,
     updated_at = :updatedAt
 WHERE id = :id AND status = :expectedStatus
 

@@ -37,6 +37,9 @@ public class OrderResponse {
     private String customerName;
     private String customerEmail;
     private String kitchenStaffName;
+    private String deliveryStaffName;
+    private UUID kitchenStaffId;
+    private UUID deliveryStaffId;
 
     public static OrderResponse from(Order order, Payment payment) {
         OrderResponse response = new OrderResponse();
@@ -50,6 +53,8 @@ public class OrderResponse {
         response.setNote(order.getNote());
         response.setDeliveryAddressSnapshot(order.getDeliveryAddressSnapshot());
         response.setCreatedAt(order.getCreatedAt());
+        response.setKitchenStaffId(order.getKitchenStaffId());
+        response.setDeliveryStaffId(order.getDeliveryStaffId());
         response.setItems(order.getItems().stream().map(OrderItemResponse::from).toList());
 
         if (payment != null) {

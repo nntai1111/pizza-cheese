@@ -29,7 +29,7 @@ export function getRouteForRole(role: AppRole): string {
       return '/cashier/pizzas';
     case AppRole.KITCHEN:
       return '/kitchen/orders';
-    default:
-      return `/welcome/${role.toLowerCase()}`;
+    case AppRole.DELIVERY:
+      return '/delivery/orders';
   }
 }

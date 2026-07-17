@@ -4,4 +4,9 @@ export interface PageResponse<T> {
   size: number;
   totalElements: number;
   totalPages: number;
+  /** Server clock — send back as updatedSince on next poll. */
+  syncedAt?: string | null;
+  /** true = content is only changed orders since updatedSince. */
+  incremental?: boolean;
 }
+

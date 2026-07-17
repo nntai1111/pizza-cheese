@@ -25,6 +25,7 @@ import pizza_cheese.todo.domain.OrderStatus;
 import pizza_cheese.todo.domain.Payment;
 import pizza_cheese.todo.domain.PaymentStatus;
 import pizza_cheese.todo.exception.ApiException;
+import pizza_cheese.todo.realtime.OrderRealtimePublisher;
 import pizza_cheese.todo.util.VnPayUtil;
 
 @Service
@@ -37,16 +38,19 @@ public class VnPayService {
     private final PaymentDao paymentDao;
     private final OrderDao orderDao;
     private final ObjectMapper objectMapper;
+    private final OrderRealtimePublisher orderRealtimePublisher;
 
     public VnPayService(
             VnPayProperties vnPayProperties,
             PaymentDao paymentDao,
             OrderDao orderDao,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            OrderRealtimePublisher orderRealtimePublisher) {
         this.vnPayProperties = vnPayProperties;
         this.paymentDao = paymentDao;
         this.orderDao = orderDao;
         this.objectMapper = objectMapper;
+        this.orderRealtimePublisher = orderRealtimePublisher;
     }
 
     public String createPaymentUrl(Order order, Payment payment, String clientIp) {
@@ -189,6 +193,8 @@ public class VnPayService {
         if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
             orderDao.updateStatus(order.getId(), OrderStatus.CONFIRMED);
             orderDao.insertStatusHistory(order.getId(), OrderStatus.CONFIRMED, null, "Thanh toan VNPay thanh cong");
+            order.setStatus(OrderStatus.CONFIRMED);
+            orderRealtimePublisher.publishKitchen(order);
         }
     }
 

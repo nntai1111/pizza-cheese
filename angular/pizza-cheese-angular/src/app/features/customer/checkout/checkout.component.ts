@@ -59,10 +59,6 @@ export class CheckoutComponent {
     recipientName: ['', [Validators.required, Validators.maxLength(100)]],
     phone: ['', [Validators.required, Validators.maxLength(20)]],
     addressLine1: ['', [Validators.required, Validators.maxLength(255)]],
-    addressLine2: [''],
-    ward: [''],
-    district: [''],
-    city: ['', [Validators.required, Validators.maxLength(100)]],
     note: [''],
     paymentMethod: [
       (this.shopContext.basePath() === '/cashier' ? 'COD' : 'VNPAY') as PaymentMethod,
@@ -84,13 +80,10 @@ export class CheckoutComponent {
       this.form.controls.phone.setValidators([Validators.maxLength(20)]);
       this.form.controls.addressLine1.clearValidators();
       this.form.controls.addressLine1.setValidators([Validators.maxLength(255)]);
-      this.form.controls.city.clearValidators();
-      this.form.controls.city.setValidators([Validators.maxLength(100)]);
 
       this.form.controls.recipientName.updateValueAndValidity();
       this.form.controls.phone.updateValueAndValidity();
       this.form.controls.addressLine1.updateValueAndValidity();
-      this.form.controls.city.updateValueAndValidity();
     }
   }
 
@@ -154,7 +147,6 @@ export class CheckoutComponent {
     const recipientName = isCashier ? (value.recipientName.trim() || 'Khách lẻ') : value.recipientName;
     const phone = isCashier ? (value.phone.trim() || '0000000000') : value.phone;
     const addressLine1 = isCashier ? 'Tại quầy' : value.addressLine1;
-    const city = isCashier ? 'Hà Nội' : value.city;
 
     const request = {
       cartItemIds: selectedItems.map((item) => item.id),
@@ -165,10 +157,7 @@ export class CheckoutComponent {
         recipientName,
         phone,
         addressLine1,
-        addressLine2: isCashier ? undefined : (value.addressLine2 || undefined),
-        ward: isCashier ? undefined : (value.ward || undefined),
-        district: isCashier ? undefined : (value.district || undefined),
-        city,
+        city: isCashier ? 'Hà Nội' : undefined,
       },
     };
 

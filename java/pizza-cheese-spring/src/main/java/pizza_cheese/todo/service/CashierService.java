@@ -20,6 +20,7 @@ import pizza_cheese.todo.domain.User;
 import pizza_cheese.todo.dto.response.OrderResponse;
 import pizza_cheese.todo.dto.response.PageResponse;
 import pizza_cheese.todo.exception.ApiException;
+import pizza_cheese.todo.realtime.OrderRealtimePublisher;
 
 @Service
 public class CashierService {
@@ -28,16 +29,19 @@ public class CashierService {
     private final PaymentDao paymentDao;
     private final UserDao userDao;
     private final OrderResponseEnricher orderResponseEnricher;
+    private final OrderRealtimePublisher orderRealtimePublisher;
 
     public CashierService(
             OrderDao orderDao,
             PaymentDao paymentDao,
             UserDao userDao,
-            OrderResponseEnricher orderResponseEnricher) {
+            OrderResponseEnricher orderResponseEnricher,
+            OrderRealtimePublisher orderRealtimePublisher) {
         this.orderDao = orderDao;
         this.paymentDao = paymentDao;
         this.userDao = userDao;
         this.orderResponseEnricher = orderResponseEnricher;
+        this.orderRealtimePublisher = orderRealtimePublisher;
     }
 
     public PageResponse<OrderResponse> getOrders(OrderStatus status, int page, int size) {
@@ -86,6 +90,7 @@ public class CashierService {
             orderDao.updateStatus(orderId, OrderStatus.CONFIRMED);
             orderDao.insertStatusHistory(orderId, OrderStatus.CONFIRMED, staffId, "Thu ngan xac nhan thanh toan");
             order.setStatus(OrderStatus.CONFIRMED);
+            orderRealtimePublisher.publishKitchen(order);
         } else if (order.getStatus() == OrderStatus.CONFIRMED) {
             orderDao.insertStatusHistory(orderId, OrderStatus.CONFIRMED, staffId, "Thu ngan xac nhan thu tien");
         } else {

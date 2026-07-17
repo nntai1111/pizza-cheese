@@ -92,31 +92,32 @@ export class ComboDetailComponent {
       return;
     }
 
-    const previousItemIds = new Set(this.cartService.cart()?.items.map((item) => item.id) ?? []);
+    const request = {
+      comboId: combo.id,
+      quantity: this.quantity(),
+    };
     const busySignal = checkoutImmediately ? this.buyingNow : this.addingToCart;
     busySignal.set(true);
     this.orderNotice.set(null);
 
-    this.cartService
-      .addCombo({
-        comboId: combo.id,
-        quantity: this.quantity(),
-      })
-      .subscribe({
-        next: (cart) => {
-          busySignal.set(false);
-          if (checkoutImmediately) {
-            this.cartService.setCheckoutForNewItems(previousItemIds, cart);
-            void this.router.navigate(this.shopContext.segments('checkout'));
-            return;
-          }
-          this.orderNotice.set('Đã thêm combo vào giỏ hàng!');
-        },
-        error: (err: HttpErrorResponse) => {
-          busySignal.set(false);
-          this.orderNotice.set(getHttpErrorMessage(err, 'Không thể thêm vào giỏ hàng.'));
-        },
-      });
+    const action$ = checkoutImmediately
+      ? this.cartService.buyComboNow(request)
+      : this.cartService.addOrMergeCombo(request);
+
+    action$.subscribe({
+      next: () => {
+        busySignal.set(false);
+        if (checkoutImmediately) {
+          void this.router.navigate(this.shopContext.segments('checkout'));
+          return;
+        }
+        this.orderNotice.set('Đã thêm combo vào giỏ hàng!');
+      },
+      error: (err: HttpErrorResponse) => {
+        busySignal.set(false);
+        this.orderNotice.set(getHttpErrorMessage(err, 'Không thể thêm vào giỏ hàng.'));
+      },
+    });
   }
 
   private loadCombo(id: string): void {

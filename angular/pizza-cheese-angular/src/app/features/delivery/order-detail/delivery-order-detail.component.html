@@ -1,0 +1,96 @@
+<section class="order-detail-page">
+  @if (loading()) {
+    <p class="order-detail-status">Đang tải đơn hàng...</p>
+  }
+
+  @if (errorMessage()) {
+    <p class="order-detail-error">{{ errorMessage() }}</p>
+  }
+
+  @if (order(); as currentOrder) {
+    <header class="order-detail-hero">
+      <div>
+        <span class="order-detail-hero__badge">🛵 Chi tiết đơn giao</span>
+        <h1>{{ currentOrder.orderCode }}</h1>
+        <p>Đặt lúc {{ currentOrder.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+        @if (currentOrder.customerName) {
+          <p>Khách: <strong>{{ currentOrder.customerName }}</strong></p>
+        }
+        @if (currentOrder.deliveryStaffName) {
+          <p>NV giao: <strong>{{ currentOrder.deliveryStaffName }}</strong></p>
+        }
+      </div>
+      <span class="order-detail-hero__status">{{ getStatusLabel(currentOrder) }}</span>
+    </header>
+
+    <div class="order-detail-grid">
+      <div class="order-detail-panel">
+        <h2>Địa chỉ giao</h2>
+        <p>{{ getDeliveryAddress(currentOrder) }}</p>
+        @if (currentOrder.note) {
+          <p><strong>Ghi chú:</strong> {{ currentOrder.note }}</p>
+        }
+        <p><strong>Thanh toán:</strong> {{ getPaymentMethodLabel(currentOrder) }}</p>
+      </div>
+
+      <aside class="order-detail-summary">
+        <h2>Tổng đơn</h2>
+        <div class="order-detail-summary__row">
+          <span>Số món</span>
+          <strong>{{ currentOrder.items?.length ?? 0 }}</strong>
+        </div>
+        <div class="order-detail-summary__total">
+          <span>Thành tiền</span>
+          <strong>{{ formatPrice(currentOrder.finalAmount) }}</strong>
+        </div>
+
+        @if (canStartDelivery(currentOrder)) {
+          <button
+            type="button"
+            class="btn-start"
+            (click)="startDelivery()"
+            [disabled]="actionLoading()"
+          >
+            {{ actionLoading() ? 'Đang xử lý...' : 'Nhận giao' }}
+          </button>
+        }
+
+        @if (canMarkDelivered(currentOrder)) {
+          <button
+            type="button"
+            class="btn-delivered"
+            (click)="markDelivered()"
+            [disabled]="actionLoading()"
+          >
+            {{ actionLoading() ? 'Đang xử lý...' : 'Đã giao thành công' }}
+          </button>
+        }
+      </aside>
+    </div>
+
+    @if (currentOrder.items?.length) {
+      <section class="order-detail-items">
+        <h2>Món cần giao</h2>
+        <ul>
+          @for (item of currentOrder.items; track item.id) {
+            <li>
+              <div>
+                <strong>{{ getItemTitle(item) }}</strong>
+                <span>{{ item.quantity }} × {{ formatPrice(item.unitPrice) }}</span>
+                @if (getToppingSummary(item); as toppings) {
+                  <span class="item-meta">Topping: {{ toppings }}</span>
+                }
+                @if (getComboLineSummary(item); as comboLines) {
+                  <span class="item-meta">{{ comboLines }}</span>
+                }
+              </div>
+              <strong>{{ formatPrice(item.lineTotal) }}</strong>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <a routerLink="/delivery/orders" class="btn-outline">← Quay lại danh sách</a>
+  }
+</section>

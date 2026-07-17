@@ -112,6 +112,107 @@ public class OrderDao {
                 RowMappers.forEntity(Order.class));
     }
 
+    public List<Order> findPageByStatusAndDeliveryStaff(OrderStatus status, UUID deliveryStaffId, int page, int size) {
+        return jdbc.query(
+                queries.get("findPageByStatusAndDeliveryStaff"),
+                new MapSqlParameterSource()
+                        .addValue("status", status.getCode())
+                        .addValue("deliveryStaffId", deliveryStaffId)
+                        .addValue("limit", size)
+                        .addValue("offset", (long) page * size),
+                RowMappers.forEntity(Order.class));
+    }
+
+    public long countByStatusAndDeliveryStaff(OrderStatus status, UUID deliveryStaffId) {
+        Long count = jdbc.queryForObject(
+                queries.get("countByStatusAndDeliveryStaff"),
+                new MapSqlParameterSource()
+                        .addValue("status", status.getCode())
+                        .addValue("deliveryStaffId", deliveryStaffId),
+                Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<Order> findPageForDeliveryStaff(UUID deliveryStaffId, int page, int size) {
+        return jdbc.query(
+                queries.get("findPageForDeliveryStaff"),
+                new MapSqlParameterSource()
+                        .addValue("readyStatus", OrderStatus.READY.getCode())
+                        .addValue("outStatus", OrderStatus.OUT_FOR_DELIVERY.getCode())
+                        .addValue("deliveredStatus", OrderStatus.DELIVERED.getCode())
+                        .addValue("deliveryStaffId", deliveryStaffId)
+                        .addValue("limit", size)
+                        .addValue("offset", (long) page * size),
+                RowMappers.forEntity(Order.class));
+    }
+
+    public long countForDeliveryStaff(UUID deliveryStaffId) {
+        Long count = jdbc.queryForObject(
+                queries.get("countForDeliveryStaff"),
+                new MapSqlParameterSource()
+                        .addValue("readyStatus", OrderStatus.READY.getCode())
+                        .addValue("outStatus", OrderStatus.OUT_FOR_DELIVERY.getCode())
+                        .addValue("deliveredStatus", OrderStatus.DELIVERED.getCode())
+                        .addValue("deliveryStaffId", deliveryStaffId),
+                Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<Order> findPageByStatusAndKitchenStaff(OrderStatus status, UUID kitchenStaffId, int page, int size) {
+        return jdbc.query(
+                queries.get("findPageByStatusAndKitchenStaff"),
+                new MapSqlParameterSource()
+                        .addValue("status", status.getCode())
+                        .addValue("kitchenStaffId", kitchenStaffId)
+                        .addValue("limit", size)
+                        .addValue("offset", (long) page * size),
+                RowMappers.forEntity(Order.class));
+    }
+
+    public long countByStatusAndKitchenStaff(OrderStatus status, UUID kitchenStaffId) {
+        Long count = jdbc.queryForObject(
+                queries.get("countByStatusAndKitchenStaff"),
+                new MapSqlParameterSource()
+                        .addValue("status", status.getCode())
+                        .addValue("kitchenStaffId", kitchenStaffId),
+                Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<Order> findPageForKitchenStaff(UUID kitchenStaffId, int page, int size) {
+        return jdbc.query(
+                queries.get("findPageForKitchenStaff"),
+                new MapSqlParameterSource()
+                        .addValue("confirmedStatus", OrderStatus.CONFIRMED.getCode())
+                        .addValue("preparingStatus", OrderStatus.PREPARING.getCode())
+                        .addValue("readyStatus", OrderStatus.READY.getCode())
+                        .addValue("kitchenStaffId", kitchenStaffId)
+                        .addValue("limit", size)
+                        .addValue("offset", (long) page * size),
+                RowMappers.forEntity(Order.class));
+    }
+
+    public long countForKitchenStaff(UUID kitchenStaffId) {
+        Long count = jdbc.queryForObject(
+                queries.get("countForKitchenStaff"),
+                new MapSqlParameterSource()
+                        .addValue("confirmedStatus", OrderStatus.CONFIRMED.getCode())
+                        .addValue("preparingStatus", OrderStatus.PREPARING.getCode())
+                        .addValue("readyStatus", OrderStatus.READY.getCode())
+                        .addValue("kitchenStaffId", kitchenStaffId),
+                Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<Order> findUpdatedSince(LocalDateTime updatedSince, int limit) {
+        return jdbc.query(
+                queries.get("findUpdatedSince"),
+                new MapSqlParameterSource()
+                        .addValue("updatedSince", JdbcTimeUtil.toTimestamp(updatedSince))
+                        .addValue("limit", Math.min(Math.max(limit, 1), 200)),
+                RowMappers.forEntity(Order.class));
+    }
+
     public void loadOrderItems(Order order) {
         loadOrderItemsBatch(List.of(order));
     }
@@ -174,6 +275,16 @@ public class OrderDao {
                 .addValue("expectedStatus", OrderStatus.CONFIRMED.getCode())
                 .addValue("newStatus", OrderStatus.PREPARING.getCode())
                 .addValue("kitchenStaffId", kitchenStaffId)
+                .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
+        return updated > 0;
+    }
+
+    public boolean claimForDelivery(UUID orderId, UUID deliveryStaffId) {
+        int updated = jdbc.update(queries.get("claimForDelivery"), new MapSqlParameterSource()
+                .addValue("id", orderId)
+                .addValue("expectedStatus", OrderStatus.READY.getCode())
+                .addValue("newStatus", OrderStatus.OUT_FOR_DELIVERY.getCode())
+                .addValue("deliveryStaffId", deliveryStaffId)
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
         return updated > 0;
     }

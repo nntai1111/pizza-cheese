@@ -22,7 +22,6 @@ public class DeliveryAddressRequest {
     @Size(max = 100, message = "Quận/huyện quá dài")
     private String district;
 
-    @NotBlank(message = "Thành phố không được để trống")
     @Size(max = 100, message = "Thành phố quá dài")
     private String city;
 

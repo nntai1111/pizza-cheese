@@ -22,24 +22,24 @@ import pizza_cheese.todo.domain.OrderStatus;
 import pizza_cheese.todo.dto.response.OrderResponse;
 import pizza_cheese.todo.dto.response.PageResponse;
 import pizza_cheese.todo.dto.response.RestResponse;
-import pizza_cheese.todo.service.KitchenService;
+import pizza_cheese.todo.service.DeliveryService;
 
-@Tag(name = "Kitchen", description = "Quản lý đơn hàng tại bếp")
+@Tag(name = "Delivery", description = "Quản lý giao hàng")
 
 @RestController
-@RequestMapping("/api/v1/kitchen/orders")
-public class KitchenController {
+@RequestMapping("/api/v1/delivery/orders")
+public class DeliveryController {
 
-    private final KitchenService kitchenService;
+    private final DeliveryService deliveryService;
 
-    public KitchenController(KitchenService kitchenService) {
-        this.kitchenService = kitchenService;
+    public DeliveryController(DeliveryService deliveryService) {
+        this.deliveryService = deliveryService;
     }
 
-    @Operation(summary = "Danh sách đơn hàng cho bếp (phân trang; dùng updatedSince để chỉ lấy đơn mới/đổi)")
+    @Operation(summary = "Danh sách đơn hàng cho shipper (phân trang; dùng updatedSince để chỉ lấy đơn mới/đổi)")
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping
-    @PreAuthorize("hasAnyRole('KITCHEN', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('DELIVERY', 'ADMIN')")
     public ResponseEntity<RestResponse<PageResponse<OrderResponse>>> getOrders(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(required = false) OrderStatus status,
@@ -47,36 +47,36 @@ public class KitchenController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(RestResponse.success(
-                kitchenService.getOrders(jwt.getSubject(), status, page, size, updatedSince)));
+                deliveryService.getOrders(jwt.getSubject(), status, page, size, updatedSince)));
     }
 
     @Operation(summary = "Chi tiết đơn hàng")
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('KITCHEN', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('DELIVERY', 'ADMIN')")
     public ResponseEntity<RestResponse<OrderResponse>> getOrder(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID id) {
-        return ResponseEntity.ok(RestResponse.success(kitchenService.getOrder(jwt.getSubject(), id)));
+        return ResponseEntity.ok(RestResponse.success(deliveryService.getOrder(jwt.getSubject(), id)));
     }
 
-    @Operation(summary = "Nhận đơn và bắt đầu chế biến (CONFIRMED → PREPARING)")
+    @Operation(summary = "Nhận đơn và bắt đầu giao (READY → OUT_FOR_DELIVERY)")
     @SecurityRequirement(name = "Bearer Authentication")
-    @PostMapping("/{id}/start-preparing")
-    @PreAuthorize("hasRole('KITCHEN')")
-    public ResponseEntity<RestResponse<OrderResponse>> startPreparing(
+    @PostMapping("/{id}/start-delivery")
+    @PreAuthorize("hasRole('DELIVERY')")
+    public ResponseEntity<RestResponse<OrderResponse>> startDelivery(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID id) {
-        return ResponseEntity.ok(RestResponse.success(kitchenService.startPreparing(jwt.getSubject(), id)));
+        return ResponseEntity.ok(RestResponse.success(deliveryService.startDelivery(jwt.getSubject(), id)));
     }
 
-    @Operation(summary = "Hoàn thành chế biến (PREPARING → READY)")
+    @Operation(summary = "Hoàn thành giao hàng (OUT_FOR_DELIVERY → DELIVERED)")
     @SecurityRequirement(name = "Bearer Authentication")
-    @PostMapping("/{id}/mark-ready")
-    @PreAuthorize("hasRole('KITCHEN')")
-    public ResponseEntity<RestResponse<OrderResponse>> markReady(
+    @PostMapping("/{id}/mark-delivered")
+    @PreAuthorize("hasRole('DELIVERY')")
+    public ResponseEntity<RestResponse<OrderResponse>> markDelivered(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID id) {
-        return ResponseEntity.ok(RestResponse.success(kitchenService.markReady(jwt.getSubject(), id)));
+        return ResponseEntity.ok(RestResponse.success(deliveryService.markDelivered(jwt.getSubject(), id)));
     }
 }

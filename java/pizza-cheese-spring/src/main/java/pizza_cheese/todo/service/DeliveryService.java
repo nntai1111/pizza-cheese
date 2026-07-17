@@ -11,9 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import pizza_cheese.todo.dao.OrderDao;
+import pizza_cheese.todo.dao.PaymentDao;
 import pizza_cheese.todo.dao.UserDao;
 import pizza_cheese.todo.domain.Order;
 import pizza_cheese.todo.domain.OrderStatus;
+import pizza_cheese.todo.domain.Payment;
+import pizza_cheese.todo.domain.PaymentStatus;
 import pizza_cheese.todo.domain.User;
 import pizza_cheese.todo.dto.response.OrderResponse;
 import pizza_cheese.todo.dto.response.PageResponse;
@@ -21,19 +24,22 @@ import pizza_cheese.todo.exception.ApiException;
 import pizza_cheese.todo.realtime.OrderRealtimePublisher;
 
 @Service
-public class KitchenService {
+public class DeliveryService {
 
     private final OrderDao orderDao;
+    private final PaymentDao paymentDao;
     private final UserDao userDao;
     private final OrderResponseEnricher orderResponseEnricher;
     private final OrderRealtimePublisher orderRealtimePublisher;
 
-    public KitchenService(
+    public DeliveryService(
             OrderDao orderDao,
+            PaymentDao paymentDao,
             UserDao userDao,
             OrderResponseEnricher orderResponseEnricher,
             OrderRealtimePublisher orderRealtimePublisher) {
         this.orderDao = orderDao;
+        this.paymentDao = paymentDao;
         this.userDao = userDao;
         this.orderResponseEnricher = orderResponseEnricher;
         this.orderRealtimePublisher = orderRealtimePublisher;
@@ -50,10 +56,10 @@ public class KitchenService {
 
         if (updatedSince != null) {
             List<Order> changes = orderDao.findUpdatedSince(updatedSince, 200).stream()
-                    .filter(order -> isKitchenChangeVisible(order, staffId, status, admin))
+                    .filter(order -> isDeliveryChangeVisible(order, staffId, status, admin))
                     .toList();
             long total = countVisible(status, staffId, admin);
-            List<OrderResponse> content = orderResponseEnricher.toListResponses(changes, true, true);
+            List<OrderResponse> content = orderResponseEnricher.toListResponses(changes, true, false, true);
             return PageResponse.incremental(content, total);
         }
 
@@ -61,7 +67,7 @@ public class KitchenService {
         int safeSize = Math.min(Math.max(size, 1), 100);
         long total = countVisible(status, staffId, admin);
         List<Order> orders = findVisiblePage(status, staffId, admin, safePage, safeSize);
-        List<OrderResponse> content = orderResponseEnricher.toListResponses(orders, true, true);
+        List<OrderResponse> content = orderResponseEnricher.toListResponses(orders, true, false, true);
         return PageResponse.of(content, safePage, safeSize, total);
     }
 
@@ -70,69 +76,71 @@ public class KitchenService {
         Order order = orderDao.findById(orderId)
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
         assertCanView(order, staffId);
-        return orderResponseEnricher.toDetailResponse(order, true);
+        return orderResponseEnricher.toDetailResponse(order, false, true);
     }
 
     @Transactional
-    public OrderResponse startPreparing(String staffEmail, UUID orderId) {
+    public OrderResponse startDelivery(String staffEmail, UUID orderId) {
         UUID staffId = resolveUserId(staffEmail);
         Order order = orderDao.findById(orderId)
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
 
-        if (order.getStatus() == OrderStatus.PREPARING) {
-            if (staffId.equals(order.getKitchenStaffId())) {
-                return orderResponseEnricher.toDetailResponse(order, true);
+        if (order.getStatus() == OrderStatus.OUT_FOR_DELIVERY) {
+            if (staffId.equals(order.getDeliveryStaffId())) {
+                return orderResponseEnricher.toDetailResponse(order, false, true);
             }
-            throw ApiException.badRequest("Đơn đang được chế biến bởi nhân viên khác");
+            throw ApiException.badRequest("Đơn đang được giao bởi nhân viên khác");
         }
 
-        if (order.getStatus() != OrderStatus.CONFIRMED) {
-            throw ApiException.badRequest("Chỉ có thể nhận đơn ở trạng thái đã xác nhận");
+        if (order.getStatus() != OrderStatus.READY) {
+            throw ApiException.badRequest("Chỉ có thể nhận đơn ở trạng thái sẵn sàng giao");
         }
 
-        if (!orderDao.claimForPreparing(orderId, staffId)) {
-            throw ApiException.conflict("Đơn đã được nhân viên bếp khác nhận");
+        if (!orderDao.claimForDelivery(orderId, staffId)) {
+            throw ApiException.conflict("Đơn đã được nhân viên giao hàng khác nhận");
         }
 
-        orderDao.insertStatusHistory(orderId, OrderStatus.PREPARING, staffId, "Bep bat dau che bien");
-        order.setStatus(OrderStatus.PREPARING);
-        order.setKitchenStaffId(staffId);
+        orderDao.insertStatusHistory(orderId, OrderStatus.OUT_FOR_DELIVERY, staffId, "Shipper bat dau giao hang");
+        order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
+        order.setDeliveryStaffId(staffId);
 
-        OrderResponse response = orderResponseEnricher.toDetailResponse(order, true);
-        orderRealtimePublisher.publishKitchen(order);
+        OrderResponse response = orderResponseEnricher.toDetailResponse(order, false, true);
+        orderRealtimePublisher.publishDelivery(order);
         return response;
     }
 
     @Transactional
-    public OrderResponse markReady(String staffEmail, UUID orderId) {
+    public OrderResponse markDelivered(String staffEmail, UUID orderId) {
         UUID staffId = resolveUserId(staffEmail);
         Order order = orderDao.findById(orderId)
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
 
-        if (order.getStatus() == OrderStatus.READY) {
-            if (!isAdmin() && order.getKitchenStaffId() != null && !staffId.equals(order.getKitchenStaffId())) {
-                throw ApiException.forbidden("Không có quyền xem đơn của nhân viên bếp khác");
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            if (!isAdmin() && order.getDeliveryStaffId() != null && !staffId.equals(order.getDeliveryStaffId())) {
+                throw ApiException.forbidden("Không có quyền xem đơn của shipper khác");
             }
-            return orderResponseEnricher.toDetailResponse(order, true);
+            markPaymentPaidIfPending(orderId);
+            return orderResponseEnricher.toDetailResponse(order, false, true);
         }
 
-        if (order.getStatus() != OrderStatus.PREPARING) {
-            throw ApiException.badRequest("Chỉ có thể hoàn thành đơn đang chế biến");
+        if (order.getStatus() != OrderStatus.OUT_FOR_DELIVERY) {
+            throw ApiException.badRequest("Chỉ có thể hoàn thành đơn đang giao");
         }
 
-        if (order.getKitchenStaffId() != null && !staffId.equals(order.getKitchenStaffId())) {
-            throw ApiException.badRequest("Chỉ nhân viên đang chế biến đơn này mới có thể hoàn thành");
+        if (order.getDeliveryStaffId() != null && !staffId.equals(order.getDeliveryStaffId())) {
+            throw ApiException.badRequest("Chỉ nhân viên đang giao đơn này mới có thể đánh dấu đã giao");
         }
 
-        if (!orderDao.updateStatusIfCurrent(orderId, OrderStatus.PREPARING, OrderStatus.READY)) {
+        if (!orderDao.updateStatusIfCurrent(orderId, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.DELIVERED)) {
             throw ApiException.conflict("Không thể cập nhật trạng thái đơn, vui lòng thử lại");
         }
 
-        orderDao.insertStatusHistory(orderId, OrderStatus.READY, staffId, "Bep hoan thanh mon");
-        order.setStatus(OrderStatus.READY);
+        orderDao.insertStatusHistory(orderId, OrderStatus.DELIVERED, staffId, "Shipper giao hang thanh cong");
+        order.setStatus(OrderStatus.DELIVERED);
+        markPaymentPaidIfPending(orderId);
 
-        OrderResponse response = orderResponseEnricher.toDetailResponse(order, true);
-        orderRealtimePublisher.publishKitchenAndDelivery(order);
+        OrderResponse response = orderResponseEnricher.toDetailResponse(order, false, true);
+        orderRealtimePublisher.publishDelivery(order);
         return response;
     }
 
@@ -143,13 +151,13 @@ public class KitchenService {
                     : orderDao.findPageByStatus(status, page, size);
         }
         if (status == null) {
-            return orderDao.findPageForKitchenStaff(staffId, page, size);
+            return orderDao.findPageForDeliveryStaff(staffId, page, size);
         }
-        if (status == OrderStatus.CONFIRMED) {
+        if (status == OrderStatus.READY) {
             return orderDao.findPageByStatus(status, page, size);
         }
-        if (status == OrderStatus.PREPARING || status == OrderStatus.READY) {
-            return orderDao.findPageByStatusAndKitchenStaff(status, staffId, page, size);
+        if (status == OrderStatus.OUT_FOR_DELIVERY || status == OrderStatus.DELIVERED) {
+            return orderDao.findPageByStatusAndDeliveryStaff(status, staffId, page, size);
         }
         return List.of();
     }
@@ -159,38 +167,52 @@ public class KitchenService {
             return status == null ? orderDao.countAll() : orderDao.countByStatus(status);
         }
         if (status == null) {
-            return orderDao.countForKitchenStaff(staffId);
+            return orderDao.countForDeliveryStaff(staffId);
         }
-        if (status == OrderStatus.CONFIRMED) {
+        if (status == OrderStatus.READY) {
             return orderDao.countByStatus(status);
         }
-        if (status == OrderStatus.PREPARING || status == OrderStatus.READY) {
-            return orderDao.countByStatusAndKitchenStaff(status, staffId);
+        if (status == OrderStatus.OUT_FOR_DELIVERY || status == OrderStatus.DELIVERED) {
+            return orderDao.countByStatusAndDeliveryStaff(status, staffId);
         }
         return 0L;
     }
 
-    private boolean isKitchenChangeVisible(Order order, UUID staffId, OrderStatus filter, boolean admin) {
+    /**
+     * Incremental: shared READY pool for everyone; claimed orders only for owner;
+     * also emit claimed-by-others updates so peers can drop them from READY.
+     */
+    private boolean isDeliveryChangeVisible(Order order, UUID staffId, OrderStatus filter, boolean admin) {
         if (admin) {
             return true;
         }
-        if (order.getStatus() == OrderStatus.CONFIRMED) {
-            return filter == null || filter == OrderStatus.CONFIRMED;
+        if (order.getStatus() == OrderStatus.READY) {
+            return filter == null || filter == OrderStatus.READY;
         }
-        if (staffId.equals(order.getKitchenStaffId())) {
+        if (staffId.equals(order.getDeliveryStaffId())) {
             return true;
         }
-        // Peer claimed: so CONFIRMED / ALL can remove the order from shared pool
-        return filter == null || filter == OrderStatus.CONFIRMED;
+        // Peer claimed/finished: so READY / ALL can remove the order from shared pool
+        return filter == null || filter == OrderStatus.READY;
     }
 
     private void assertCanView(Order order, UUID staffId) {
-        if (isAdmin() || order.getStatus() == OrderStatus.CONFIRMED) {
+        if (isAdmin() || order.getStatus() == OrderStatus.READY) {
             return;
         }
-        if (order.getKitchenStaffId() != null && !staffId.equals(order.getKitchenStaffId())) {
-            throw ApiException.forbidden("Không có quyền xem đơn của nhân viên bếp khác");
+        if (order.getDeliveryStaffId() != null && !staffId.equals(order.getDeliveryStaffId())) {
+            throw ApiException.forbidden("Không có quyền xem đơn của shipper khác");
         }
+    }
+
+    private void markPaymentPaidIfPending(UUID orderId) {
+        Payment payment = paymentDao.findLatestByOrderId(orderId).orElse(null);
+        if (payment == null || payment.getStatus() != PaymentStatus.PENDING) {
+            return;
+        }
+        payment.setStatus(PaymentStatus.PAID);
+        payment.setPaidAt(LocalDateTime.now());
+        paymentDao.updateStatus(payment);
     }
 
     private boolean isAdmin() {

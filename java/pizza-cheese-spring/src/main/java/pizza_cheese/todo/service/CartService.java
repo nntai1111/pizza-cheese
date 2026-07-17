@@ -184,7 +184,7 @@ public class CartService {
     }
 
     private Cart getOrCreateCart(UUID userId) {
-        return cartDao.findByUserId(userId).orElseGet(() -> cartDao.createForUser(userId));
+        return cartDao.findByUserIdWithoutItems(userId).orElseGet(() -> cartDao.createForUser(userId));
     }
 
     private CartResponse reloadCart(UUID userId) {
@@ -197,7 +197,7 @@ public class CartService {
         CartItem item = cartDao.findItemById(itemId)
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy món trong giỏ hàng"));
 
-        Cart cart = cartDao.findByUserId(userId)
+        Cart cart = cartDao.findByUserIdWithoutItems(userId)
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy món trong giỏ hàng"));
 
         if (!item.getCartId().equals(cart.getId())) {

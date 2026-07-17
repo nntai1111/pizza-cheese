@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { auditTime } from 'rxjs';
 
-import { KitchenService } from '../../../core/services/kitchen.service';
+import { DeliveryService } from '../../../core/services/delivery.service';
 import { OrderRealtimeService } from '../../../core/services/order-realtime.service';
 import {
   Order,
@@ -20,20 +20,20 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 type StatusFilter = OrderStatus | 'ALL';
 
 @Component({
-  selector: 'app-kitchen-order-list',
+  selector: 'app-delivery-order-list',
   imports: [RouterLink, DatePipe, PaginationComponent],
-  templateUrl: './kitchen-order-list.component.html',
-  styleUrl: './kitchen-order-list.component.scss',
+  templateUrl: './delivery-order-list.component.html',
+  styleUrl: './delivery-order-list.component.scss',
 })
-export class KitchenOrderListComponent implements OnInit {
-  private readonly kitchenService = inject(KitchenService);
+export class DeliveryOrderListComponent implements OnInit {
+  private readonly deliveryService = inject(DeliveryService);
   private readonly orderRealtime = inject(OrderRealtimeService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly orders = signal<Order[]>([]);
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
-  readonly activeFilter = signal<StatusFilter>('CONFIRMED');
+  readonly activeFilter = signal<StatusFilter>('READY');
   readonly page = signal(0);
   readonly totalPages = signal(0);
   readonly totalElements = signal(0);
@@ -44,9 +44,9 @@ export class KitchenOrderListComponent implements OnInit {
   readonly getStatusLabel = (order: Order) => getEnumLabel(order.status, ORDER_STATUS_LABELS);
 
   readonly filters: { value: StatusFilter; label: string }[] = [
-    { value: 'CONFIRMED', label: 'Chờ làm' },
-    { value: 'PREPARING', label: 'Đang làm' },
-    { value: 'READY', label: 'Sẵn sàng' },
+    { value: 'READY', label: 'Chờ giao' },
+    { value: 'OUT_FOR_DELIVERY', label: 'Đang giao' },
+    { value: 'DELIVERED', label: 'Đã giao' },
     { value: 'ALL', label: 'Tất cả' },
   ];
 
@@ -54,7 +54,7 @@ export class KitchenOrderListComponent implements OnInit {
     this.reload(true);
 
     this.orderRealtime
-      .connect('kitchen')
+      .connect('delivery')
       .pipe(auditTime(300), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.reload(false));
   }
@@ -71,26 +71,53 @@ export class KitchenOrderListComponent implements OnInit {
   }
 
   needsStartAction(order: Order): boolean {
-    return enumEquals(order.status, 'CONFIRMED');
+    return enumEquals(order.status, 'READY');
   }
 
-  needsReadyAction(order: Order): boolean {
-    return enumEquals(order.status, 'PREPARING');
+  needsDeliveredAction(order: Order): boolean {
+    return enumEquals(order.status, 'OUT_FOR_DELIVERY');
   }
 
-  startPreparing(order: Order, event: Event): void {
+  startDelivery(order: Order, event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    this.runAction(order.id, () => this.kitchenService.startPreparing(order.id));
+    this.runAction(order.id, () => this.deliveryService.startDelivery(order.id));
   }
 
-  markReady(order: Order, event: Event): void {
+  markDelivered(order: Order, event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    this.runAction(order.id, () => this.kitchenService.markReady(order.id));
+    this.runAction(order.id, () => this.deliveryService.markDelivered(order.id));
   }
 
-  private runAction(orderId: string, action: () => ReturnType<KitchenService['startPreparing']>): void {
+  getDeliveryAddress(order: Order): string {
+    try {
+      const address = JSON.parse(order.deliveryAddressSnapshot) as {
+        recipientName?: string;
+        phone?: string;
+        addressLine1?: string;
+        addressLine2?: string;
+        ward?: string;
+        district?: string;
+        city?: string;
+      };
+      if (address.addressLine1 === 'Tại quầy') {
+        return `Mua tại quầy · ${address.recipientName || 'Khách lẻ'}`;
+      }
+      const parts = [
+        address.addressLine1,
+        address.addressLine2,
+        address.ward,
+        address.district,
+        address.city,
+      ].filter(Boolean);
+      return `${address.recipientName ?? ''} · ${address.phone ?? ''} · ${parts.join(', ')}`;
+    } catch {
+      return order.deliveryAddressSnapshot;
+    }
+  }
+
+  private runAction(orderId: string, action: () => ReturnType<DeliveryService['startDelivery']>): void {
     this.actionOrderId.set(orderId);
     this.errorMessage.set(null);
 
@@ -111,7 +138,7 @@ export class KitchenOrderListComponent implements OnInit {
       this.loading.set(true);
     }
 
-    this.kitchenService
+    this.deliveryService
       .getOrders({
         status: this.resolveStatusParam(this.activeFilter()),
         page: this.page(),

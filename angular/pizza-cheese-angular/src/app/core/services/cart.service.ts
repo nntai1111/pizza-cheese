@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, finalize, map, tap } from 'rxjs';
+import { Observable, finalize, map, of, tap } from 'rxjs';
 
 import { API_BASE_URL } from '../constants/api.constants';
 import { ApiResponse } from '../models/auth.model';
@@ -11,6 +11,7 @@ import {
   CartItem,
   UpdateCartItemRequest,
 } from '../models/cart.model';
+import { normalizeCodedEnum } from '../utils/coded-enum.util';
 
 const CART_BASE = `${API_BASE_URL}/cart`;
 const CHECKOUT_SELECTION_KEY = 'pizza_cheese_checkout_selection';
@@ -84,6 +85,106 @@ export class CartService {
           this.syncCheckoutSelection(cart);
         }),
       );
+  }
+
+  /**
+   * Add pizza, or bump quantity if the same pizza/size/toppings already exists.
+   * Avoids duplicate lines when user adds then taps "Mua ngay".
+   */
+  addOrMergePizza(request: AddPizzaToCartRequest): Observable<Cart> {
+    const existing = this.findMatchingPizzaItem(request);
+    if (!existing) {
+      return this.addPizza(request);
+    }
+    return this.updateItemQuantity(existing.id, {
+      quantity: existing.quantity + request.quantity,
+    });
+  }
+
+  addOrMergeCombo(request: AddComboToCartRequest): Observable<Cart> {
+    const existing = this.findMatchingComboItem(request.comboId);
+    if (!existing) {
+      return this.addCombo(request);
+    }
+    return this.updateItemQuantity(existing.id, {
+      quantity: existing.quantity + request.quantity,
+    });
+  }
+
+  /**
+   * Buy-now: reuse matching cart line (set qty) or add once, then select only that line for checkout.
+   */
+  buyPizzaNow(request: AddPizzaToCartRequest): Observable<Cart> {
+    const existing = this.findMatchingPizzaItem(request);
+    if (existing) {
+      const ensureQty$ =
+        existing.quantity === request.quantity
+          ? of(this.cart()!)
+          : this.updateItemQuantity(existing.id, { quantity: request.quantity });
+
+      return ensureQty$.pipe(
+        tap((cart) => {
+          const item = this.findMatchingPizzaItem(request) ?? existing;
+          this.setCheckoutSelection([item.id]);
+          this.cart.set(cart);
+        }),
+      );
+    }
+
+    const previousIds = new Set(this.cart()?.items.map((item) => item.id) ?? []);
+    return this.addPizza(request).pipe(
+      tap((cart) => this.setCheckoutForNewItems(previousIds, cart)),
+    );
+  }
+
+  buyComboNow(request: AddComboToCartRequest): Observable<Cart> {
+    const existing = this.findMatchingComboItem(request.comboId);
+    if (existing) {
+      const ensureQty$ =
+        existing.quantity === request.quantity
+          ? of(this.cart()!)
+          : this.updateItemQuantity(existing.id, { quantity: request.quantity });
+
+      return ensureQty$.pipe(
+        tap((cart) => {
+          const item = this.findMatchingComboItem(request.comboId) ?? existing;
+          this.setCheckoutSelection([item.id]);
+          this.cart.set(cart);
+        }),
+      );
+    }
+
+    const previousIds = new Set(this.cart()?.items.map((item) => item.id) ?? []);
+    return this.addCombo(request).pipe(
+      tap((cart) => this.setCheckoutForNewItems(previousIds, cart)),
+    );
+  }
+
+  findMatchingPizzaItem(request: AddPizzaToCartRequest): CartItem | undefined {
+    const cart = this.cart();
+    if (!cart) {
+      return undefined;
+    }
+    const wantedToppings = normalizeToppingKey(request.toppingIds);
+    return cart.items.find((item) => {
+      if (normalizeCodedEnum(item.itemType) !== 'PIZZA') {
+        return false;
+      }
+      if (item.pizzaId !== request.pizzaId || item.pizzaVariantId !== request.pizzaVariantId) {
+        return false;
+      }
+      return normalizeToppingKey(item.toppings.map((t) => t.toppingId)) === wantedToppings;
+    });
+  }
+
+  findMatchingComboItem(comboId: string): CartItem | undefined {
+    const cart = this.cart();
+    if (!cart) {
+      return undefined;
+    }
+    return cart.items.find(
+      (item) => normalizeCodedEnum(item.itemType) === 'COMBO' && item.comboId === comboId,
+    );
   }
 
   updateItemQuantity(itemId: string, request: UpdateCartItemRequest): Observable<Cart> {
@@ -218,4 +319,8 @@ export class CartService {
       JSON.stringify(this.getCheckoutItemIds()),
     );
   }
+}
+
+function normalizeToppingKey(toppingIds: string[]): string {
+  return [...toppingIds].sort().join(',');
 }

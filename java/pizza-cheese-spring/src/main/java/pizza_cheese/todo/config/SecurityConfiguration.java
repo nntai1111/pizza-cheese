@@ -23,10 +23,13 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
+import jakarta.servlet.http.HttpServletRequest;
 import pizza_cheese.todo.handler.CustomAccessDeniedHandler;
 import pizza_cheese.todo.handler.CustomAuthenticationEntryPoint;
 import pizza_cheese.todo.service.CustomUserDetailsService;
@@ -125,9 +128,32 @@ public class SecurityConfiguration {
         return source;
     }
 
+    @Bean
+    public BearerTokenResolver bearerTokenResolver() {
+        DefaultBearerTokenResolver defaultResolver = new DefaultBearerTokenResolver();
+        return (HttpServletRequest request) -> {
+            String token = defaultResolver.resolve(request);
+            if (token != null) {
+                return token;
+            }
+            // EventSource cannot set Authorization header — allow query token for SSE.
+            String path = request.getRequestURI();
+            if (path != null && path.endsWith("/events")) {
+                String queryToken = request.getParameter("access_token");
+                if (queryToken != null && !queryToken.isBlank()) {
+                    return queryToken;
+                }
+            }
+            return null;
+        };
+    }
+
     // Cấu hình security filter chain để định nghĩa cách bảo vệ các endpoint
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter)
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            BearerTokenResolver bearerTokenResolver)
             throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -156,6 +182,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .bearerTokenResolver(bearerTokenResolver)
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler))

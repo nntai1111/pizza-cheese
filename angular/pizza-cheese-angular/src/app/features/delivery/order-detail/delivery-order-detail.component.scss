@@ -1,0 +1,26 @@
+@use '../../customer/customer-theme';
+
+.order-detail-summary {
+  .btn-start {
+    @include customer-theme.pc-btn-primary;
+    width: 100%;
+    margin-top: 1rem;
+    background: linear-gradient(135deg, #fca5a5, #ef4444);
+    border: none;
+  }
+
+  .btn-delivered {
+    @include customer-theme.pc-btn-primary;
+    width: 100%;
+    margin-top: 1rem;
+    background: linear-gradient(135deg, #86efac, #22c55e);
+    border: none;
+  }
+}
+
+.item-meta {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--pc-crust-muted);
+}

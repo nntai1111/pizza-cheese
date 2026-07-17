@@ -42,6 +42,17 @@ public class CartDao {
         return Optional.of(cart);
     }
 
+    /** Cart header only — use for mutations that only need cartId (avoids loading toppings mid-transaction). */
+    public Optional<Cart> findByUserIdWithoutItems(UUID userId) {
+        List<Cart> carts = jdbc.query(queries.get("findByUserId"), Map.of("userId", userId), RowMappers.forEntity(Cart.class));
+        if (carts.isEmpty()) {
+            return Optional.empty();
+        }
+        Cart cart = carts.get(0);
+        cart.setItems(List.of());
+        return Optional.of(cart);
+    }
+
     public Cart createForUser(UUID userId) {
         LocalDateTime now = LocalDateTime.now();
         Cart cart = new Cart();

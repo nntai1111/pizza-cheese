@@ -39,6 +39,7 @@ import pizza_cheese.todo.dto.request.CreateOrderRequest;
 import pizza_cheese.todo.dto.request.DeliveryAddressRequest;
 import pizza_cheese.todo.dto.response.OrderResponse;
 import pizza_cheese.todo.exception.ApiException;
+import pizza_cheese.todo.realtime.OrderRealtimePublisher;
 
 @Service
 public class OrderService {
@@ -52,6 +53,7 @@ public class OrderService {
     private final VnPayService vnPayService;
     private final CouponService couponService;
     private final OrderResponseEnricher orderResponseEnricher;
+    private final OrderRealtimePublisher orderRealtimePublisher;
     private final ObjectMapper objectMapper;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -63,6 +65,7 @@ public class OrderService {
             VnPayService vnPayService,
             CouponService couponService,
             OrderResponseEnricher orderResponseEnricher,
+            OrderRealtimePublisher orderRealtimePublisher,
             ObjectMapper objectMapper) {
         this.orderDao = orderDao;
         this.paymentDao = paymentDao;
@@ -71,6 +74,7 @@ public class OrderService {
         this.vnPayService = vnPayService;
         this.couponService = couponService;
         this.orderResponseEnricher = orderResponseEnricher;
+        this.orderRealtimePublisher = orderRealtimePublisher;
         this.objectMapper = objectMapper;
     }
 
@@ -144,6 +148,10 @@ public class OrderService {
 
         cartDao.deleteItemsByIds(selectedItems.stream().map(CartItem::getId).toList());
         cartDao.touchUpdatedAt(cart.getId());
+
+        if (order.getStatus() == OrderStatus.CONFIRMED) {
+            orderRealtimePublisher.publishKitchen(order);
+        }
 
         return toOrderResponse(order, payment);
     }

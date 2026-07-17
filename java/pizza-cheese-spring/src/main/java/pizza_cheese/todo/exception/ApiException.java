@@ -42,6 +42,10 @@ public class ApiException extends RuntimeException {
         return new ApiException(401, "Unauthorized", detail);
     }
 
+    public static ApiException forbidden(String detail) {
+        return new ApiException(403, "Forbidden", detail);
+    }
+
     public static ApiException uploadFailed(String detail, Throwable cause) {
         return new ApiException(400, "Upload failed", detail, cause);
     }

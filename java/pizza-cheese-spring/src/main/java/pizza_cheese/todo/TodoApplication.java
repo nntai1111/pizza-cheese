@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import pizza_cheese.todo.config.AppProperties;
 import pizza_cheese.todo.config.CacheProperties;
@@ -15,6 +16,7 @@ import pizza_cheese.todo.config.VnPayProperties;
 		RedisRepositoriesAutoConfiguration.class,
 })
 @EnableConfigurationProperties({ AppProperties.class, VnPayProperties.class, CacheProperties.class })
+@EnableScheduling
 public class TodoApplication {
 
 	public static void main(String[] args) {

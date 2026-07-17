@@ -1,0 +1,46 @@
+<div class="delivery-layout-container">
+  <aside class="delivery-left-sidebar">
+    <a routerLink="/delivery/orders" class="sidebar-brand">
+      <span class="sidebar-brand__logo">🛵</span>
+      <div class="sidebar-brand__text">
+        <strong>Pizza Cheese</strong>
+        <span>Giao hàng</span>
+      </div>
+    </a>
+
+    <nav class="sidebar-nav">
+      <a
+        routerLink="/delivery/orders"
+        routerLinkActive="sidebar-nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="sidebar-nav__link"
+      >
+        <span class="link-icon">📋</span>
+        <span>Đơn cần giao</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <app-user-avatar [user]="user()" size="sm" />
+        <div class="sidebar-user__info">
+          <span class="sidebar-user__name">{{ user()?.name }}</span>
+          <span class="sidebar-user__role">Nhân viên giao hàng</span>
+        </div>
+      </div>
+      <button type="button" class="btn-logout" (click)="logout()">
+        <span class="logout-icon">🚪</span>
+        <span>Đăng xuất</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="delivery-main-container">
+    <main class="delivery-content">
+      <router-outlet />
+    </main>
+    <footer class="delivery-footer">
+      <p>© {{ currentYear }} Pizza Cheese — Giao hàng</p>
+    </footer>
+  </div>
+</div>

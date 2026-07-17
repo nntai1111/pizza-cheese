@@ -142,33 +142,34 @@ export class PizzaDetailComponent {
       return;
     }
 
-    const previousItemIds = new Set(this.cartService.cart()?.items.map((item) => item.id) ?? []);
+    const request = {
+      pizzaId: pizza.id,
+      pizzaVariantId: variant.id,
+      toppingIds: Array.from(this.selectedToppingIds()),
+      quantity: this.quantity(),
+    };
     const busySignal = checkoutImmediately ? this.buyingNow : this.addingToCart;
     busySignal.set(true);
     this.orderNotice.set(null);
 
-    this.cartService
-      .addPizza({
-        pizzaId: pizza.id,
-        pizzaVariantId: variant.id,
-        toppingIds: Array.from(this.selectedToppingIds()),
-        quantity: this.quantity(),
-      })
-      .subscribe({
-        next: (cart) => {
-          busySignal.set(false);
-          if (checkoutImmediately) {
-            this.cartService.setCheckoutForNewItems(previousItemIds, cart);
-            void this.router.navigate(this.shopContext.segments('checkout'));
-            return;
-          }
-          this.orderNotice.set('Đã thêm pizza vào giỏ hàng!');
-        },
-        error: (err: HttpErrorResponse) => {
-          busySignal.set(false);
-          this.orderNotice.set(getHttpErrorMessage(err, 'Không thể thêm vào giỏ hàng.'));
-        },
-      });
+    const action$ = checkoutImmediately
+      ? this.cartService.buyPizzaNow(request)
+      : this.cartService.addOrMergePizza(request);
+
+    action$.subscribe({
+      next: () => {
+        busySignal.set(false);
+        if (checkoutImmediately) {
+          void this.router.navigate(this.shopContext.segments('checkout'));
+          return;
+        }
+        this.orderNotice.set('Đã thêm pizza vào giỏ hàng!');
+      },
+      error: (err: HttpErrorResponse) => {
+        busySignal.set(false);
+        this.orderNotice.set(getHttpErrorMessage(err, 'Không thể thêm vào giỏ hàng.'));
+      },
+    });
   }
 
   goBack(): void {

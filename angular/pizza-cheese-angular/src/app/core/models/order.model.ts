@@ -23,7 +23,7 @@ export interface DeliveryAddress {
   addressLine2?: string;
   ward?: string;
   district?: string;
-  city: string;
+  city?: string;
 }
 
 export interface CreateOrderRequest {
@@ -81,6 +81,9 @@ export interface Order {
   customerName?: string | null;
   customerEmail?: string | null;
   kitchenStaffName?: string | null;
+  deliveryStaffName?: string | null;
+  kitchenStaffId?: string | null;
+  deliveryStaffId?: string | null;
 }
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
