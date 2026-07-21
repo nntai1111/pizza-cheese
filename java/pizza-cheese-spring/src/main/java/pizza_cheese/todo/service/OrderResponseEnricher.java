@@ -126,6 +126,7 @@ public class OrderResponseEnricher {
         if (customer != null) {
             response.setCustomerName(customer.fullName());
             response.setCustomerEmail(customer.email());
+            response.setCustomerPhone(customer.phone());
         }
 
         if (includeKitchenStaff && order.getKitchenStaffId() != null) {

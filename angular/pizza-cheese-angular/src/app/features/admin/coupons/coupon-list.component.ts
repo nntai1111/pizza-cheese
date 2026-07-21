@@ -41,6 +41,8 @@ export class CouponListComponent {
     discountValue: [0, [Validators.required, Validators.min(0.01)]],
     minOrderValue: [null as number | null],
     maxDiscount: [null as number | null],
+    startDate: [''],
+    endDate: [''],
     usageLimit: [null as number | null],
     perUserLimit: [null as number | null],
     isActive: [true],
@@ -59,6 +61,8 @@ export class CouponListComponent {
       discountValue: 10,
       minOrderValue: null,
       maxDiscount: null,
+      startDate: '',
+      endDate: '',
       usageLimit: null,
       perUserLimit: null,
       isActive: true,
@@ -76,6 +80,8 @@ export class CouponListComponent {
       discountValue: coupon.discountValue,
       minOrderValue: coupon.minOrderValue,
       maxDiscount: coupon.maxDiscount,
+      startDate: this.toLocalInput(coupon.startDate),
+      endDate: this.toLocalInput(coupon.endDate),
       usageLimit: coupon.usageLimit,
       perUserLimit: coupon.perUserLimit,
       isActive: coupon.active,
@@ -105,6 +111,8 @@ export class CouponListComponent {
       discountValue: value.discountValue,
       minOrderValue: value.minOrderValue ?? undefined,
       maxDiscount: value.maxDiscount ?? undefined,
+      startDate: this.fromLocalInput(value.startDate),
+      endDate: this.fromLocalInput(value.endDate),
       usageLimit: value.usageLimit ?? undefined,
       perUserLimit: value.perUserLimit ?? undefined,
       isActive: value.isActive,
@@ -156,6 +164,32 @@ export class CouponListComponent {
       return `${coupon.discountValue}%`;
     }
     return this.formatPrice(coupon.discountValue);
+  }
+
+  formatDateRange(coupon: Coupon): string {
+    const start = coupon.startDate ? this.formatDate(coupon.startDate) : null;
+    const end = coupon.endDate ? this.formatDate(coupon.endDate) : null;
+    if (!start && !end) return 'Không giới hạn';
+    if (start && end) return `${start} → ${end}`;
+    if (start) return `Từ ${start}`;
+    return `Đến ${end}`;
+  }
+
+  private formatDate(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('vi-VN');
+  }
+
+  private toLocalInput(iso: string | null): string {
+    if (!iso) return '';
+    return iso.length >= 16 ? iso.slice(0, 16) : iso;
+  }
+
+  private fromLocalInput(value: string): string | undefined {
+    const trimmed = value?.trim();
+    if (!trimmed) return undefined;
+    return trimmed.length === 16 ? `${trimmed}:00` : trimmed;
   }
 
   private loadCoupons(): void {

@@ -8,12 +8,14 @@ export function getHttpErrorMessage(
     return 'Không thể kết nối server. Kiểm tra backend đang chạy và cấu hình CORS.';
   }
 
-  if (typeof err.error?.message === 'string' && err.error.message.trim()) {
-    return err.error.message;
+  const body = err.error;
+  // Backend RestResponse: message = short status, error = chi tiết
+  if (typeof body?.error === 'string' && body.error.trim()) {
+    return body.error;
   }
 
-  if (typeof err.error?.error === 'string' && err.error.error.trim()) {
-    return err.error.error;
+  if (typeof body?.message === 'string' && body.message.trim()) {
+    return body.message;
   }
 
   return fallback;

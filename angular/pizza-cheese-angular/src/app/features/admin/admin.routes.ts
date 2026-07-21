@@ -63,6 +63,41 @@ export const ADMIN_ROUTES: Routes = [
             (m) => m.AdminOrderDetailComponent,
           ),
       },
+      {
+        path: 'payments',
+        loadComponent: () =>
+          import('./payments/admin-payment-list.component').then(
+            (m) => m.AdminPaymentListComponent,
+          ),
+      },
+      {
+        path: 'payments/:id',
+        loadComponent: () =>
+          import('./payments/admin-payment-detail.component').then(
+            (m) => m.AdminPaymentDetailComponent,
+          ),
+      },
+      {
+        path: 'staff',
+        loadComponent: () =>
+          import('./staff/admin-staff-list.component').then(
+            (m) => m.AdminStaffListComponent,
+          ),
+      },
+      {
+        path: 'customers',
+        loadComponent: () =>
+          import('./customers/admin-customer-list.component').then(
+            (m) => m.AdminCustomerListComponent,
+          ),
+      },
+      {
+        path: 'customers/:id',
+        loadComponent: () =>
+          import('./customers/admin-customer-detail.component').then(
+            (m) => m.AdminCustomerDetailComponent,
+          ),
+      },
     ],
   },
 ];

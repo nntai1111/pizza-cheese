@@ -72,6 +72,21 @@ public class OrderDao {
         return jdbc.query(queries.get("findByUserId"), Map.of("userId", userId), RowMappers.forEntity(Order.class));
     }
 
+    public long countByUserId(UUID userId) {
+        Long count = jdbc.queryForObject(queries.get("countByUserId"), Map.of("userId", userId), Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<Order> findPageByUserId(UUID userId, int page, int size) {
+        return jdbc.query(
+                queries.get("findPageByUserId"),
+                new MapSqlParameterSource()
+                        .addValue("userId", userId)
+                        .addValue("limit", size)
+                        .addValue("offset", (long) page * size),
+                RowMappers.forEntity(Order.class));
+    }
+
     public List<Order> findAll() {
         return jdbc.query(queries.get("findAll"), Map.of(), RowMappers.forEntity(Order.class));
     }
@@ -110,6 +125,44 @@ public class OrderDao {
                         .addValue("limit", size)
                         .addValue("offset", (long) page * size),
                 RowMappers.forEntity(Order.class));
+    }
+
+    public long countFiltered(OrderStatus status, LocalDateTime from, LocalDateTime to) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        String sql = queries.get("countFilteredBase") + buildOrderFilterSql(status, from, to, params);
+        Long count = jdbc.queryForObject(sql, params, Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<Order> findPageFiltered(OrderStatus status, LocalDateTime from, LocalDateTime to, int page, int size) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        String sql = queries.get("findPageFilteredBase")
+                + buildOrderFilterSql(status, from, to, params)
+                + " ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
+        params.addValue("limit", size);
+        params.addValue("offset", (long) page * size);
+        return jdbc.query(sql, params, RowMappers.forEntity(Order.class));
+    }
+
+    private String buildOrderFilterSql(
+            OrderStatus status,
+            LocalDateTime from,
+            LocalDateTime to,
+            MapSqlParameterSource params) {
+        StringBuilder where = new StringBuilder(" WHERE 1=1");
+        if (status != null) {
+            where.append(" AND status = :status");
+            params.addValue("status", status.getCode());
+        }
+        if (from != null) {
+            where.append(" AND created_at >= :from");
+            params.addValue("from", JdbcTimeUtil.toTimestamp(from));
+        }
+        if (to != null) {
+            where.append(" AND created_at < :to");
+            params.addValue("to", JdbcTimeUtil.toTimestamp(to));
+        }
+        return where.toString();
     }
 
     public List<Order> findPageByStatusAndDeliveryStaff(OrderStatus status, UUID deliveryStaffId, int page, int size) {

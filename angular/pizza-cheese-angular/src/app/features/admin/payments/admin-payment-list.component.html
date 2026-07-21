@@ -1,0 +1,103 @@
+<div class="admin-page">
+  <div class="admin-page__header">
+    <h1>Thanh toán</h1>
+  </div>
+
+  <div class="order-filters">
+    @for (filter of statusFilters; track filter.value) {
+      <button
+        type="button"
+        class="filter-chip"
+        [class.filter-chip--active]="statusFilter() === filter.value"
+        (click)="setStatus(filter.value)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+
+  <div class="order-filters">
+    @for (filter of methodFilters; track filter.value) {
+      <button
+        type="button"
+        class="filter-chip"
+        [class.filter-chip--active]="methodFilter() === filter.value"
+        (click)="setMethod(filter.value)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+
+  <div class="date-filters">
+    <label>
+      Từ ngày
+      <input type="date" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event)" />
+    </label>
+    <label>
+      Đến ngày
+      <input type="date" [ngModel]="toDate()" (ngModelChange)="toDate.set($event)" />
+    </label>
+    <button type="button" class="btn-secondary" (click)="applyDateFilter()">Lọc</button>
+    @if (fromDate() || toDate()) {
+      <button type="button" class="btn-link" (click)="clearDateFilter()">Xóa ngày</button>
+    }
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="loading-text">Đang tải...</p>
+  } @else if (!payments().length) {
+    <p class="loading-text">Không có thanh toán nào trong bộ lọc này.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Thời gian</th>
+            <th>Mã đơn</th>
+            <th>Method</th>
+            <th>Số tiền</th>
+            <th>Trạng thái</th>
+            <th>Txn</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (payment of payments(); track payment.id) {
+            <tr>
+              <td>{{ payment.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <a [routerLink]="['/admin/orders', payment.orderId]" class="btn-link">
+                  {{ payment.orderCode }}
+                </a>
+              </td>
+              <td>{{ getMethodLabel(payment) }}</td>
+              <td>{{ formatPrice(payment.amount) }}</td>
+              <td>
+                <span [class]="paymentBadgeClass(payment)">
+                  {{ getStatusLabel(payment) }}
+                </span>
+              </td>
+              <td class="txn">{{ payment.transactionId || '—' }}</td>
+              <td class="actions">
+                <a [routerLink]="['/admin/payments', payment.id]" class="btn-link">Chi tiết</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [page]="page()"
+      [totalPages]="totalPages()"
+      [totalElements]="totalElements()"
+      [disabled]="loading()"
+      (pageChange)="onPageChange($event)"
+    />
+  }
+</div>

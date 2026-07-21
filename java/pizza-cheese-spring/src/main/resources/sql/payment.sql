@@ -52,3 +52,36 @@ UPDATE payments
 SET payment_url = :paymentUrl,
     updated_at = :updatedAt
 WHERE id = :id
+
+-- name: countFilteredBase
+SELECT COUNT(*)
+FROM payments p
+
+-- name: findPageFilteredBase
+SELECT p.id,
+       p.order_id,
+       o.order_code,
+       p.payment_method,
+       p.amount,
+       p.transaction_id,
+       p.status,
+       p.paid_at,
+       p.created_at,
+       p.updated_at
+FROM payments p
+JOIN orders o ON o.id = p.order_id
+
+-- name: findAdminById
+SELECT p.id,
+       p.order_id,
+       o.order_code,
+       p.payment_method,
+       p.amount,
+       p.transaction_id,
+       p.status,
+       p.paid_at,
+       p.created_at,
+       p.updated_at
+FROM payments p
+JOIN orders o ON o.id = p.order_id
+WHERE p.id = :id

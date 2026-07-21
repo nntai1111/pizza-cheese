@@ -17,6 +17,9 @@ import org.springframework.stereotype.Repository;
 
 import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Payment;
+import pizza_cheese.todo.domain.PaymentMethod;
+import pizza_cheese.todo.domain.PaymentStatus;
+import pizza_cheese.todo.dto.response.PaymentResponse;
 import pizza_cheese.todo.util.JdbcTimeUtil;
 import pizza_cheese.todo.util.SqlLoader;
 
@@ -95,5 +98,84 @@ public class PaymentDao {
                 .addValue("id", paymentId)
                 .addValue("paymentUrl", paymentUrl)
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(LocalDateTime.now())));
+    }
+
+    public long countFiltered(
+            PaymentStatus status,
+            PaymentMethod method,
+            LocalDateTime from,
+            LocalDateTime to) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        String sql = queries.get("countFilteredBase") + buildPaymentFilterSql(status, method, from, to, params);
+        Long count = jdbc.queryForObject(sql, params, Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<PaymentResponse> findPageFiltered(
+            PaymentStatus status,
+            PaymentMethod method,
+            LocalDateTime from,
+            LocalDateTime to,
+            int page,
+            int size) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        String sql = queries.get("findPageFilteredBase")
+                + buildPaymentFilterSql(status, method, from, to, params)
+                + " ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset";
+        params.addValue("limit", size);
+        params.addValue("offset", (long) page * size);
+        return jdbc.query(sql, params, (rs, rowNum) -> mapPaymentResponse(rs));
+    }
+
+    public Optional<PaymentResponse> findAdminById(UUID id) {
+        List<PaymentResponse> payments = jdbc.query(
+                queries.get("findAdminById"),
+                Map.of("id", id),
+                (rs, rowNum) -> mapPaymentResponse(rs));
+        return payments.isEmpty() ? Optional.empty() : Optional.of(payments.get(0));
+    }
+
+    private String buildPaymentFilterSql(
+            PaymentStatus status,
+            PaymentMethod method,
+            LocalDateTime from,
+            LocalDateTime to,
+            MapSqlParameterSource params) {
+        StringBuilder where = new StringBuilder(" WHERE 1=1");
+        if (status != null) {
+            where.append(" AND p.status = :status");
+            params.addValue("status", status.getCode());
+        }
+        if (method != null) {
+            where.append(" AND p.payment_method = :method");
+            params.addValue("method", method.getCode());
+        }
+        if (from != null) {
+            where.append(" AND p.created_at >= :from");
+            params.addValue("from", JdbcTimeUtil.toTimestamp(from));
+        }
+        if (to != null) {
+            where.append(" AND p.created_at < :to");
+            params.addValue("to", JdbcTimeUtil.toTimestamp(to));
+        }
+        return where.toString();
+    }
+
+    private PaymentResponse mapPaymentResponse(java.sql.ResultSet rs) throws java.sql.SQLException {
+        return PaymentResponse.of(
+                rs.getObject("id", UUID.class),
+                rs.getObject("order_id", UUID.class),
+                rs.getString("order_code"),
+                PaymentMethod.fromCode(rs.getInt("payment_method")),
+                rs.getBigDecimal("amount"),
+                rs.getString("transaction_id"),
+                PaymentStatus.fromCode(rs.getInt("status")),
+                toLocalDateTime(rs.getTimestamp("paid_at")),
+                toLocalDateTime(rs.getTimestamp("created_at")),
+                toLocalDateTime(rs.getTimestamp("updated_at")));
+    }
+
+    private LocalDateTime toLocalDateTime(java.sql.Timestamp timestamp) {
+        return timestamp != null ? timestamp.toLocalDateTime() : null;
     }
 }

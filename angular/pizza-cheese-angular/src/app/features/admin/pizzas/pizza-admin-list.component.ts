@@ -177,6 +177,12 @@ export class PizzaAdminListComponent {
     this.secondaryImagePreviewUrls.set(urls);
   }
 
+  removeExistingSecondaryImage(index: number): void {
+    const urls = [...this.existingSecondaryImageUrls()];
+    urls.splice(index, 1);
+    this.existingSecondaryImageUrls.set(urls);
+  }
+
   toggleTopping(toppingId: string, checked: boolean): void {
     const current = this.form.controls.toppingIds.value;
     if (checked) {
@@ -203,6 +209,7 @@ export class PizzaAdminListComponent {
     }
 
     const value = this.form.getRawValue();
+    const id = this.editingId();
     const payload = {
       categoryId: value.categoryId,
       name: value.name,
@@ -215,11 +222,13 @@ export class PizzaAdminListComponent {
         { size: 'LARGE' as PizzaSize, price: value.largePrice },
       ],
       toppingIds: value.toppingIds,
+      ...(id
+        ? { keepSecondaryImageUrls: this.existingSecondaryImageUrls() }
+        : {}),
     };
 
     this.saving.set(true);
     this.errorMessage.set(null);
-    const id = this.editingId();
     const imageUpload = {
       mainImage: this.selectedMainImageFile(),
       secondaryImages: this.selectedSecondaryImageFiles(),

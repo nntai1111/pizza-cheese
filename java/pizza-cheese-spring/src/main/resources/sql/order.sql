@@ -42,6 +42,20 @@ FROM orders
 WHERE user_id = :userId
 ORDER BY created_at DESC
 
+-- name: countByUserId
+SELECT COUNT(*) FROM orders WHERE user_id = :userId
+
+-- name: findPageByUserId
+SELECT id, order_code, user_id, address_id, status,
+       total_amount, discount_amount, final_amount, coupon_id,
+       payment_method_selected, note, estimated_delivery_time,
+       kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
+       created_at, updated_at
+FROM orders
+WHERE user_id = :userId
+ORDER BY created_at DESC
+LIMIT :limit OFFSET :offset
+
 -- name: findAll
 SELECT id, order_code, user_id, address_id, status,
        total_amount, discount_amount, final_amount, coupon_id,
@@ -87,6 +101,18 @@ FROM orders
 WHERE status = :status
 ORDER BY created_at DESC
 LIMIT :limit OFFSET :offset
+
+-- name: countFilteredBase
+SELECT COUNT(*)
+FROM orders
+
+-- name: findPageFilteredBase
+SELECT id, order_code, user_id, address_id, status,
+       total_amount, discount_amount, final_amount, coupon_id,
+       payment_method_selected, note, estimated_delivery_time,
+       kitchen_staff_id, delivery_staff_id, delivery_address_snapshot::text AS delivery_address_snapshot,
+       created_at, updated_at
+FROM orders
 
 -- name: findPageByStatusAndDeliveryStaff
 SELECT id, order_code, user_id, address_id, status,

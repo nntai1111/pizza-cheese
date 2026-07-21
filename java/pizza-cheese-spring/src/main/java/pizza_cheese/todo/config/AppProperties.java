@@ -42,6 +42,9 @@ public class AppProperties {
 	}
 
 	public String paymentReturnUrl() {
+		if (frontendUrl == null || frontendUrl.isBlank()) {
+			throw new IllegalStateException("Missing app.frontend-url (set APP_FRONTEND_URL or profile properties)");
+		}
 		return frontendUrl.replaceAll("/+$", "") + "/customer/payment/return";
 	}
 }

@@ -17,4 +17,15 @@ export class ShopContextService {
   isCartPage(url: string): boolean {
     return url.includes(`${this.basePath()}/cart`);
   }
+
+  /** Hide floating cart on flows where it distracts (orders, checkout, cart itself). */
+  hideCartSidebar(url: string): boolean {
+    const base = this.basePath();
+    return (
+      url.includes(`${base}/cart`) ||
+      url.includes(`${base}/orders`) ||
+      url.includes(`${base}/checkout`) ||
+      url.includes(`${base}/payment`)
+    );
+  }
 }

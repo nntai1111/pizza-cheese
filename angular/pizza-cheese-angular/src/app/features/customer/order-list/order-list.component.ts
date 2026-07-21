@@ -12,6 +12,7 @@ import {
 import { formatVnd } from '../../../core/utils/pizza.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
 import { getEnumLabel } from '../../../core/utils/coded-enum.util';
+import { orderStatusTone, statusBadgeClass } from '../../../core/utils/status-tone.util';
 
 @Component({
   selector: 'app-order-list',
@@ -31,6 +32,7 @@ export class OrderListComponent {
   readonly paymentLabels = PAYMENT_METHOD_LABELS;
   readonly getStatusLabel = (order: Order) => getEnumLabel(order.status, ORDER_STATUS_LABELS);
   readonly getPaymentLabel = (order: Order) => getEnumLabel(order.paymentMethod, PAYMENT_METHOD_LABELS);
+  readonly getStatusClass = (order: Order) => statusBadgeClass(orderStatusTone(order.status));
 
   constructor() {
     this.orderService.getMyOrders().subscribe({

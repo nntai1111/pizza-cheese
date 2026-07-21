@@ -16,6 +16,21 @@
     }
   </div>
 
+  <div class="date-filters">
+    <label>
+      Từ ngày
+      <input type="date" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event)" />
+    </label>
+    <label>
+      Đến ngày
+      <input type="date" [ngModel]="toDate()" (ngModelChange)="toDate.set($event)" />
+    </label>
+    <button type="button" class="btn-secondary" (click)="applyDateFilter()">Lọc</button>
+    @if (fromDate() || toDate()) {
+      <button type="button" class="btn-link" (click)="clearDateFilter()">Xóa ngày</button>
+    }
+  </div>
+
   @if (errorMessage()) {
     <div class="alert">{{ errorMessage() }}</div>
   }
@@ -33,7 +48,7 @@
             <th>Khách hàng</th>
             <th>Thời gian</th>
             <th>Thanh toán</th>
-            <th>Trạng thái</th>
+            <th>Trạng thái đơn</th>
             <th>Tổng tiền</th>
             <th>Thao tác</th>
           </tr>
@@ -42,29 +57,30 @@
           @for (order of orders(); track order.id) {
             <tr>
               <td><strong>{{ order.orderCode }}</strong></td>
-              <td>
-                @if (order.customerName || order.customerEmail) {
-                  <div>{{ order.customerName ?? '—' }}</div>
+              <td class="customer-cell">
+                @if (order.customerName || order.customerEmail || order.customerPhone) {
+                  <strong>{{ order.customerName || 'Khách' }}</strong>
+                  @if (order.customerPhone) {
+                    <div class="meta">{{ order.customerPhone }}</div>
+                  }
                   @if (order.customerEmail) {
-                    <div class="order-email">{{ order.customerEmail }}</div>
+                    <div class="meta">{{ order.customerEmail }}</div>
                   }
                 } @else {
-                  —
+                  <span class="meta">Không rõ khách</span>
                 }
               </td>
               <td>{{ order.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
               <td>
-                <div>{{ getPaymentLabel(order) }}</div>
+                <div class="pay-method">{{ getPaymentLabel(order) }}</div>
                 @if (order.paymentStatus) {
-                  <div class="order-payment-status">{{ getPaymentStatusLabel(order) }}</div>
+                  <span [class]="paymentBadgeClass(order)">{{ getPaymentStatusLabel(order) }}</span>
                 }
               </td>
               <td>
-                <span class="badge" [class.badge--active]="!isCancelled(order)">
-                  {{ getStatusLabel(order) }}
-                </span>
+                <span [class]="orderBadgeClass(order)">{{ getStatusLabel(order) }}</span>
               </td>
-              <td>{{ formatPrice(order.finalAmount) }}</td>
+              <td><strong>{{ formatPrice(order.finalAmount) }}</strong></td>
               <td class="actions">
                 <a [routerLink]="['/admin/orders', order.id]" class="btn-link">Chi tiết</a>
               </td>

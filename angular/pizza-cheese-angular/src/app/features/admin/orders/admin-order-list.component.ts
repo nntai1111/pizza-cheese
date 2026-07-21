@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -13,14 +14,19 @@ import {
 } from '../../../core/models/order.model';
 import { formatVnd } from '../../../core/utils/pizza.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
-import { getEnumLabel, enumEquals } from '../../../core/utils/coded-enum.util';
+import { getEnumLabel } from '../../../core/utils/coded-enum.util';
+import {
+  orderStatusTone,
+  paymentStatusTone,
+  statusBadgeClass,
+} from '../../../core/utils/status-tone.util';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 type StatusFilter = OrderStatus | 'ALL';
 
 @Component({
   selector: 'app-admin-order-list',
-  imports: [RouterLink, DatePipe, PaginationComponent],
+  imports: [RouterLink, DatePipe, FormsModule, PaginationComponent],
   templateUrl: './admin-order-list.component.html',
   styleUrl: './admin-order-list.component.scss',
 })
@@ -31,6 +37,8 @@ export class AdminOrderListComponent {
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly activeFilter = signal<StatusFilter>('ALL');
+  readonly fromDate = signal('');
+  readonly toDate = signal('');
   readonly page = signal(0);
   readonly totalPages = signal(0);
   readonly totalElements = signal(0);
@@ -41,28 +49,50 @@ export class AdminOrderListComponent {
   readonly getPaymentLabel = (order: Order) => getEnumLabel(order.paymentMethod, PAYMENT_METHOD_LABELS);
   readonly getPaymentStatusLabel = (order: Order) =>
     order.paymentStatus ? getEnumLabel(order.paymentStatus, PAYMENT_STATUS_LABELS) : '';
-  readonly isCancelled = (order: Order) => enumEquals(order.status, 'CANCELLED');
+  readonly orderBadgeClass = (order: Order) => statusBadgeClass(orderStatusTone(order.status));
+  readonly paymentBadgeClass = (order: Order) =>
+    statusBadgeClass(paymentStatusTone(order.paymentStatus));
 
   readonly filters: { value: StatusFilter; label: string }[] = [
     { value: 'ALL', label: 'Tất cả' },
     { value: 'PENDING_PAYMENT', label: 'Chờ thanh toán' },
     { value: 'CONFIRMED', label: 'Đã xác nhận' },
+    { value: 'PREPARING', label: 'Đang chế biến' },
+    { value: 'READY', label: 'Sẵn sàng' },
+    { value: 'OUT_FOR_DELIVERY', label: 'Đang giao' },
+    { value: 'DELIVERED', label: 'Đã giao' },
     { value: 'CANCELLED', label: 'Đã hủy' },
   ];
 
   constructor() {
-    this.loadOrders('ALL', 0);
+    this.reload();
   }
 
   setFilter(filter: StatusFilter): void {
     this.activeFilter.set(filter);
     this.page.set(0);
-    this.loadOrders(filter, 0);
+    this.reload();
+  }
+
+  applyDateFilter(): void {
+    this.page.set(0);
+    this.reload();
+  }
+
+  clearDateFilter(): void {
+    this.fromDate.set('');
+    this.toDate.set('');
+    this.page.set(0);
+    this.reload();
   }
 
   onPageChange(page: number): void {
     this.page.set(page);
-    this.loadOrders(this.activeFilter(), page);
+    this.reload();
+  }
+
+  private reload(): void {
+    this.loadOrders(this.activeFilter(), this.page());
   }
 
   private loadOrders(filter: StatusFilter, page: number): void {
@@ -72,6 +102,8 @@ export class AdminOrderListComponent {
     this.cashierService
       .getOrders({
         status: filter === 'ALL' ? undefined : filter,
+        from: this.fromDate() || undefined,
+        to: this.toDate() || undefined,
         page,
         size: this.pageSize,
       })

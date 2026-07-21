@@ -1,0 +1,55 @@
+<div class="admin-page">
+  <div class="admin-page__header">
+    <h1>Chi tiết thanh toán</h1>
+  </div>
+
+  @if (loading()) {
+    <p class="loading-text">Đang tải...</p>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (payment(); as p) {
+    <div class="detail-card">
+      <div class="detail-row">
+        <span>Mã đơn</span>
+        <strong>
+          <a [routerLink]="['/admin/orders', p.orderId]" class="btn-link">{{ p.orderCode }}</a>
+        </strong>
+      </div>
+      <div class="detail-row">
+        <span>Phương thức</span>
+        <strong>{{ getMethodLabel(p) }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Số tiền</span>
+        <strong>{{ formatPrice(p.amount) }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Trạng thái</span>
+        <strong>
+          <span [class]="paymentBadgeClass(p)">{{ getStatusLabel(p) }}</span>
+        </strong>
+      </div>
+      <div class="detail-row">
+        <span>Mã giao dịch</span>
+        <strong>{{ p.transactionId || '—' }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Tạo lúc</span>
+        <strong>{{ p.createdAt | date: 'dd/MM/yyyy HH:mm' }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Thanh toán lúc</span>
+        <strong>{{ p.paidAt ? (p.paidAt | date: 'dd/MM/yyyy HH:mm') : '—' }}</strong>
+      </div>
+    </div>
+
+    <div class="detail-actions">
+      <a routerLink="/admin/payments" class="btn-secondary">← Danh sách thanh toán</a>
+      <a [routerLink]="['/admin/orders', p.orderId]" class="btn-primary">Xem đơn hàng</a>
+    </div>
+  }
+</div>

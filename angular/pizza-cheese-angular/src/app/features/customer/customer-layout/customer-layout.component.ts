@@ -31,7 +31,7 @@ export class CustomerLayoutComponent implements OnInit {
   readonly cartItemCount = this.cartService.itemCount;
   readonly shop = this.shopContext;
   readonly currentYear = new Date().getFullYear();
-  readonly isCartPage = signal(false);
+  readonly hideCartSidebar = signal(false);
 
   readonly formatPrice = formatVnd;
   readonly getItemTitle = getCartItemTitle;
@@ -40,13 +40,13 @@ export class CustomerLayoutComponent implements OnInit {
 
   ngOnInit(): void {
     this.shopContext.setBasePath('/customer');
-    this.isCartPage.set(this.shopContext.isCartPage(this.router.url));
+    this.hideCartSidebar.set(this.shopContext.hideCartSidebar(this.router.url));
     this.cartService.loadCart().subscribe();
 
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
-        this.isCartPage.set(this.shopContext.isCartPage(this.router.url));
+        this.hideCartSidebar.set(this.shopContext.hideCartSidebar(this.router.url));
       });
   }
 

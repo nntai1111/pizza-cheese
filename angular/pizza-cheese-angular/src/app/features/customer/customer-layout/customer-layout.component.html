@@ -60,7 +60,7 @@
       <router-outlet />
     </main>
 
-    @if (!isCartPage()) {
+    @if (!hideCartSidebar()) {
       <aside class="cart-sidebar">
         <div class="cart-sidebar__header">
           <h2>🛒 Giỏ hàng</h2>

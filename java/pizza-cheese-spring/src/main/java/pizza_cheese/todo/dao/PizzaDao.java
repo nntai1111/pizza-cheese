@@ -4,10 +4,13 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -20,8 +23,10 @@ import org.springframework.stereotype.Repository;
 import pizza_cheese.todo.dao.mapper.RowMappers;
 import pizza_cheese.todo.domain.Pizza;
 import pizza_cheese.todo.domain.PizzaImage;
+import pizza_cheese.todo.domain.PizzaSize;
 import pizza_cheese.todo.domain.PizzaVariant;
 import pizza_cheese.todo.domain.Topping;
+import pizza_cheese.todo.exception.ApiException;
 import pizza_cheese.todo.util.JdbcTimeUtil;
 import pizza_cheese.todo.util.SqlLoader;
 
@@ -97,15 +102,15 @@ public class PizzaDao {
             pizza.setCreatedAt(now);
             pizza.setUpdatedAt(now);
             insert(pizza);
+            saveVariants(pizza);
         } else {
             pizza.setUpdatedAt(now);
             update(pizza);
-            jdbc.update(queries.get("deleteVariantsByPizzaId"), Map.of("pizzaId", pizza.getId()));
+            syncVariants(pizza);
             jdbc.update(queries.get("deleteToppingsByPizzaId"), Map.of("pizzaId", pizza.getId()));
             jdbc.update(queries.get("deleteImagesByPizzaId"), Map.of("pizzaId", pizza.getId()));
         }
 
-        saveVariants(pizza);
         saveToppings(pizza);
         saveImages(pizza);
         return pizza;
@@ -220,16 +225,73 @@ public class PizzaDao {
             return;
         }
         for (PizzaVariant variant : pizza.getVariants()) {
-            if (variant.getId() == null) {
-                variant.setId(UUID.randomUUID());
-            }
-            variant.setPizzaId(pizza.getId());
-            jdbc.update(queries.get("insertVariant"), new MapSqlParameterSource()
-                    .addValue("id", variant.getId())
-                    .addValue("pizzaId", variant.getPizzaId())
-                    .addValue("size", variant.getSize().getCode())
-                    .addValue("price", variant.getPrice()));
+            insertVariant(pizza.getId(), variant);
         }
+    }
+
+    /**
+     * Upsert variants by size so existing IDs stay stable (combo/cart/order FKs).
+     * Sizes removed from the request are deleted only when not referenced.
+     */
+    private void syncVariants(Pizza pizza) {
+        List<PizzaVariant> existing = jdbc.query(
+                queries.get("findVariantsByPizzaId"),
+                Map.of("pizzaId", pizza.getId()),
+                RowMappers.forEntity(PizzaVariant.class));
+
+        Map<PizzaSize, PizzaVariant> existingBySize = new EnumMap<>(PizzaSize.class);
+        for (PizzaVariant variant : existing) {
+            existingBySize.put(variant.getSize(), variant);
+        }
+
+        List<PizzaVariant> incoming = pizza.getVariants() != null ? pizza.getVariants() : List.of();
+        Set<PizzaSize> keptSizes = new HashSet<>();
+
+        for (PizzaVariant variant : incoming) {
+            keptSizes.add(variant.getSize());
+            PizzaVariant current = existingBySize.get(variant.getSize());
+            if (current != null) {
+                variant.setId(current.getId());
+                variant.setPizzaId(pizza.getId());
+                jdbc.update(queries.get("updateVariant"), new MapSqlParameterSource()
+                        .addValue("id", current.getId())
+                        .addValue("price", variant.getPrice()));
+            } else {
+                insertVariant(pizza.getId(), variant);
+            }
+        }
+
+        for (PizzaVariant current : existing) {
+            if (keptSizes.contains(current.getSize())) {
+                continue;
+            }
+            if (isVariantReferenced(current.getId())) {
+                throw ApiException.badRequest(
+                        "Không thể xóa size " + current.getSize().getLabel()
+                                + " vì đang được dùng trong combo, giỏ hàng hoặc đơn hàng");
+            }
+            jdbc.update(queries.get("deleteVariantById"), Map.of("id", current.getId()));
+        }
+    }
+
+    private void insertVariant(UUID pizzaId, PizzaVariant variant) {
+        if (variant.getId() == null) {
+            variant.setId(UUID.randomUUID());
+        }
+        variant.setPizzaId(pizzaId);
+        jdbc.update(queries.get("insertVariant"), new MapSqlParameterSource()
+                .addValue("id", variant.getId())
+                .addValue("pizzaId", variant.getPizzaId())
+                .addValue("size", variant.getSize().getCode())
+                .addValue("price", variant.getPrice()));
+    }
+
+    private boolean isVariantReferenced(UUID variantId) {
+        Boolean exists = jdbc.queryForObject(
+                queries.get("isVariantReferenced"),
+                Map.of("variantId", variantId),
+                Boolean.class);
+        return Boolean.TRUE.equals(exists);
     }
 
     private void saveToppings(Pizza pizza) {

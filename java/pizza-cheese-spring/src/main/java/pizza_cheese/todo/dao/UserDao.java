@@ -60,7 +60,8 @@ public class UserDao {
                 (rs, rowNum) -> new UserDisplayInfo(
                         rs.getObject("id", UUID.class),
                         rs.getString("full_name"),
-                        rs.getString("email")));
+                        rs.getString("email"),
+                        rs.getString("phone")));
         return users.stream()
                 .collect(Collectors.toMap(UserDisplayInfo::id, Function.identity()));
     }
@@ -102,12 +103,50 @@ public class UserDao {
                     .addValue("fullName", user.getFullName())
                     .addValue("phone", user.getPhone())
                     .addValue("avatarUrl", user.getAvatarUrl())
+                    .addValue("active", user.isActive())
                     .addValue("updatedAt", JdbcTimeUtil.toTimestamp(user.getUpdatedAt())));
             jdbc.update(queries.get("deleteRolesByUserId"), Map.of("userId", user.getId()));
         }
 
         saveRoles(user.getId(), user.getRoles());
         return user;
+    }
+
+    public long countStaff(Role role) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        String sql = queries.get("countStaffBase") + buildStaffRoleFilter(role, params);
+        Long count = jdbc.queryForObject(sql, params, Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<User> findStaffPage(Role role, int page, int size) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        String sql = queries.get("findStaffPageBase")
+                + buildStaffRoleFilter(role, params)
+                + " ORDER BY u.created_at DESC LIMIT :limit OFFSET :offset";
+        params.addValue("limit", size);
+        params.addValue("offset", (long) page * size);
+        List<User> users = jdbc.query(sql, params, RowMappers.forEntity(User.class));
+        for (User user : users) {
+            user.setRoles(findRolesByUserId(user.getId()));
+        }
+        return users;
+    }
+
+    private String buildStaffRoleFilter(Role role, MapSqlParameterSource params) {
+        if (role == null) {
+            return "";
+        }
+        params.addValue("role", role.name());
+        return """
+                 AND EXISTS (
+                    SELECT 1
+                    FROM user_roles ur2
+                    JOIN roles r2 ON r2.id = ur2.role_id
+                    WHERE ur2.user_id = u.id
+                      AND r2.name = :role
+                )
+                """;
     }
 
     private Optional<User> findOne(String sql, Map<String, ?> params) {
@@ -140,6 +179,7 @@ public class UserDao {
                 .addValue("fullName", user.getFullName())
                 .addValue("phone", user.getPhone())
                 .addValue("avatarUrl", user.getAvatarUrl())
+                .addValue("active", user.isActive())
                 .addValue("createdAt", JdbcTimeUtil.toTimestamp(user.getCreatedAt()))
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(user.getUpdatedAt())));
     }
@@ -153,6 +193,24 @@ public class UserDao {
         }
     }
 
-    public record UserDisplayInfo(UUID id, String fullName, String email) {
+    public long countCustomers() {
+        Long count = jdbc.queryForObject(queries.get("countCustomersBase"), Map.of(), Long.class);
+        return count != null ? count : 0L;
+    }
+
+    public List<User> findCustomersPage(int page, int size) {
+        List<User> users = jdbc.query(
+                queries.get("findCustomersPageBase") + " ORDER BY u.created_at DESC LIMIT :limit OFFSET :offset",
+                new MapSqlParameterSource()
+                        .addValue("limit", size)
+                        .addValue("offset", (long) page * size),
+                RowMappers.forEntity(User.class));
+        for (User user : users) {
+            user.setRoles(findRolesByUserId(user.getId()));
+        }
+        return users;
+    }
+
+    public record UserDisplayInfo(UUID id, String fullName, String email, String phone) {
     }
 }

@@ -15,6 +15,8 @@ export class CashierService {
 
   getOrders(params: {
     status?: OrderStatus;
+    from?: string;
+    to?: string;
     page?: number;
     size?: number;
   } = {}): Observable<PageResponse<Order>> {
@@ -24,6 +26,12 @@ export class CashierService {
     };
     if (params.status) {
       query['status'] = params.status;
+    }
+    if (params.from) {
+      query['from'] = params.from;
+    }
+    if (params.to) {
+      query['to'] = params.to;
     }
     return this.http
       .get<ApiResponse<PageResponse<Order>>>(CASHIER_ORDER_BASE, { params: query })

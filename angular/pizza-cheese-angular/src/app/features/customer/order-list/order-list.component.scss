@@ -4,6 +4,9 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .order-list-hero {
@@ -85,16 +88,6 @@
     }
   }
 
-  &__status {
-    padding: 0.35rem 0.75rem;
-    border-radius: 999px;
-    background: var(--pc-cream);
-    color: var(--pc-crust);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
   &__body {
     display: flex;
     justify-content: space-between;
@@ -107,5 +100,52 @@
     @include customer-theme.pc-btn-outline;
     display: inline-flex;
     text-decoration: none;
+  }
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+
+  &--neutral {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  &--info {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  &--warning {
+    background: #fef3c7;
+    color: #b45309;
+  }
+
+  &--success {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  &--danger {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  &--purple {
+    background: #ede9fe;
+    color: #6d28d9;
+  }
+
+  &--orange {
+    background: #ffedd5;
+    color: #c2410c;
   }
 }

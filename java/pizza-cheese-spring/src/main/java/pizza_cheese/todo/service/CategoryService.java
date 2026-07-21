@@ -130,6 +130,13 @@ public class CategoryService {
         }
     }
 
+    /** Admin update: category must exist; inactive is allowed. */
+    public void requireCategory(UUID categoryId) {
+        if (categoryDao.findById(categoryId).isEmpty()) {
+            throw ApiException.notFound("Không tìm thấy danh mục");
+        }
+    }
+
     private String resolveImageUrl(String imageUrl, MultipartFile imageFile) {
         if (imageFile != null && !imageFile.isEmpty()) {
             return cloudinaryService.uploadCategoryImage(imageFile);

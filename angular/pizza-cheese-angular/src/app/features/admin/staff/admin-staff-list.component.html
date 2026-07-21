@@ -1,0 +1,125 @@
+<div class="admin-page">
+  <div class="admin-page__header">
+    <h1>Nhân viên</h1>
+    <button type="button" class="btn-primary" (click)="openCreate()">+ Thêm nhân viên</button>
+  </div>
+
+  <div class="order-filters">
+    @for (filter of roleFilters; track filter.value) {
+      <button
+        type="button"
+        class="filter-chip"
+        [class.filter-chip--active]="roleFilter() === filter.value"
+        (click)="setRoleFilter(filter.value)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (showForm()) {
+    <div class="form-card">
+      <h2>{{ editingId() ? 'Sửa nhân viên' : 'Thêm nhân viên' }}</h2>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <label>Username *</label>
+          <input formControlName="username" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Email *</label>
+          <input formControlName="email" type="email" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>{{ editingId() ? 'Mật khẩu mới (để trống nếu giữ)' : 'Mật khẩu *' }}</label>
+          <input formControlName="password" type="password" autocomplete="new-password" />
+        </div>
+        <div class="form-row">
+          <label>Họ tên *</label>
+          <input formControlName="fullName" />
+        </div>
+        <div class="form-row">
+          <label>Số điện thoại *</label>
+          <input formControlName="phone" placeholder="09xxxxxxxx" />
+        </div>
+        <div class="form-row">
+          <label>Vai trò *</label>
+          <select formControlName="role">
+            @for (role of staffRoles; track role) {
+              <option [value]="role">{{ roleFilters.find((f) => f.value === role)?.label }}</option>
+            }
+          </select>
+        </div>
+        @if (editingId()) {
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="active" />
+            Đang hoạt động
+          </label>
+        }
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancelForm()">Hủy</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Đang lưu...' : 'Lưu' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="loading-text">Đang tải...</p>
+  } @else if (!staff().length) {
+    <p class="loading-text">Chưa có nhân viên nào.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nhân viên</th>
+            <th>Vai trò</th>
+            <th>SĐT</th>
+            <th>Trạng thái</th>
+            <th>Tạo lúc</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of staff(); track user.id) {
+            <tr>
+              <td>
+                <strong>{{ user.name || user.username }}</strong>
+                <div class="meta">{{ user.email }}</div>
+                <div class="meta">@{{ user.username }}</div>
+              </td>
+              <td>{{ roleLabel(user) }}</td>
+              <td>{{ user.phone || '—' }}</td>
+              <td>
+                <span class="badge" [class.badge--active]="user.active !== false">
+                  {{ user.active === false ? 'Đã khóa' : 'Hoạt động' }}
+                </span>
+              </td>
+              <td>{{ user.createdAt | date: 'dd/MM/yyyy' }}</td>
+              <td class="actions">
+                <button type="button" class="btn-link" (click)="openEdit(user)">Sửa</button>
+                <button type="button" class="btn-link btn-link--danger" (click)="toggleActive(user)">
+                  {{ user.active === false ? 'Mở khóa' : 'Khóa' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [page]="page()"
+      [totalPages]="totalPages()"
+      [totalElements]="totalElements()"
+      [disabled]="loading()"
+      (pageChange)="onPageChange($event)"
+    />
+  }
+</div>

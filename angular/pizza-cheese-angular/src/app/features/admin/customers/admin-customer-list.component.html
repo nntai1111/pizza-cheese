@@ -1,0 +1,52 @@
+<div class="admin-page">
+  <div class="admin-page__header">
+    <h1>Khách hàng</h1>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="loading-text">Đang tải...</p>
+  } @else if (!customers().length) {
+    <p class="loading-text">Chưa có khách hàng nào.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Khách hàng</th>
+            <th>SĐT</th>
+            <th>Ngày tạo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of customers(); track user.id) {
+            <tr class="clickable-row" [routerLink]="['/admin/customers', user.id]">
+              <td class="customer-cell">
+                <strong>{{ user.name || user.username }}</strong>
+                <div class="meta">{{ user.email }}</div>
+                <div class="meta">@{{ user.username }}</div>
+              </td>
+              <td>{{ user.phone || '—' }}</td>
+              <td>{{ user.createdAt | date: 'dd/MM/yyyy' }}</td>
+              <td class="actions">
+                <span class="btn-link">Xem đơn →</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [page]="page()"
+      [totalPages]="totalPages()"
+      [totalElements]="totalElements()"
+      [disabled]="loading()"
+      (pageChange)="onPageChange($event)"
+    />
+  }
+</div>

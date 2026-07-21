@@ -134,7 +134,7 @@ public class PizzaService {
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy pizza"));
 
         if (request.getCategoryId() != null) {
-            categoryService.requireActiveCategory(request.getCategoryId());
+            categoryService.requireCategory(request.getCategoryId());
             pizza.setCategoryId(request.getCategoryId());
         }
 
@@ -174,13 +174,17 @@ public class PizzaService {
 
         boolean hasImageUpload = isPresent(mainImage)
                 || (secondaryImages != null && secondaryImages.stream().anyMatch(this::isPresent));
+        boolean syncImages = request.getImages() != null
+                || hasImageUpload
+                || request.getKeepSecondaryImageUrls() != null;
 
-        if (request.getImages() != null || hasImageUpload) {
+        if (syncImages) {
             pizza.setImages(buildImagesFromUploads(
                     request.getImages(),
                     mainImage,
                     secondaryImages != null ? secondaryImages : List.of(),
-                    pizza.getImages()));
+                    pizza.getImages(),
+                    request.getKeepSecondaryImageUrls()));
         } else {
             pizza.setImages(new ArrayList<>(pizza.getImages()));
         }
@@ -222,6 +226,15 @@ public class PizzaService {
             MultipartFile mainImage,
             List<MultipartFile> secondaryImages,
             List<PizzaImage> existingImages) {
+        return buildImagesFromUploads(imageRequests, mainImage, secondaryImages, existingImages, null);
+    }
+
+    private List<PizzaImage> buildImagesFromUploads(
+            List<PizzaImageRequest> imageRequests,
+            MultipartFile mainImage,
+            List<MultipartFile> secondaryImages,
+            List<PizzaImage> existingImages,
+            List<String> keepSecondaryImageUrls) {
         if (imageRequests != null) {
             return buildImages(imageRequests, List.of());
         }
@@ -240,9 +253,18 @@ public class PizzaService {
             }
         }
 
-        for (PizzaImage image : existingImages) {
-            if (!image.isMain()) {
-                images.add(cloneWithOrder(image, order++));
+        if (keepSecondaryImageUrls != null) {
+            Set<String> keepUrls = new HashSet<>(keepSecondaryImageUrls);
+            for (PizzaImage image : existingImages) {
+                if (!image.isMain() && keepUrls.contains(image.getImageUrl())) {
+                    images.add(cloneWithOrder(image, order++));
+                }
+            }
+        } else {
+            for (PizzaImage image : existingImages) {
+                if (!image.isMain()) {
+                    images.add(cloneWithOrder(image, order++));
+                }
             }
         }
 

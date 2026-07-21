@@ -1,0 +1,83 @@
+<div class="admin-page customer-detail">
+  <a routerLink="/admin/customers" class="back-link">← Danh sách khách</a>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="loading-text">Đang tải...</p>
+  } @else if (customer(); as c) {
+    <section class="customer-head">
+      <div>
+        <p class="eyebrow">Khách hàng</p>
+        <h1>{{ c.name || c.username }}</h1>
+        <div class="customer-head__meta">
+          @if (c.phone) {
+            <span>{{ c.phone }}</span>
+          }
+          <span>{{ c.email }}</span>
+          <span>@{{ c.username }}</span>
+        </div>
+      </div>
+      <div class="customer-head__stat">
+        <span class="label">Tổng đơn</span>
+        <strong>{{ totalElements() }}</strong>
+      </div>
+    </section>
+
+    <section class="orders-section">
+      <h2>Lịch sử đơn hàng</h2>
+
+      @if (ordersLoading()) {
+        <p class="loading-text">Đang tải đơn...</p>
+      } @else if (!orders().length) {
+        <p class="loading-text">Khách chưa có đơn nào.</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Thời gian</th>
+                <th>Thanh toán</th>
+                <th>Trạng thái</th>
+                <th>Tổng tiền</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (order of orders(); track order.id) {
+                <tr>
+                  <td><strong>{{ order.orderCode }}</strong></td>
+                  <td>{{ order.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                  <td>
+                    <div class="pay-method">{{ getPaymentLabel(order) }}</div>
+                    @if (order.paymentStatus) {
+                      <span [class]="paymentBadgeClass(order)">{{ getPaymentStatusLabel(order) }}</span>
+                    }
+                  </td>
+                  <td>
+                    <span [class]="orderBadgeClass(order)">{{ getStatusLabel(order) }}</span>
+                  </td>
+                  <td><strong>{{ formatPrice(order.finalAmount) }}</strong></td>
+                  <td class="actions">
+                    <a [routerLink]="['/admin/orders', order.id]" class="btn-link">Chi tiết</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <app-pagination
+          [page]="page()"
+          [totalPages]="totalPages()"
+          [totalElements]="totalElements()"
+          [disabled]="ordersLoading()"
+          (pageChange)="onPageChange($event)"
+        />
+      }
+    </section>
+  }
+</div>

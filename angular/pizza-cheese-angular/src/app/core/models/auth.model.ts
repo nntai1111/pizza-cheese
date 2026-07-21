@@ -33,6 +33,7 @@ export interface User {
   phone: string | null;
   avatarUrl: string | null;
   roles: CodedEnumValue<AppRole>[];
+  active?: boolean;
   createdAt: string;
   updatedAt: string;
 }

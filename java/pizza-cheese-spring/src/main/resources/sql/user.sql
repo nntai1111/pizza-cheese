@@ -1,25 +1,29 @@
 -- name: findByEmail
-SELECT id, username, email, password_hash, full_name, phone, avatar_url, created_at, updated_at
+SELECT id, username, email, password_hash, full_name, phone, avatar_url,
+       is_active AS active, created_at, updated_at
 FROM users
 WHERE email = :email
 
 -- name: findByUsername
-SELECT id, username, email, password_hash, full_name, phone, avatar_url, created_at, updated_at
+SELECT id, username, email, password_hash, full_name, phone, avatar_url,
+       is_active AS active, created_at, updated_at
 FROM users
 WHERE LOWER(username) = LOWER(:username)
 
 -- name: findByEmailOrUsername
-SELECT id, username, email, password_hash, full_name, phone, avatar_url, created_at, updated_at
+SELECT id, username, email, password_hash, full_name, phone, avatar_url,
+       is_active AS active, created_at, updated_at
 FROM users
 WHERE email = :login OR LOWER(username) = LOWER(:login)
 
 -- name: findById
-SELECT id, username, email, password_hash, full_name, phone, avatar_url, created_at, updated_at
+SELECT id, username, email, password_hash, full_name, phone, avatar_url,
+       is_active AS active, created_at, updated_at
 FROM users
 WHERE id = :id
 
 -- name: findDisplayInfoByIds
-SELECT id, full_name, email
+SELECT id, full_name, email, phone
 FROM users
 WHERE id IN (:ids)
 
@@ -38,13 +42,69 @@ SELECT EXISTS (SELECT 1 FROM users WHERE LOWER(username) = LOWER(:username))
 -- name: count
 SELECT COUNT(*) FROM users
 
+-- name: countStaffBase
+SELECT COUNT(*)
+FROM users u
+WHERE COALESCE(u.is_deleted, FALSE) = FALSE
+  AND EXISTS (
+      SELECT 1
+      FROM user_roles ur
+      JOIN roles r ON r.id = ur.role_id
+      WHERE ur.user_id = u.id
+        AND r.name IN ('CASHIER', 'KITCHEN', 'DELIVERY', 'ADMIN')
+  )
+
+-- name: findStaffPageBase
+SELECT u.id, u.username, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url,
+       u.is_active AS active, u.created_at, u.updated_at
+FROM users u
+WHERE COALESCE(u.is_deleted, FALSE) = FALSE
+  AND EXISTS (
+      SELECT 1
+      FROM user_roles ur
+      JOIN roles r ON r.id = ur.role_id
+      WHERE ur.user_id = u.id
+        AND r.name IN ('CASHIER', 'KITCHEN', 'DELIVERY', 'ADMIN')
+  )
+
+-- name: countCustomersBase
+SELECT COUNT(*)
+FROM users u
+WHERE COALESCE(u.is_deleted, FALSE) = FALSE
+  AND EXISTS (
+      SELECT 1
+      FROM user_roles ur
+      JOIN roles r ON r.id = ur.role_id
+      WHERE ur.user_id = u.id
+        AND r.name = 'CUSTOMER'
+  )
+
+-- name: findCustomersPageBase
+SELECT u.id, u.username, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url,
+       u.is_active AS active, u.created_at, u.updated_at
+FROM users u
+WHERE COALESCE(u.is_deleted, FALSE) = FALSE
+  AND EXISTS (
+      SELECT 1
+      FROM user_roles ur
+      JOIN roles r ON r.id = ur.role_id
+      WHERE ur.user_id = u.id
+        AND r.name = 'CUSTOMER'
+  )
+
 -- name: insert
-INSERT INTO users (id, username, email, password_hash, full_name, phone, avatar_url, created_at, updated_at)
-VALUES (:id, :username, :email, :passwordHash, :fullName, :phone, :avatarUrl, :createdAt, :updatedAt)
+INSERT INTO users (id, username, email, password_hash, full_name, phone, avatar_url, is_active, created_at, updated_at)
+VALUES (:id, :username, :email, :passwordHash, :fullName, :phone, :avatarUrl, :active, :createdAt, :updatedAt)
 
 -- name: update
 UPDATE users
-SET email = :email, password_hash = :passwordHash, full_name = :fullName, phone = :phone, avatar_url = :avatarUrl, updated_at = :updatedAt
+SET email = :email,
+    password_hash = :passwordHash,
+    full_name = :fullName,
+    phone = :phone,
+    avatar_url = :avatarUrl,
+    is_active = :active,
+    updated_at = :updatedAt
 WHERE id = :id
 
 -- name: deleteRolesByUserId

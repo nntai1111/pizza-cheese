@@ -1,0 +1,14 @@
+@import '../admin-shared';
+
+.clickable-row {
+  cursor: pointer;
+
+  &:hover {
+    background: #fff7ed;
+  }
+}
+
+.actions .btn-link {
+  color: #e94560;
+  font-weight: 600;
+}

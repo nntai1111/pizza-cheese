@@ -20,6 +20,7 @@ public class UserProfileResponse {
     private String phone;
     private String avatarUrl;
     private Set<CodedEnumValue> roles;
+    private boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -32,6 +33,7 @@ public class UserProfileResponse {
         response.setPhone(user.getPhone());
         response.setAvatarUrl(user.getAvatarUrl());
         response.setRoles(CodedEnumValue.fromSet(user.getRoles()));
+        response.setActive(user.isActive());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
         return response;

@@ -75,11 +75,14 @@ export interface Order {
   deliveryAddressSnapshot: string;
   paymentUrl: string | null;
   paymentTxnRef: string | null;
+  paymentId?: string | null;
   createdAt: string;
   paidAt: string | null;
   items: OrderItem[] | null;
+  userId?: string | null;
   customerName?: string | null;
   customerEmail?: string | null;
+  customerPhone?: string | null;
   kitchenStaffName?: string | null;
   deliveryStaffName?: string | null;
   kitchenStaffId?: string | null;

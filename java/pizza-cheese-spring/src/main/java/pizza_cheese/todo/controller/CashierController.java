@@ -1,7 +1,9 @@
 package pizza_cheese.todo.controller;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,9 +50,11 @@ public class CashierController {
     @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<RestResponse<PageResponse<OrderResponse>>> getOrders(
             @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(RestResponse.success(cashierService.getOrders(status, page, size)));
+        return ResponseEntity.ok(RestResponse.success(cashierService.getOrders(status, from, to, page, size)));
     }
 
     @Operation(summary = "Tạo đơn hàng tại quầy")
@@ -86,7 +90,7 @@ public class CashierController {
     @Operation(summary = "Hủy đơn hàng")
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/{id}/cancel")
-    @PreAuthorize("hasRole('CASHIER')")
+    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<RestResponse<OrderResponse>> cancelOrder(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID id) {

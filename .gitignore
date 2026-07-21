@@ -19,3 +19,6 @@ desktop.ini
 # Logs & build artifacts
 *.log
 out.txt
+
+# Local seed helper (node pg install)
+scripts/.seed-tmp/

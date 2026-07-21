@@ -1,4 +1,4 @@
-<section class="order-detail-page">
+<section class="order-detail-page customer-order">
   @if (loading()) {
     <p class="order-detail-status">Đang tải đơn hàng...</p>
   }
@@ -8,81 +8,131 @@
   }
 
   @if (order(); as currentOrder) {
-    <header class="order-detail-hero">
-      <div>
-        <span class="order-detail-hero__badge">📦 Chi tiết đơn</span>
-        <h1>{{ currentOrder.orderCode }}</h1>
-        <p>Đặt lúc {{ currentOrder.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+    <a routerLink="/customer/orders" class="back-link">← Đơn hàng của tôi</a>
+
+    <header class="track-hero" [class.track-hero--failed]="isTerminal()">
+      <div class="track-hero__top">
+        <div>
+          <p class="eyebrow">{{ currentOrder.orderCode }}</p>
+          <h1>{{ headline().title }}</h1>
+          @if (headline().subtitle) {
+            <p class="track-hero__subtitle">{{ headline().subtitle }}</p>
+          }
+          <p class="track-hero__time">Đặt lúc {{ currentOrder.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+        </div>
       </div>
-      <span class="order-detail-hero__status">{{ getStatusLabel(currentOrder) }}</span>
+
+      @if (!isTerminal() && trackSteps().length) {
+        <ol class="tracker">
+          @for (step of trackSteps(); track step.key; let last = $last) {
+            <li class="tracker__item" [attr.data-state]="step.state">
+              <div class="tracker__rail">
+                <span class="tracker__dot"></span>
+                @if (!last) {
+                  <span class="tracker__line"></span>
+                }
+              </div>
+              <div class="tracker__body">
+                <strong>{{ step.title }}</strong>
+                <span>{{ step.description }}</span>
+              </div>
+            </li>
+          }
+        </ol>
+      }
+
+      <div class="track-meta">
+        <div class="track-meta__item">
+          <span class="track-meta__label">{{ isPickup() ? 'Nhận hàng' : 'Giao hàng' }}</span>
+          <strong>{{ getDeliveryAddress(currentOrder) }}</strong>
+          @if (currentOrder.note) {
+            <span class="track-meta__note">Ghi chú: {{ currentOrder.note }}</span>
+          }
+        </div>
+        <div class="track-meta__item">
+          <span class="track-meta__label">Thanh toán</span>
+          <strong>{{ getPaymentLabel(currentOrder) }}</strong>
+          @if (currentOrder.paymentStatus) {
+            <span class="track-meta__note">{{ getPaymentStatusLabel(currentOrder) }}</span>
+          }
+        </div>
+      </div>
     </header>
 
-    <div class="order-detail-grid">
-      <div class="order-detail-panel">
-        <h2>Thông tin giao hàng</h2>
-        <p>{{ getDeliveryAddress(currentOrder) }}</p>
-        @if (currentOrder.note) {
-          <p><strong>Ghi chú:</strong> {{ currentOrder.note }}</p>
-        }
-
-        <h2>Thanh toán</h2>
-        <p>{{ getPaymentLabel(currentOrder) }}</p>
-        @if (currentOrder.paymentStatus) {
-          <p>Trạng thái thanh toán: <strong>{{ getPaymentStatusLabel(currentOrder) }}</strong></p>
-        }
-      </div>
-
-      <aside class="order-detail-summary">
-        <h2>Tổng đơn</h2>
-        <div class="order-detail-summary__row">
-          <span>Tạm tính</span>
-          <strong>{{ formatPrice(currentOrder.totalAmount) }}</strong>
-        </div>
-        @if (currentOrder.couponCode) {
-          <div class="order-detail-summary__row">
-            <span>Mã giảm giá</span>
-            <strong>{{ currentOrder.couponCode }}</strong>
-          </div>
-        }
-        <div class="order-detail-summary__row">
-          <span>Giảm giá</span>
-          <strong>{{ formatPrice(currentOrder.discountAmount) }}</strong>
-        </div>
-        <div class="order-detail-summary__total">
-          <span>Thành tiền</span>
-          <strong>{{ formatPrice(currentOrder.finalAmount) }}</strong>
-        </div>
-
-        @if (canCancel(currentOrder)) {
-          <button
-            type="button"
-            class="btn-cancel"
-            (click)="cancelOrder()"
-            [disabled]="cancelling()"
-          >
-            {{ cancelling() ? 'Đang hủy...' : 'Hủy đơn hàng' }}
-          </button>
-        }
-      </aside>
-    </div>
-
     @if (currentOrder.items?.length) {
-      <section class="order-detail-items">
-        <h2>Món đã đặt</h2>
-        <ul>
+      <section class="order-items-card">
+        <div class="order-items-card__head">
+          <h2>Món đã đặt</h2>
+          <span>{{ currentOrder.items!.length }} món</span>
+        </div>
+
+        <ul class="order-item-list">
           @for (item of currentOrder.items; track item.id) {
-            <li>
-              <div>
-                <strong>{{ getItemTitle(item) }}</strong>
-                <span>{{ item.quantity }} × {{ formatPrice(item.unitPrice) }}</span>
+            <li class="order-item">
+              <div class="order-item__media">
+                @if (getItemImage(item); as imageUrl) {
+                  <img [src]="imageUrl" [alt]="getItemTitle(item)" />
+                } @else {
+                  <div class="order-item__placeholder">🍕</div>
+                }
               </div>
-              <strong>{{ formatPrice(item.lineTotal) }}</strong>
+
+              <div class="order-item__info">
+                <div class="order-item__title-row">
+                  <strong>{{ getItemTitle(item) }}</strong>
+                  <span class="order-item__qty">×{{ item.quantity }}</span>
+                </div>
+                @if (getToppingNames(item)) {
+                  <p class="order-item__meta">Topping: {{ getToppingNames(item) }}</p>
+                }
+                @if (item.comboLines?.length) {
+                  <p class="order-item__meta">
+                    @for (line of item.comboLines; track $index; let last = $last) {
+                      {{ line.quantity }}× {{ line.pizzaName }}@if (!last) {, }
+                    }
+                  </p>
+                }
+                <p class="order-item__unit">{{ formatPrice(item.unitPrice) }} / phần</p>
+              </div>
+
+              <div class="order-item__price">{{ formatPrice(item.lineTotal) }}</div>
             </li>
           }
         </ul>
+
+        <div class="order-bill">
+          <div class="order-bill__row">
+            <span>Tạm tính</span>
+            <strong>{{ formatPrice(currentOrder.totalAmount) }}</strong>
+          </div>
+          @if (currentOrder.couponCode) {
+            <div class="order-bill__row">
+              <span>Mã {{ currentOrder.couponCode }}</span>
+              <strong>-{{ formatPrice(currentOrder.discountAmount) }}</strong>
+            </div>
+          } @else if (currentOrder.discountAmount > 0) {
+            <div class="order-bill__row">
+              <span>Giảm giá</span>
+              <strong>-{{ formatPrice(currentOrder.discountAmount) }}</strong>
+            </div>
+          }
+          <div class="order-bill__row order-bill__row--total">
+            <span>Thành tiền</span>
+            <strong>{{ formatPrice(currentOrder.finalAmount) }}</strong>
+          </div>
+        </div>
       </section>
     }
 
-    <a routerLink="/customer/orders" class="btn-outline">← Quay lại danh sách</a>
+    @if (canCancel(currentOrder)) {
+      <button
+        type="button"
+        class="btn-cancel-order"
+        (click)="cancelOrder()"
+        [disabled]="cancelling()"
+      >
+        {{ cancelling() ? 'Đang hủy...' : 'Hủy đơn hàng' }}
+      </button>
+    }
   }
 </section>

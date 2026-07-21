@@ -41,6 +41,14 @@
           <input type="number" formControlName="maxDiscount" min="0" step="1000" />
         </div>
         <div class="form-row">
+          <label>Bắt đầu</label>
+          <input type="datetime-local" formControlName="startDate" />
+        </div>
+        <div class="form-row">
+          <label>Kết thúc</label>
+          <input type="datetime-local" formControlName="endDate" />
+        </div>
+        <div class="form-row">
           <label>Giới hạn lượt dùng</label>
           <input type="number" formControlName="usageLimit" min="1" step="1" />
         </div>
@@ -71,6 +79,7 @@
           <tr>
             <th>Mã</th>
             <th>Giảm giá</th>
+            <th>Thời hạn</th>
             <th>Đơn tối thiểu</th>
             <th>Đã dùng</th>
             <th>Trạng thái</th>
@@ -87,6 +96,7 @@
                 }
               </td>
               <td>{{ getDiscountLabel(coupon) }}</td>
+              <td class="coupon-dates">{{ formatDateRange(coupon) }}</td>
               <td>{{ formatPrice(coupon.minOrderValue) }}</td>
               <td>
                 {{ coupon.usedCount }}

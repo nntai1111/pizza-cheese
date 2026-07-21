@@ -124,8 +124,18 @@
             <div class="image-section">
               <span class="image-section__label">Ảnh phụ hiện tại</span>
               <div class="image-preview-grid">
-                @for (url of existingSecondaryImageUrls(); track url) {
-                  <img class="image-preview" [src]="url" alt="Ảnh phụ hiện tại" />
+                @for (url of existingSecondaryImageUrls(); track url; let i = $index) {
+                  <div class="image-preview-item">
+                    <img class="image-preview" [src]="url" alt="Ảnh phụ hiện tại" />
+                    <button
+                      type="button"
+                      class="image-preview-remove"
+                      (click)="removeExistingSecondaryImage(i)"
+                      title="Xóa ảnh phụ"
+                    >
+                      ×
+                    </button>
+                  </div>
                 }
               </div>
             </div>

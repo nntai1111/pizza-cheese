@@ -4,14 +4,15 @@ SELECT p.id, p.category_id, p.name, p.slug, p.description, p.base_price, p.is_ac
        c.name AS category_name, c.slug AS category_slug
 FROM pizzas p
 LEFT JOIN categories c ON c.id = p.category_id
-WHERE (:activeOnly = FALSE OR p.is_active = TRUE)
+WHERE (:activeOnly = FALSE OR (p.is_active = TRUE AND COALESCE(c.is_active, FALSE) = TRUE))
   AND (:filterByCategory = FALSE OR p.category_id = :categoryId)
 ORDER BY p.created_at DESC
 
 -- name: countAll
 SELECT COUNT(*)
 FROM pizzas p
-WHERE (:activeOnly = FALSE OR p.is_active = TRUE)
+LEFT JOIN categories c ON c.id = p.category_id
+WHERE (:activeOnly = FALSE OR (p.is_active = TRUE AND COALESCE(c.is_active, FALSE) = TRUE))
   AND (:filterByCategory = FALSE OR p.category_id = :categoryId)
 
 -- name: findPage
@@ -20,7 +21,7 @@ SELECT p.id, p.category_id, p.name, p.slug, p.description, p.base_price, p.is_ac
        c.name AS category_name, c.slug AS category_slug
 FROM pizzas p
 LEFT JOIN categories c ON c.id = p.category_id
-WHERE (:activeOnly = FALSE OR p.is_active = TRUE)
+WHERE (:activeOnly = FALSE OR (p.is_active = TRUE AND COALESCE(c.is_active, FALSE) = TRUE))
   AND (:filterByCategory = FALSE OR p.category_id = :categoryId)
 ORDER BY p.created_at DESC
 LIMIT :limit OFFSET :offset
@@ -72,9 +73,30 @@ ORDER BY pizza_id, size
 -- name: deleteVariantsByPizzaId
 DELETE FROM pizza_variants WHERE pizza_id = :pizzaId
 
+-- name: deleteVariantById
+DELETE FROM pizza_variants WHERE id = :id
+
+-- name: updateVariant
+UPDATE pizza_variants
+SET price = :price
+WHERE id = :id
+
 -- name: insertVariant
 INSERT INTO pizza_variants (id, pizza_id, size, price)
 VALUES (:id, :pizzaId, :size, :price)
+
+-- name: isVariantReferenced
+SELECT EXISTS (
+    SELECT 1 FROM combo_items WHERE pizza_variant_id = :variantId
+    UNION ALL
+    SELECT 1 FROM cart_items WHERE pizza_variant_id = :variantId
+    UNION ALL
+    SELECT 1 FROM order_items WHERE pizza_variant_id = :variantId
+    UNION ALL
+    SELECT 1 FROM cart_item_combo_lines WHERE pizza_variant_id = :variantId
+    UNION ALL
+    SELECT 1 FROM order_item_combo_lines WHERE pizza_variant_id = :variantId
+)
 
 -- name: findToppingsByPizzaId
 SELECT t.id, t.name, t.price, t.is_active AS active, t.created_at, t.updated_at

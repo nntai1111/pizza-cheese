@@ -1,80 +1,174 @@
-<section class="order-detail-page admin-order-detail">
+<section class="admin-order">
   @if (loading()) {
-    <p class="order-detail-status">Đang tải đơn hàng...</p>
+    <p class="admin-order__state">Đang tải đơn hàng...</p>
   }
 
   @if (errorMessage()) {
-    <p class="order-detail-error">{{ errorMessage() }}</p>
+    <p class="admin-order__error">{{ errorMessage() }}</p>
   }
 
-  @if (order(); as currentOrder) {
-    <header class="order-detail-hero">
-      <div>
-        <span class="order-detail-hero__badge">📦 Chi tiết đơn hàng</span>
-        <h1>{{ currentOrder.orderCode }}</h1>
-        <p>Đặt lúc {{ currentOrder.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
-        @if (currentOrder.customerName || currentOrder.customerEmail) {
-          <p>
-            Khách:
-            <strong>{{ currentOrder.customerName ?? currentOrder.customerEmail }}</strong>
-            @if (currentOrder.customerEmail && currentOrder.customerName) {
-              <span>({{ currentOrder.customerEmail }})</span>
-            }
-          </p>
-        }
+  @if (order(); as o) {
+    @let delivery = getDeliveryInfo(o);
+
+    <div class="admin-order__toolbar">
+      <a routerLink="/admin/orders" class="back-link">← Danh sách đơn</a>
+      @if (canCancel(o)) {
+        <button
+          type="button"
+          class="btn-cancel"
+          (click)="cancelOrder()"
+          [disabled]="actionLoading()"
+        >
+          {{ actionLoading() ? 'Đang hủy...' : 'Hủy đơn' }}
+        </button>
+      }
+    </div>
+
+    <header class="admin-order__head">
+      <div class="admin-order__identity">
+        <p class="eyebrow">Đơn hàng</p>
+        <h1>{{ o.orderCode }}</h1>
+        <p class="meta">Đặt lúc {{ o.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
       </div>
-      <span class="order-detail-hero__status">{{ getStatusLabel(currentOrder) }}</span>
+
+      <div class="admin-order__statuses">
+        <div [class]="orderToneClass(o)">
+          <span class="status-panel__label">Trạng thái đơn</span>
+          <span [class]="orderBadgeClass(o)">{{ getStatusLabel(o) }}</span>
+        </div>
+        <div [class]="paymentToneClass(o)">
+          <span class="status-panel__label">Thanh toán</span>
+          <span [class]="paymentBadgeClass(o)">{{ getPaymentStatusLabel(o) }}</span>
+        </div>
+      </div>
     </header>
 
-    <div class="order-detail-grid">
-      <div class="order-detail-panel">
-        <h2>Thông tin giao hàng</h2>
-        <p>{{ getDeliveryAddress(currentOrder) }}</p>
-        @if (currentOrder.note) {
-          <p><strong>Ghi chú:</strong> {{ currentOrder.note }}</p>
-        }
-
-        <h2>Thanh toán</h2>
-        <p>{{ getPaymentLabel(currentOrder) }}</p>
-        @if (currentOrder.paymentStatus) {
-          <p>
-            Trạng thái thanh toán:
-            <strong>{{ getPaymentStatusLabel(currentOrder) }}</strong>
-          </p>
-        }
-        @if (currentOrder.paidAt) {
-          <p>Thanh toán lúc: {{ currentOrder.paidAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+    <section class="admin-order__customer">
+      <div>
+        <p class="eyebrow">Khách hàng</p>
+        @if (o.customerName || o.customerEmail || o.customerPhone) {
+          <h2>{{ o.customerName || 'Khách' }}</h2>
+          <div class="customer-meta">
+            @if (o.customerPhone) {
+              <span>{{ o.customerPhone }}</span>
+            }
+            @if (o.customerEmail) {
+              <span>{{ o.customerEmail }}</span>
+            }
+          </div>
+        } @else {
+          <h2>Không rõ tài khoản</h2>
+          <p class="muted">Đơn không gắn user hoặc thiếu thông tin profile.</p>
         }
       </div>
+      @if (o.userId) {
+        <a
+          class="text-link"
+          [routerLink]="['/admin/customers', o.userId]"
+        >
+          Xem lịch sử đơn của khách →
+        </a>
+      }
+    </section>
 
-      <aside class="order-detail-summary">
-        <h2>Tổng đơn</h2>
-        <div class="order-detail-summary__row">
+    <div class="admin-order__grid">
+      <section class="panel">
+        <h3>Giao hàng</h3>
+        <dl class="facts">
+          <div>
+            <dt>Hình thức</dt>
+            <dd>{{ delivery.isPickup ? 'Nhận tại quầy' : 'Giao tận nơi' }}</dd>
+          </div>
+          <div>
+            <dt>Người nhận</dt>
+            <dd>{{ delivery.recipientName }}</dd>
+          </div>
+          <div>
+            <dt>SĐT giao</dt>
+            <dd>{{ delivery.phone }}</dd>
+          </div>
+          <div class="facts__full">
+            <dt>Địa chỉ</dt>
+            <dd>
+              @for (line of delivery.addressLines; track line) {
+                <div>{{ line }}</div>
+              }
+            </dd>
+          </div>
+          @if (o.note) {
+            <div class="facts__full">
+              <dt>Ghi chú</dt>
+              <dd>{{ o.note }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      <section class="panel">
+        <h3>Thanh toán</h3>
+        <dl class="facts">
+          <div>
+            <dt>Phương thức</dt>
+            <dd>{{ getPaymentLabel(o) }}</dd>
+          </div>
+          <div>
+            <dt>Trạng thái</dt>
+            <dd>
+              <span [class]="paymentBadgeClass(o)">{{ getPaymentStatusLabel(o) }}</span>
+            </dd>
+          </div>
+          <div class="facts__full">
+            <dt>Mã giao dịch</dt>
+            <dd>
+              @if (o.paymentTxnRef) {
+                <code>{{ o.paymentTxnRef }}</code>
+              } @else {
+                —
+              }
+            </dd>
+          </div>
+          @if (o.paidAt) {
+            <div class="facts__full">
+              <dt>Thanh toán lúc</dt>
+              <dd>{{ o.paidAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+            </div>
+          }
+        </dl>
+        @if (o.paymentId) {
+          <a class="text-link" [routerLink]="['/admin/payments', o.paymentId]">
+            Xem bản ghi thanh toán →
+          </a>
+        }
+      </section>
+
+      <aside class="panel panel--money">
+        <h3>Tổng tiền</h3>
+        <div class="money-row">
           <span>Tạm tính</span>
-          <strong>{{ formatPrice(currentOrder.totalAmount) }}</strong>
+          <strong>{{ formatPrice(o.totalAmount) }}</strong>
         </div>
-        @if (currentOrder.couponCode) {
-          <div class="order-detail-summary__row">
-            <span>Mã giảm giá</span>
-            <strong>{{ currentOrder.couponCode }}</strong>
+        @if (o.couponCode) {
+          <div class="money-row">
+            <span>Mã giảm</span>
+            <strong>{{ o.couponCode }}</strong>
           </div>
         }
-        <div class="order-detail-summary__row">
+        <div class="money-row">
           <span>Giảm giá</span>
-          <strong>{{ formatPrice(currentOrder.discountAmount) }}</strong>
+          <strong>{{ formatPrice(o.discountAmount) }}</strong>
         </div>
-        <div class="order-detail-summary__total">
+        <div class="money-row money-row--total">
           <span>Thành tiền</span>
-          <strong>{{ formatPrice(currentOrder.finalAmount) }}</strong>
+          <strong>{{ formatPrice(o.finalAmount) }}</strong>
         </div>
       </aside>
     </div>
 
-    @if (currentOrder.items?.length) {
-      <section class="order-detail-items">
-        <h2>Món đã đặt</h2>
-        <ul>
-          @for (item of currentOrder.items; track item.id) {
+    @if (o.items?.length) {
+      <section class="panel panel--items">
+        <h3>Món đã đặt ({{ o.items!.length }})</h3>
+        <ul class="item-list">
+          @for (item of o.items; track item.id) {
             <li>
               <div>
                 <strong>{{ getItemTitle(item) }}</strong>
@@ -86,7 +180,5 @@
         </ul>
       </section>
     }
-
-    <a routerLink="/admin/orders" class="btn-outline">← Quay lại danh sách</a>
   }
 </section>

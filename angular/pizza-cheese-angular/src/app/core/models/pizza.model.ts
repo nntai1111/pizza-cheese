@@ -64,4 +64,6 @@ export interface UpdatePizzaRequest {
   isActive?: boolean;
   variants?: { size: PizzaSize; price: number }[];
   toppingIds?: string[];
+  /** Existing secondary URLs to keep; omit to leave unchanged when not syncing images. */
+  keepSecondaryImageUrls?: string[];
 }

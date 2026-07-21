@@ -29,6 +29,9 @@ export class AdminLayoutComponent {
     { label: 'Combo', icon: '🎁', route: '/admin/combos' },
     { label: 'Coupon', icon: '🎟️', route: '/admin/coupons' },
     { label: 'Đơn hàng', icon: '📦', route: '/admin/orders' },
+    { label: 'Thanh toán', icon: '💳', route: '/admin/payments' },
+    { label: 'Khách hàng', icon: '🧑', route: '/admin/customers' },
+    { label: 'Nhân viên', icon: '👥', route: '/admin/staff' },
   ];
 
   logout(): void {

@@ -1,0 +1,95 @@
+@import '../admin-shared';
+
+.customer-detail {
+  max-width: 1100px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #4b5563;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+
+  &:hover {
+    color: #111827;
+  }
+}
+
+.customer-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1.25rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+
+  h1 {
+    margin: 0.2rem 0 0.45rem;
+    font-size: 1.45rem;
+    color: #111827;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    color: #4b5563;
+    font-size: 0.9rem;
+  }
+
+  &__stat {
+    text-align: right;
+
+    .label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #9a3412;
+    }
+
+    strong {
+      font-size: 1.75rem;
+      color: #111827;
+    }
+  }
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9a3412;
+}
+
+.orders-section {
+  h2 {
+    margin: 0 0 0.85rem;
+    font-size: 1.05rem;
+    color: #111827;
+  }
+}
+
+.pay-method {
+  margin-bottom: 0.35rem;
+  font-size: 0.8125rem;
+  color: #4b5563;
+}
+
+.actions .btn-link {
+  color: #e94560;
+  text-decoration: none;
+  font-weight: 600;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

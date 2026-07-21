@@ -37,4 +37,10 @@ public class UpdatePizzaRequest {
 
     @Valid
     private List<PizzaImageRequest> images;
+
+    /**
+     * When non-null, only these existing secondary image URLs are kept
+     * (empty list = remove all secondary). New uploads are still appended.
+     */
+    private List<String> keepSecondaryImageUrls;
 }

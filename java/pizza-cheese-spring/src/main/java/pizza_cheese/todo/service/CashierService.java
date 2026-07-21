@@ -1,5 +1,6 @@
 package pizza_cheese.todo.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -45,14 +46,47 @@ public class CashierService {
     }
 
     public PageResponse<OrderResponse> getOrders(OrderStatus status, int page, int size) {
+        return getOrders(status, null, null, page, size);
+    }
+
+    public PageResponse<OrderResponse> getOrders(
+            OrderStatus status,
+            LocalDate fromDate,
+            LocalDate toDate,
+            int page,
+            int size) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
-        long total = status == null ? orderDao.countAll() : orderDao.countByStatus(status);
-        List<Order> orders = status == null
-                ? orderDao.findPage(safePage, safeSize)
-                : orderDao.findPageByStatus(status, safePage, safeSize);
-        List<OrderResponse> content = orderResponseEnricher.toListResponses(orders, false, false);
-        return PageResponse.of(content, safePage, safeSize, total);
+        LocalDateTime from = fromDate != null ? fromDate.atStartOfDay() : null;
+        LocalDateTime to = toDate != null ? toDate.plusDays(1).atStartOfDay() : null;
+
+        if (from == null && to == null && status == null) {
+            long total = orderDao.countAll();
+            List<Order> orders = orderDao.findPage(safePage, safeSize);
+            return PageResponse.of(
+                    orderResponseEnricher.toListResponses(orders, false, false),
+                    safePage,
+                    safeSize,
+                    total);
+        }
+
+        if (from == null && to == null && status != null) {
+            long total = orderDao.countByStatus(status);
+            List<Order> orders = orderDao.findPageByStatus(status, safePage, safeSize);
+            return PageResponse.of(
+                    orderResponseEnricher.toListResponses(orders, false, false),
+                    safePage,
+                    safeSize,
+                    total);
+        }
+
+        long total = orderDao.countFiltered(status, from, to);
+        List<Order> orders = orderDao.findPageFiltered(status, from, to, safePage, safeSize);
+        return PageResponse.of(
+                orderResponseEnricher.toListResponses(orders, false, false),
+                safePage,
+                safeSize,
+                total);
     }
 
     public OrderResponse getOrder(UUID orderId) {
@@ -114,7 +148,7 @@ public class CashierService {
         if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
             failPendingPayment(payment);
             orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
-            orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, staffId, "Thu ngan huy don chua thanh toan");
+            orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, staffId, "Nhan vien huy don chua thanh toan");
             order.setStatus(OrderStatus.CANCELLED);
             return orderResponseEnricher.toDetailResponse(order, false);
         }
@@ -131,7 +165,7 @@ public class CashierService {
         if (payment != null && payment.getStatus() == PaymentStatus.PENDING) {
             failPendingPayment(payment);
             orderDao.updateStatus(orderId, OrderStatus.CANCELLED);
-            orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, staffId, "Thu ngan huy don");
+            orderDao.insertStatusHistory(orderId, OrderStatus.CANCELLED, staffId, "Nhan vien huy don");
             order.setStatus(OrderStatus.CANCELLED);
             return orderResponseEnricher.toDetailResponse(order, false);
         }

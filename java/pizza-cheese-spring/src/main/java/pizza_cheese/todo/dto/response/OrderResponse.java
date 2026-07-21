@@ -23,6 +23,7 @@ public class OrderResponse {
     private CodedEnumValue status;
     private CodedEnumValue paymentMethod;
     private CodedEnumValue paymentStatus;
+    private UUID paymentId;
     private BigDecimal totalAmount;
     private BigDecimal discountAmount;
     private BigDecimal finalAmount;
@@ -36,6 +37,8 @@ public class OrderResponse {
     private List<OrderItemResponse> items;
     private String customerName;
     private String customerEmail;
+    private String customerPhone;
+    private UUID userId;
     private String kitchenStaffName;
     private String deliveryStaffName;
     private UUID kitchenStaffId;
@@ -53,11 +56,13 @@ public class OrderResponse {
         response.setNote(order.getNote());
         response.setDeliveryAddressSnapshot(order.getDeliveryAddressSnapshot());
         response.setCreatedAt(order.getCreatedAt());
+        response.setUserId(order.getUserId());
         response.setKitchenStaffId(order.getKitchenStaffId());
         response.setDeliveryStaffId(order.getDeliveryStaffId());
         response.setItems(order.getItems().stream().map(OrderItemResponse::from).toList());
 
         if (payment != null) {
+            response.setPaymentId(payment.getId());
             response.setPaymentStatus(CodedEnumValue.from(payment.getStatus()));
             response.setPaymentUrl(payment.getPaymentUrl());
             response.setPaymentTxnRef(payment.getTransactionId());
