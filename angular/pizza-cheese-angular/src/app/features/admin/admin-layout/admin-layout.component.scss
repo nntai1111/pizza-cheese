@@ -73,15 +73,31 @@
   gap: 0.75rem;
 }
 
+.sidebar__profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .sidebar__user {
+  min-width: 0;
+
   strong {
     display: block;
     font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   small {
+    display: block;
     color: #94a3b8;
     font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 

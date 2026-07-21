@@ -1,6 +1,6 @@
 <div class="admin-page">
   <div class="admin-page__header">
-    <h1>Quản lý Danh mục</h1>
+    <h1>Danh mục</h1>
     <button type="button" class="btn-primary" (click)="openCreate()">+ Thêm danh mục</button>
   </div>
 
@@ -10,37 +10,53 @@
 
   @if (showForm()) {
     <div class="form-card">
-      <h2>{{ editingId() ? 'Sửa danh mục' : 'Thêm danh mục' }}</h2>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="form-row">
-          <label>Tên *</label>
-          <input formControlName="name" placeholder="VD: Pizza Bò" />
+      <div class="form-card__head">
+        <div>
+          <h2>{{ editingId() ? 'Sửa danh mục' : 'Thêm danh mục' }}</h2>
+          <p>{{ editingId() ? 'Cập nhật thông tin hiển thị.' : 'Chỉ cần tên và ảnh để bắt đầu.' }}</p>
         </div>
-        <div class="form-row">
-          <label>Slug</label>
-          <input formControlName="slug" placeholder="Để trống sẽ tự tạo từ tên" />
+      </div>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Tên *</label>
+            <input
+              formControlName="name"
+              placeholder="VD: Pizza bò"
+              [class]="controlClass('name')"
+            />
+            @if (errorOf('name'); as err) {
+              <span class="field-error">{{ err }}</span>
+            }
+          </div>
+          <div class="form-row">
+            <label>Ảnh</label>
+            <div class="file-field">
+              <input type="file" accept="image/*" (change)="onImageSelected($event)" />
+              @if (imagePreviewUrl()) {
+                <img class="image-preview" [src]="imagePreviewUrl()!" alt="Xem trước ảnh danh mục" />
+              }
+            </div>
+          </div>
         </div>
         <div class="form-row">
           <label>Mô tả</label>
-          <textarea formControlName="description" rows="2" placeholder="Mô tả ngắn về danh mục"></textarea>
+          <textarea formControlName="description" rows="2" placeholder="Mô tả ngắn (tuỳ chọn)"></textarea>
         </div>
-        <div class="form-row">
-          <label>Ảnh danh mục</label>
-          <input type="file" accept="image/*" (change)="onImageSelected($event)" />
-          @if (imagePreviewUrl()) {
-            <img class="image-preview" [src]="imagePreviewUrl()!" alt="Xem trước ảnh danh mục" />
-          }
-        </div>
-        <div class="form-row form-row--inline">
-          <div>
-            <label>Thứ tự</label>
-            <input type="number" formControlName="sortOrder" />
+        @if (editingId()) {
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Thứ tự</label>
+              <input type="number" formControlName="sortOrder" />
+            </div>
+            <div class="form-row">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="isActive" />
+                Đang hoạt động
+              </label>
+            </div>
           </div>
-          <label class="checkbox-label">
-            <input type="checkbox" formControlName="isActive" />
-            Hoạt động
-          </label>
-        </div>
+        }
         <div class="form-actions">
           <button type="button" class="btn-secondary" (click)="cancelForm()">Hủy</button>
           <button type="submit" class="btn-primary" [disabled]="saving()">

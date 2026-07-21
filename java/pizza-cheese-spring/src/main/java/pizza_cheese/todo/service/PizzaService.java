@@ -242,8 +242,27 @@ public class PizzaService {
         List<PizzaImage> images = new ArrayList<>();
         int order = 0;
 
-        if (isPresent(mainImage)) {
-            images.add(createUploadedImage(mainImage, true, order++));
+        List<MultipartFile> filesToUpload = new ArrayList<>();
+        boolean uploadMain = isPresent(mainImage);
+        if (uploadMain) {
+            filesToUpload.add(mainImage);
+        }
+
+        List<MultipartFile> secondaryToUpload = new ArrayList<>();
+        if (secondaryImages != null) {
+            for (MultipartFile file : secondaryImages) {
+                if (isPresent(file)) {
+                    secondaryToUpload.add(file);
+                    filesToUpload.add(file);
+                }
+            }
+        }
+
+        List<String> uploadedUrls = cloudinaryService.uploadPizzaImages(filesToUpload);
+        int urlIndex = 0;
+
+        if (uploadMain) {
+            images.add(imageFromUrl(uploadedUrls.get(urlIndex++), true, order++));
         } else {
             for (PizzaImage image : existingImages) {
                 if (image.isMain()) {
@@ -268,21 +287,17 @@ public class PizzaService {
             }
         }
 
-        if (secondaryImages != null) {
-            for (MultipartFile file : secondaryImages) {
-                if (isPresent(file)) {
-                    images.add(createUploadedImage(file, false, order++));
-                }
-            }
+        for (int i = 0; i < secondaryToUpload.size(); i++) {
+            images.add(imageFromUrl(uploadedUrls.get(urlIndex++), false, order++));
         }
 
         ensureSingleMainImage(images);
         return images;
     }
 
-    private PizzaImage createUploadedImage(MultipartFile file, boolean main, int sortOrder) {
+    private PizzaImage imageFromUrl(String url, boolean main, int sortOrder) {
         PizzaImage image = new PizzaImage();
-        image.setImageUrl(cloudinaryService.uploadPizzaImage(file));
+        image.setImageUrl(url);
         image.setMain(main);
         image.setSortOrder(sortOrder);
         return image;

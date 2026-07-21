@@ -9,15 +9,18 @@
     <p class="loading-text">Đang tải...</p>
   } @else if (customer(); as c) {
     <section class="customer-head">
-      <div>
-        <p class="eyebrow">Khách hàng</p>
-        <h1>{{ c.name || c.username }}</h1>
-        <div class="customer-head__meta">
-          @if (c.phone) {
-            <span>{{ c.phone }}</span>
-          }
-          <span>{{ c.email }}</span>
-          <span>@{{ c.username }}</span>
+      <div class="customer-head__identity">
+        <app-user-avatar [user]="c" size="md" />
+        <div>
+          <p class="eyebrow">Khách hàng</p>
+          <h1>{{ c.name || c.username }}</h1>
+          <div class="customer-head__meta">
+            @if (c.phone) {
+              <span>{{ c.phone }}</span>
+            }
+            <span>{{ c.email }}</span>
+            <span>@{{ c.username }}</span>
+          </div>
         </div>
       </div>
       <div class="customer-head__stat">

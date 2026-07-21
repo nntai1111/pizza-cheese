@@ -1,15 +1,5 @@
 @import '../admin-shared';
 
-.image-preview {
-  display: block;
-  margin-top: 0.75rem;
-  max-width: 200px;
-  max-height: 140px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-
 .table-thumb {
   width: 48px;
   height: 48px;
@@ -54,10 +44,10 @@
 }
 
 .items-section {
-  margin: 1rem 0;
+  margin: 0.25rem 0 0;
   padding: 1rem;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fafafa;
 
   &__header {
@@ -68,7 +58,11 @@
 
     h3 {
       margin: 0;
-      font-size: 0.9375rem;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #6b7280;
     }
   }
 }
@@ -82,15 +76,36 @@
 .item-row {
   display: flex;
   gap: 0.5rem;
-  align-items: center;
+  align-items: flex-start;
 
-  select {
+  &__field {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+
+    &--qty {
+      flex: 0 0 auto;
+      width: 72px;
+    }
+  }
+
+  select {
+    width: 100%;
+    min-width: 0;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: #fff;
   }
 
   input[type='number'] {
-    width: 72px;
+    width: 100%;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
   }
 }
 

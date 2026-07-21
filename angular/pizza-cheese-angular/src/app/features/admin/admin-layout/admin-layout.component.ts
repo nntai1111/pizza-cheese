@@ -23,6 +23,7 @@ export class AdminLayoutComponent {
   readonly user = this.authService.currentUser;
 
   readonly navItems: NavItem[] = [
+    { label: 'Tổng quan', icon: '📊', route: '/admin/dashboard' },
     { label: 'Danh mục', icon: '📁', route: '/admin/categories' },
     { label: 'Topping', icon: '🧀', route: '/admin/toppings' },
     { label: 'Pizza', icon: '🍕', route: '/admin/pizzas' },

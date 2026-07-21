@@ -22,10 +22,12 @@
     </nav>
 
     <div class="sidebar__footer">
-      <app-user-avatar [user]="user()" size="sm" />
-      <div class="sidebar__user">
-        <strong>{{ user()?.name }}</strong>
-        <small>{{ user()?.username }}</small>
+      <div class="sidebar__profile">
+        <app-user-avatar [user]="user()" size="sm" />
+        <div class="sidebar__user">
+          <strong>{{ user()?.name }}</strong>
+          <small>{{ user()?.username }}</small>
+        </div>
       </div>
       <button type="button" class="btn-logout" (click)="logout()">Đăng xuất</button>
     </div>

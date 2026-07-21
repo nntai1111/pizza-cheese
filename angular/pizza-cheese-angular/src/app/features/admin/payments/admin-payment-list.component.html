@@ -63,18 +63,13 @@
             <th>Số tiền</th>
             <th>Trạng thái</th>
             <th>Txn</th>
-            <th>Thao tác</th>
           </tr>
         </thead>
         <tbody>
           @for (payment of payments(); track payment.id) {
-            <tr>
+            <tr class="clickable-row" (click)="openPayment(payment)">
               <td>{{ payment.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-              <td>
-                <a [routerLink]="['/admin/orders', payment.orderId]" class="btn-link">
-                  {{ payment.orderCode }}
-                </a>
-              </td>
+              <td>{{ payment.orderCode }}</td>
               <td>{{ getMethodLabel(payment) }}</td>
               <td>{{ formatPrice(payment.amount) }}</td>
               <td>
@@ -83,9 +78,6 @@
                 </span>
               </td>
               <td class="txn">{{ payment.transactionId || '—' }}</td>
-              <td class="actions">
-                <a [routerLink]="['/admin/payments', payment.id]" class="btn-link">Chi tiết</a>
-              </td>
             </tr>
           }
         </tbody>

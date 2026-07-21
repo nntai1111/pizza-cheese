@@ -1,28 +1,15 @@
 @import '../admin-shared';
 
-.form-hint {
-  display: block;
-  margin-top: 0.35rem;
-  color: #6b7280;
-  font-size: 0.8rem;
-}
-
-.image-section {
-  margin-top: 0.75rem;
-
-  &__label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #6b7280;
-  }
+.image-preview--main {
+  max-width: 140px;
+  max-height: 140px;
 }
 
 .image-preview-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  margin-top: 0.75rem;
 }
 
 .image-preview-item {
@@ -44,19 +31,6 @@
   cursor: pointer;
 }
 
-.image-preview {
-  width: 96px;
-  height: 96px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-
-  &--main {
-    width: 140px;
-    height: 140px;
-  }
-}
-
 .table-thumb {
   width: 48px;
   height: 48px;
@@ -75,4 +49,3 @@
   border-radius: 8px;
   font-size: 1.25rem;
 }
-

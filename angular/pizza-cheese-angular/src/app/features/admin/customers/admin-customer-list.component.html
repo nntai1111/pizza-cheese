@@ -25,10 +25,15 @@
         <tbody>
           @for (user of customers(); track user.id) {
             <tr class="clickable-row" [routerLink]="['/admin/customers', user.id]">
-              <td class="customer-cell">
-                <strong>{{ user.name || user.username }}</strong>
-                <div class="meta">{{ user.email }}</div>
-                <div class="meta">@{{ user.username }}</div>
+              <td>
+                <div class="customer-cell">
+                  <app-user-avatar [user]="user" size="sm" />
+                  <div class="customer-cell__info">
+                    <strong>{{ user.name || user.username }}</strong>
+                    <div class="meta">{{ user.email }}</div>
+                    <div class="meta">@{{ user.username }}</div>
+                  </div>
+                </div>
               </td>
               <td>{{ user.phone || '—' }}</td>
               <td>{{ user.createdAt | date: 'dd/MM/yyyy' }}</td>

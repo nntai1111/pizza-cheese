@@ -1,0 +1,219 @@
+<div class="admin-page dashboard">
+  <div class="admin-page__header">
+    <div>
+      <h1>Tổng quan</h1>
+      @if (data(); as dashboard) {
+        <p class="dashboard-meta">
+          Cập nhật {{ dashboard.generatedAt | date: 'dd/MM/yyyy HH:mm' }}
+        </p>
+      }
+    </div>
+    <button type="button" class="btn-secondary" (click)="reload()" [disabled]="loading()">
+      Làm mới
+    </button>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="loading-text">Đang tải...</p>
+  } @else if (data(); as dashboard) {
+    <section class="panel">
+      <div class="panel__head">
+        <h2>Hôm nay</h2>
+      </div>
+
+      <div class="metric-strip">
+        <div class="metric">
+          <span class="metric__label">Đơn hoàn thành</span>
+          <strong class="metric__value">{{ dashboard.kpis.ordersCompletedToday }}</strong>
+        </div>
+        <div class="metric">
+          <span class="metric__label">Đơn chưa HT</span>
+          <strong class="metric__value">{{ dashboard.kpis.ordersIncomplete }}</strong>
+        </div>
+        <div class="metric">
+          <span class="metric__label">Doanh thu</span>
+          <strong class="metric__value">{{ formatPrice(dashboard.kpis.revenueCompletedToday) }}</strong>
+        </div>
+        <div class="metric">
+          <span class="metric__label">Tiền đã thu</span>
+          <strong class="metric__value">{{ formatPrice(dashboard.kpis.collectedToday) }}</strong>
+        </div>
+        <div class="metric">
+          <span class="metric__label">Tổng khách</span>
+          <strong class="metric__value">{{ dashboard.kpis.customersTotal }}</strong>
+        </div>
+        <div class="metric">
+          <span class="metric__label">Khách mới</span>
+          <strong class="metric__value">{{ dashboard.kpis.customersNewToday }}</strong>
+        </div>
+      </div>
+
+      <div class="panel__divider"></div>
+
+      <div class="panel__subhead">
+        <h3>Đang xử lý</h3>
+        <button type="button" class="btn-link" (click)="openIncompleteOrders()">Xem tất cả</button>
+      </div>
+
+      @if (dashboard.kpis.ordersIncomplete === 0) {
+        <p class="empty-inline">Không có đơn đang chờ xử lý.</p>
+      } @else {
+        <div class="pipeline">
+          @for (item of dashboard.incompleteByStatus; track $index) {
+            <button
+              type="button"
+              class="pipeline__item"
+              (click)="openIncompleteOrders(item)"
+            >
+              <span [class]="incompleteBadgeClass(item)">{{ incompleteStatusLabel(item) }}</span>
+              <strong>{{ item.count }}</strong>
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="panel__head panel__head--wrap">
+        <div>
+          <h2>Theo khoảng ngày</h2>
+          @if (stats(); as report) {
+            <p class="panel__hint">
+              So với kỳ trước {{ formatPeriod(report.previousPeriod.from, report.previousPeriod.to) }}
+            </p>
+          }
+        </div>
+
+        <div class="range-bar">
+          <div class="preset-row">
+            <button type="button" class="filter-chip" (click)="setRangePreset(7)">7 ngày</button>
+            <button type="button" class="filter-chip" (click)="setRangePreset(14)">14 ngày</button>
+            <button type="button" class="filter-chip" (click)="setRangePreset(30)">30 ngày</button>
+          </div>
+          <div class="date-filters">
+            <label>
+              Từ
+              <input type="date" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event)" />
+            </label>
+            <label>
+              Đến
+              <input type="date" [ngModel]="toDate()" (ngModelChange)="toDate.set($event)" />
+            </label>
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="applyStatsRange()"
+              [disabled]="statsLoading()"
+            >
+              Áp dụng
+            </button>
+          </div>
+        </div>
+      </div>
+
+      @if (statsError()) {
+        <div class="alert">{{ statsError() }}</div>
+      }
+
+      @if (statsLoading() && !stats()) {
+        <p class="empty-inline">Đang tải thống kê...</p>
+      } @else if (stats(); as report) {
+        <div class="metric-strip metric-strip--compact">
+          <div class="metric">
+            <span class="metric__label">Đơn tạo</span>
+            <strong class="metric__value">{{ report.summary.ordersCreated }}</strong>
+          </div>
+          <div class="metric">
+            <span class="metric__label">Đơn hoàn thành</span>
+            <strong class="metric__value">{{ report.summary.ordersCompleted }}</strong>
+            <span [class]="changeClass(report.previousPeriod.ordersChangePercent)">
+              {{ formatChange(report.previousPeriod.ordersChangePercent) }}
+            </span>
+          </div>
+          <div class="metric">
+            <span class="metric__label">Doanh thu HT</span>
+            <strong class="metric__value">{{ formatPrice(report.summary.revenueCompleted) }}</strong>
+            <span [class]="changeClass(report.previousPeriod.revenueChangePercent)">
+              {{ formatChange(report.previousPeriod.revenueChangePercent) }}
+            </span>
+          </div>
+          <div class="metric">
+            <span class="metric__label">Tiền đã thu</span>
+            <strong class="metric__value">{{ formatPrice(report.summary.collected) }}</strong>
+            <span [class]="changeClass(report.previousPeriod.collectedChangePercent)">
+              {{ formatChange(report.previousPeriod.collectedChangePercent) }}
+            </span>
+          </div>
+          <div class="metric">
+            <span class="metric__label">Giá trị đơn TB</span>
+            <strong class="metric__value">{{ formatPrice(report.summary.avgOrderValue) }}</strong>
+          </div>
+        </div>
+
+        <div class="panel__divider"></div>
+
+        <div class="stats-body">
+          <div class="stats-body__main">
+            <div class="block-title">
+              <h3>Doanh thu / tiền thu</h3>
+              <div class="legend">
+                <span class="legend__item legend__item--revenue">Doanh thu HT</span>
+                <span class="legend__item legend__item--collected">Tiền đã thu</span>
+              </div>
+            </div>
+            @if (!report.series.length) {
+              <p class="empty-inline">Không có dữ liệu trong khoảng này.</p>
+            } @else {
+              <div class="bar-chart">
+                @for (point of report.series; track point.date) {
+                  <div class="bar-chart__col" [title]="point.date">
+                    <div class="bar-chart__bars">
+                      <span
+                        class="bar bar--revenue"
+                        [style.height]="barHeight(point.revenueCompleted)"
+                      ></span>
+                      <span
+                        class="bar bar--collected"
+                        [style.height]="barHeight(point.collected)"
+                      ></span>
+                    </div>
+                    <span class="bar-chart__label">{{ dayLabel(point) }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="stats-body__side">
+            <div class="block-title">
+              <h3>Top món bán chạy</h3>
+            </div>
+            @if (!report.topItems.length) {
+              <p class="empty-inline">Chưa có đơn hoàn thành trong khoảng này.</p>
+            } @else {
+              <ol class="top-list">
+                @for (item of report.topItems; track $index) {
+                  <li class="top-list__item">
+                    <span class="top-list__rank">{{ $index + 1 }}</span>
+                    <div class="top-list__main">
+                      <strong>{{ item.name }}</strong>
+                      <span class="item-type">{{ itemTypeLabel(item) }}</span>
+                    </div>
+                    <div class="top-list__meta">
+                      <span>{{ item.quantity }} sp</span>
+                      <strong>{{ formatPrice(item.revenue) }}</strong>
+                    </div>
+                  </li>
+                }
+              </ol>
+            }
+          </div>
+        </div>
+      }
+    </section>
+  }
+</div>

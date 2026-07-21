@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+﻿import { Component, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -8,11 +8,17 @@ import {
 import { CategoryService } from '../../../core/services/category.service';
 import { PizzaService } from '../../../core/services/pizza.service';
 import { ToppingService } from '../../../core/services/topping.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Category } from '../../../core/models/category.model';
 import { Pizza, PizzaSize } from '../../../core/models/pizza.model';
 import { Topping } from '../../../core/models/topping.model';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
 import { normalizeCodedEnum } from '../../../core/utils/coded-enum.util';
+import {
+  fieldErrorMessage,
+  markFormInvalidAndMessage,
+  showFieldError,
+} from '../../../core/utils/form-validation.util';
 import {
   getPizzaMainImage,
   getPizzaSecondaryImages,
@@ -20,6 +26,14 @@ import {
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 const PIZZA_SIZES: PizzaSize[] = ['SMALL', 'MEDIUM', 'LARGE'];
+
+const PIZZA_FIELD_LABELS: Record<string, string> = {
+  categoryId: 'Danh mục',
+  name: 'Tên pizza',
+  smallPrice: 'Giá Small',
+  mediumPrice: 'Giá Medium',
+  largePrice: 'Giá Large',
+};
 
 @Component({
   selector: 'app-pizza-admin-list',
@@ -32,6 +46,7 @@ export class PizzaAdminListComponent {
   private readonly pizzaService = inject(PizzaService);
   private readonly categoryService = inject(CategoryService);
   private readonly toppingService = inject(ToppingService);
+  private readonly toast = inject(ToastService);
 
   readonly pizzas = signal<Pizza[]>([]);
   readonly categories = signal<Category[]>([]);
@@ -60,11 +75,10 @@ export class PizzaAdminListComponent {
     categoryId: ['', Validators.required],
     name: ['', [Validators.required, Validators.maxLength(150)]],
     description: [''],
-    basePrice: [0, [Validators.required, Validators.min(0.01)]],
     isActive: [true],
-    smallPrice: [0, [Validators.required, Validators.min(0.01)]],
-    mediumPrice: [0, [Validators.required, Validators.min(0.01)]],
-    largePrice: [0, [Validators.required, Validators.min(0.01)]],
+    smallPrice: [null as number | null, [Validators.required, Validators.min(0.01)]],
+    mediumPrice: [null as number | null, [Validators.required, Validators.min(0.01)]],
+    largePrice: [null as number | null, [Validators.required, Validators.min(0.01)]],
     toppingIds: this.fb.nonNullable.control<string[]>([]),
   });
 
@@ -72,6 +86,18 @@ export class PizzaAdminListComponent {
     this.loadCategories();
     this.loadToppings();
     this.loadPizzas();
+  }
+
+  showError(name: string): boolean {
+    return showFieldError(this.form.get(name));
+  }
+
+  errorOf(name: string): string | null {
+    return fieldErrorMessage(this.form.get(name), this.messagesFor(name));
+  }
+
+  controlClass(name: string): string {
+    return this.showError(name) ? 'is-invalid' : '';
   }
 
   onCategoryFilterChange(categoryId: string): void {
@@ -92,11 +118,10 @@ export class PizzaAdminListComponent {
       categoryId: this.categories()[0]?.id ?? '',
       name: '',
       description: '',
-      basePrice: 0,
       isActive: true,
-      smallPrice: 0,
-      mediumPrice: 0,
-      largePrice: 0,
+      smallPrice: null,
+      mediumPrice: null,
+      largePrice: null,
       toppingIds: [],
     });
     this.showForm.set(true);
@@ -119,7 +144,6 @@ export class PizzaAdminListComponent {
       categoryId: pizza.category?.id ?? '',
       name: pizza.name,
       description: pizza.description ?? '',
-      basePrice: pizza.basePrice,
       isActive: pizza.active,
       smallPrice: variantMap.SMALL ?? pizza.basePrice,
       mediumPrice: variantMap.MEDIUM ?? pizza.basePrice,
@@ -204,22 +228,25 @@ export class PizzaAdminListComponent {
 
   onSubmit(): void {
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      this.toast.error(markFormInvalidAndMessage(this.form, PIZZA_FIELD_LABELS));
       return;
     }
 
     const value = this.form.getRawValue();
     const id = this.editingId();
+    const medium = Number(value.mediumPrice);
+    const small = Number(value.smallPrice);
+    const large = Number(value.largePrice);
     const payload = {
       categoryId: value.categoryId,
       name: value.name,
       description: value.description || undefined,
-      basePrice: value.basePrice,
+      basePrice: medium || small || large,
       isActive: value.isActive,
       variants: [
-        { size: 'SMALL' as PizzaSize, price: value.smallPrice },
-        { size: 'MEDIUM' as PizzaSize, price: value.mediumPrice },
-        { size: 'LARGE' as PizzaSize, price: value.largePrice },
+        { size: 'SMALL' as PizzaSize, price: small },
+        { size: 'MEDIUM' as PizzaSize, price: medium },
+        { size: 'LARGE' as PizzaSize, price: large },
       ],
       toppingIds: value.toppingIds,
       ...(id
@@ -243,10 +270,13 @@ export class PizzaAdminListComponent {
         this.saving.set(false);
         this.cancelForm();
         this.loadPizzas();
+        this.toast.success(id ? 'Đã cập nhật pizza' : 'Đã tạo pizza');
       },
       error: (err) => {
         this.saving.set(false);
-        this.errorMessage.set(getHttpErrorMessage(err, 'Lưu pizza thất bại.'));
+        const message = getHttpErrorMessage(err, 'Lưu pizza thất bại.');
+        this.errorMessage.set(message);
+        this.toast.error(message);
       },
     });
   }
@@ -257,9 +287,12 @@ export class PizzaAdminListComponent {
     }
 
     this.pizzaService.delete(pizza.id).subscribe({
-      next: () => this.loadPizzas(),
+      next: () => {
+        this.loadPizzas();
+        this.toast.success('Đã xóa pizza');
+      },
       error: (err) => {
-        alert(err?.error?.message ?? 'Xóa pizza thất bại.');
+        this.toast.error(getHttpErrorMessage(err, 'Xóa pizza thất bại.'));
       },
     });
   }
@@ -271,39 +304,20 @@ export class PizzaAdminListComponent {
     }).format(price);
   }
 
-  private loadCategories(): void {
-    this.categoryService.list(false).subscribe({
-      next: (categories) => this.categories.set(categories),
-    });
-  }
-
-  private loadToppings(): void {
-    this.toppingService.list(false).subscribe({
-      next: (toppings) => this.toppings.set(toppings),
-    });
-  }
-
-  private loadPizzas(): void {
-    this.loading.set(true);
-    this.pizzaService
-      .list({
-        activeOnly: false,
-        categoryId: this.selectedCategoryId(),
-        page: this.page(),
-        size: this.pageSize,
-      })
-      .subscribe({
-        next: (result) => {
-          this.pizzas.set(result.content);
-          this.totalPages.set(result.totalPages);
-          this.totalElements.set(result.totalElements);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.errorMessage.set('Không thể tải danh sách pizza.');
-          this.loading.set(false);
-        },
-      });
+  private messagesFor(name: string): Partial<Record<string, string>> {
+    if (name === 'categoryId') {
+      return { required: 'Vui lòng chọn danh mục' };
+    }
+    if (name === 'name') {
+      return { required: 'Vui lòng nhập tên pizza' };
+    }
+    if (name.endsWith('Price')) {
+      return {
+        required: 'Vui lòng nhập giá',
+        min: 'Giá phải lớn hơn 0',
+      };
+    }
+    return {};
   }
 
   private clearImageState(): void {
@@ -325,6 +339,45 @@ export class PizzaAdminListComponent {
   }
 
   private revokeSecondaryPreviewUrls(): void {
-    this.secondaryImagePreviewUrls().forEach((url) => URL.revokeObjectURL(url));
+    for (const url of this.secondaryImagePreviewUrls()) {
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    }
+  }
+
+  private loadCategories(): void {
+    this.categoryService.list(true).subscribe({
+      next: (categories) => this.categories.set(categories),
+    });
+  }
+
+  private loadToppings(): void {
+    this.toppingService.list(true).subscribe({
+      next: (toppings) => this.toppings.set(toppings),
+    });
+  }
+
+  private loadPizzas(): void {
+    this.loading.set(true);
+    this.pizzaService
+      .list({
+        activeOnly: false,
+        categoryId: this.selectedCategoryId() ?? undefined,
+        page: this.page(),
+        size: this.pageSize,
+      })
+      .subscribe({
+        next: (result) => {
+          this.pizzas.set(result.content);
+          this.totalPages.set(result.totalPages);
+          this.totalElements.set(result.totalElements);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.errorMessage.set('Không thể tải danh sách pizza.');
+          this.loading.set(false);
+        },
+      });
   }
 }

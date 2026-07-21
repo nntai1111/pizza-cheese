@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { CashierService } from '../../../core/services/cashier.service';
@@ -24,14 +24,27 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 
 type StatusFilter = OrderStatus | 'ALL';
 
+const STATUS_FILTERS: StatusFilter[] = [
+  'ALL',
+  'PENDING_PAYMENT',
+  'CONFIRMED',
+  'PREPARING',
+  'READY',
+  'OUT_FOR_DELIVERY',
+  'COMPLETED',
+  'CANCELLED',
+];
+
 @Component({
   selector: 'app-admin-order-list',
-  imports: [RouterLink, DatePipe, FormsModule, PaginationComponent],
+  imports: [DatePipe, FormsModule, PaginationComponent],
   templateUrl: './admin-order-list.component.html',
   styleUrl: './admin-order-list.component.scss',
 })
 export class AdminOrderListComponent {
   private readonly cashierService = inject(CashierService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly orders = signal<Order[]>([]);
   readonly loading = signal(true);
@@ -60,17 +73,30 @@ export class AdminOrderListComponent {
     { value: 'PREPARING', label: 'Đang chế biến' },
     { value: 'READY', label: 'Sẵn sàng' },
     { value: 'OUT_FOR_DELIVERY', label: 'Đang giao' },
-    { value: 'DELIVERED', label: 'Đã giao' },
+    { value: 'COMPLETED', label: 'Hoàn thành' },
     { value: 'CANCELLED', label: 'Đã hủy' },
   ];
 
   constructor() {
+    const statusParam = this.route.snapshot.queryParamMap.get('status');
+    if (statusParam && STATUS_FILTERS.includes(statusParam as StatusFilter)) {
+      this.activeFilter.set(statusParam as StatusFilter);
+    }
     this.reload();
+  }
+
+  openOrder(order: Order): void {
+    this.router.navigate(['/admin/orders', order.id]);
   }
 
   setFilter(filter: StatusFilter): void {
     this.activeFilter.set(filter);
     this.page.set(0);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: filter === 'ALL' ? {} : { status: filter },
+      replaceUrl: true,
+    });
     this.reload();
   }
 

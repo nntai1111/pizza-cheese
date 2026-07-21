@@ -6,8 +6,19 @@ import {
 } from '@angular/forms';
 
 import { ToppingService } from '../../../core/services/topping.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Topping } from '../../../core/models/topping.model';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
+import {
+  fieldErrorMessage,
+  markFormInvalidAndMessage,
+  showFieldError,
+} from '../../../core/utils/form-validation.util';
+
+const TOPPING_FIELD_LABELS: Record<string, string> = {
+  name: 'Tên topping',
+  price: 'Giá',
+};
 
 @Component({
   selector: 'app-topping-list',
@@ -18,6 +29,7 @@ import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
 export class ToppingListComponent {
   private readonly fb = inject(FormBuilder);
   private readonly toppingService = inject(ToppingService);
+  private readonly toast = inject(ToastService);
 
   readonly toppings = signal<Topping[]>([]);
   readonly loading = signal(false);
@@ -28,7 +40,7 @@ export class ToppingListComponent {
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
-    price: [0, [Validators.required, Validators.min(0)]],
+    price: [null as number | null, [Validators.required, Validators.min(0)]],
     isActive: [true],
   });
 
@@ -36,9 +48,21 @@ export class ToppingListComponent {
     this.loadToppings();
   }
 
+  showError(name: string): boolean {
+    return showFieldError(this.form.get(name));
+  }
+
+  errorOf(name: string): string | null {
+    return fieldErrorMessage(this.form.get(name), this.messagesFor(name));
+  }
+
+  controlClass(name: string): string {
+    return this.showError(name) ? 'is-invalid' : '';
+  }
+
   openCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ name: '', price: 0, isActive: true });
+    this.form.reset({ name: '', price: null, isActive: true });
     this.showForm.set(true);
     this.errorMessage.set(null);
   }
@@ -61,7 +85,7 @@ export class ToppingListComponent {
 
   onSubmit(): void {
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      this.toast.error(markFormInvalidAndMessage(this.form, TOPPING_FIELD_LABELS));
       return;
     }
 
@@ -69,20 +93,28 @@ export class ToppingListComponent {
     this.errorMessage.set(null);
     const value = this.form.getRawValue();
     const id = this.editingId();
+    const payload = {
+      name: value.name,
+      price: Number(value.price),
+      isActive: value.isActive,
+    };
 
     const request$ = id
-      ? this.toppingService.update(id, value)
-      : this.toppingService.create(value);
+      ? this.toppingService.update(id, payload)
+      : this.toppingService.create(payload);
 
     request$.subscribe({
       next: () => {
         this.saving.set(false);
         this.showForm.set(false);
         this.loadToppings();
+        this.toast.success(id ? 'Đã cập nhật topping' : 'Đã tạo topping');
       },
       error: (err) => {
         this.saving.set(false);
-        this.errorMessage.set(getHttpErrorMessage(err, 'Lưu topping thất bại.'));
+        const message = getHttpErrorMessage(err, 'Lưu topping thất bại.');
+        this.errorMessage.set(message);
+        this.toast.error(message);
       },
     });
   }
@@ -93,9 +125,12 @@ export class ToppingListComponent {
     }
 
     this.toppingService.delete(topping.id).subscribe({
-      next: () => this.loadToppings(),
+      next: () => {
+        this.loadToppings();
+        this.toast.success('Đã xóa topping');
+      },
       error: (err) => {
-        alert(err?.error?.message ?? 'Xóa topping thất bại.');
+        this.toast.error(getHttpErrorMessage(err, 'Xóa topping thất bại.'));
       },
     });
   }
@@ -105,6 +140,19 @@ export class ToppingListComponent {
       style: 'currency',
       currency: 'VND',
     }).format(price);
+  }
+
+  private messagesFor(name: string): Partial<Record<string, string>> {
+    if (name === 'name') {
+      return { required: 'Vui lòng nhập tên topping' };
+    }
+    if (name === 'price') {
+      return {
+        required: 'Vui lòng nhập giá',
+        min: 'Giá không được âm',
+      };
+    }
+    return {};
   }
 
   private loadToppings(): void {

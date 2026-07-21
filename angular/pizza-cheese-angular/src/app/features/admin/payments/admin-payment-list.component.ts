@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { AdminService } from '../../../core/services/admin.service';
@@ -26,12 +26,13 @@ type MethodFilter = PaymentMethod | 'ALL';
 
 @Component({
   selector: 'app-admin-payment-list',
-  imports: [RouterLink, DatePipe, FormsModule, PaginationComponent],
+  imports: [DatePipe, FormsModule, PaginationComponent],
   templateUrl: './admin-payment-list.component.html',
   styleUrl: './admin-payment-list.component.scss',
 })
 export class AdminPaymentListComponent {
   private readonly adminService = inject(AdminService);
+  private readonly router = inject(Router);
 
   readonly payments = signal<Payment[]>([]);
   readonly loading = signal(true);
@@ -66,6 +67,10 @@ export class AdminPaymentListComponent {
 
   constructor() {
     this.reload();
+  }
+
+  openPayment(payment: Payment): void {
+    this.router.navigate(['/admin/payments', payment.id]);
   }
 
   setStatus(filter: StatusFilter): void {

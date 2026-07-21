@@ -1,6 +1,8 @@
 package pizza_cheese.todo.dao;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -15,6 +17,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import pizza_cheese.todo.dao.mapper.RowMappers;
+import pizza_cheese.todo.domain.LineItemType;
 import pizza_cheese.todo.domain.Order;
 import pizza_cheese.todo.domain.OrderItem;
 import pizza_cheese.todo.domain.OrderItemComboLine;
@@ -134,6 +137,41 @@ public class OrderDao {
         return count != null ? count : 0L;
     }
 
+    public BigDecimal sumFinalAmountFiltered(OrderStatus status, LocalDateTime from, LocalDateTime to) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        String sql = queries.get("sumFinalAmountFilteredBase") + buildOrderFilterSql(status, from, to, params);
+        BigDecimal sum = jdbc.queryForObject(sql, params, BigDecimal.class);
+        return sum != null ? sum : BigDecimal.ZERO;
+    }
+
+    public List<DailyAmountRow> sumCompletedRevenueByDay(LocalDateTime from, LocalDateTime to) {
+        return jdbc.query(
+                queries.get("sumCompletedRevenueByDay"),
+                new MapSqlParameterSource()
+                        .addValue("status", OrderStatus.COMPLETED.getCode())
+                        .addValue("from", JdbcTimeUtil.toTimestamp(from))
+                        .addValue("to", JdbcTimeUtil.toTimestamp(to)),
+                (rs, rowNum) -> new DailyAmountRow(
+                        rs.getObject("day", LocalDate.class),
+                        rs.getBigDecimal("revenue"),
+                        rs.getLong("order_count")));
+    }
+
+    public List<TopItemRow> findTopSellingItems(LocalDateTime from, LocalDateTime to, int limit) {
+        return jdbc.query(
+                queries.get("topSellingItems"),
+                new MapSqlParameterSource()
+                        .addValue("status", OrderStatus.COMPLETED.getCode())
+                        .addValue("from", JdbcTimeUtil.toTimestamp(from))
+                        .addValue("to", JdbcTimeUtil.toTimestamp(to))
+                        .addValue("limit", Math.max(1, limit)),
+                (rs, rowNum) -> new TopItemRow(
+                        rs.getString("item_name"),
+                        LineItemType.fromCode(rs.getInt("item_type")),
+                        rs.getLong("quantity"),
+                        rs.getBigDecimal("revenue")));
+    }
+
     public List<Order> findPageFiltered(OrderStatus status, LocalDateTime from, LocalDateTime to, int page, int size) {
         MapSqlParameterSource params = new MapSqlParameterSource();
         String sql = queries.get("findPageFilteredBase")
@@ -192,7 +230,7 @@ public class OrderDao {
                 new MapSqlParameterSource()
                         .addValue("readyStatus", OrderStatus.READY.getCode())
                         .addValue("outStatus", OrderStatus.OUT_FOR_DELIVERY.getCode())
-                        .addValue("deliveredStatus", OrderStatus.DELIVERED.getCode())
+                        .addValue("completedStatus", OrderStatus.COMPLETED.getCode())
                         .addValue("deliveryStaffId", deliveryStaffId)
                         .addValue("limit", size)
                         .addValue("offset", (long) page * size),
@@ -205,7 +243,7 @@ public class OrderDao {
                 new MapSqlParameterSource()
                         .addValue("readyStatus", OrderStatus.READY.getCode())
                         .addValue("outStatus", OrderStatus.OUT_FOR_DELIVERY.getCode())
-                        .addValue("deliveredStatus", OrderStatus.DELIVERED.getCode())
+                        .addValue("completedStatus", OrderStatus.COMPLETED.getCode())
                         .addValue("deliveryStaffId", deliveryStaffId),
                 Long.class);
         return count != null ? count : 0L;
@@ -424,5 +462,15 @@ public class OrderDao {
                 Map.of("orderItemIds", orderItemIds),
                 RowMappers.forEntity(OrderItemComboLine.class));
         return comboLines.stream().collect(Collectors.groupingBy(OrderItemComboLine::getOrderItemId));
+    }
+
+    public record DailyAmountRow(LocalDate day, BigDecimal amount, long count) {
+    }
+
+    public record TopItemRow(
+            String name,
+            LineItemType itemType,
+            long quantity,
+            BigDecimal revenue) {
     }
 }

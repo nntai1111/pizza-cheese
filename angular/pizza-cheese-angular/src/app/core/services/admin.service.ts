@@ -4,14 +4,16 @@ import { Observable, map } from 'rxjs';
 
 import { API_BASE_URL } from '../constants/api.constants';
 import { ApiResponse, User } from '../models/auth.model';
+import { AdminDashboard, AdminDashboardStats } from '../models/admin-dashboard.model';
 import { Payment } from '../models/payment.model';
 import { PageResponse } from '../models/page.model';
 import { PaymentMethod, PaymentStatus, Order } from '../models/order.model';
 import { AppRole } from '../enums/role.enum';
 
-const ADMIN_PAYMENTS = `${API_BASE_URL}/admin/payments`;
-const ADMIN_STAFF = `${API_BASE_URL}/admin/staff`;
-const ADMIN_CUSTOMERS = `${API_BASE_URL}/admin/customers`;
+const ADMIN_BASE = `${API_BASE_URL}/admin`;
+const ADMIN_PAYMENTS = `${ADMIN_BASE}/payments`;
+const ADMIN_STAFF = `${ADMIN_BASE}/staff`;
+const ADMIN_CUSTOMERS = `${ADMIN_BASE}/customers`;
 
 export interface CreateStaffRequest {
   username: string;
@@ -33,6 +35,21 @@ export interface UpdateStaffRequest {
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private readonly http = inject(HttpClient);
+
+  getDashboard(): Observable<AdminDashboard> {
+    return this.http
+      .get<ApiResponse<AdminDashboard>>(`${ADMIN_BASE}/dashboard`)
+      .pipe(map((r) => r.data));
+  }
+
+  getDashboardStats(params: { from?: string; to?: string } = {}): Observable<AdminDashboardStats> {
+    const query: Record<string, string> = {};
+    if (params.from) query['from'] = params.from;
+    if (params.to) query['to'] = params.to;
+    return this.http
+      .get<ApiResponse<AdminDashboardStats>>(`${ADMIN_BASE}/dashboard/stats`, { params: query })
+      .pipe(map((r) => r.data));
+  }
 
   getPayments(params: {
     status?: PaymentStatus;

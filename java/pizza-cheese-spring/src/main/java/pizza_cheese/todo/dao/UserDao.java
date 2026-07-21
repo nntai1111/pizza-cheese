@@ -198,6 +198,16 @@ public class UserDao {
         return count != null ? count : 0L;
     }
 
+    public long countCustomersCreatedBetween(LocalDateTime from, LocalDateTime to) {
+        Long count = jdbc.queryForObject(
+                queries.get("countCustomersCreatedBetween"),
+                new MapSqlParameterSource()
+                        .addValue("from", JdbcTimeUtil.toTimestamp(from))
+                        .addValue("to", JdbcTimeUtil.toTimestamp(to)),
+                Long.class);
+        return count != null ? count : 0L;
+    }
+
     public List<User> findCustomersPage(int page, int size) {
         List<User> users = jdbc.query(
                 queries.get("findCustomersPageBase") + " ORDER BY u.created_at DESC LIMIT :limit OFFSET :offset",

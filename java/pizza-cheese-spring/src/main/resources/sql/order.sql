@@ -106,6 +106,37 @@ LIMIT :limit OFFSET :offset
 SELECT COUNT(*)
 FROM orders
 
+-- name: sumFinalAmountFilteredBase
+SELECT COALESCE(SUM(final_amount), 0)
+FROM orders
+
+-- name: sumCompletedRevenueByDay
+SELECT CAST(created_at AS DATE) AS day,
+       COALESCE(SUM(final_amount), 0) AS revenue,
+       COUNT(*) AS order_count
+FROM orders
+WHERE status = :status
+  AND created_at >= :from
+  AND created_at < :to
+GROUP BY CAST(created_at AS DATE)
+ORDER BY day
+
+-- name: topSellingItems
+SELECT COALESCE(p.name, c.name, 'Unknown') AS item_name,
+       oi.item_type,
+       COALESCE(SUM(oi.quantity), 0) AS quantity,
+       COALESCE(SUM(oi.line_total), 0) AS revenue
+FROM order_items oi
+JOIN orders o ON o.id = oi.order_id
+LEFT JOIN pizzas p ON p.id = oi.pizza_id
+LEFT JOIN combos c ON c.id = oi.combo_id
+WHERE o.status = :status
+  AND o.created_at >= :from
+  AND o.created_at < :to
+GROUP BY COALESCE(p.name, c.name, 'Unknown'), oi.item_type
+ORDER BY quantity DESC, revenue DESC
+LIMIT :limit
+
 -- name: findPageFilteredBase
 SELECT id, order_code, user_id, address_id, status,
        total_amount, discount_amount, final_amount, coupon_id,
@@ -137,14 +168,14 @@ SELECT id, order_code, user_id, address_id, status,
        created_at, updated_at
 FROM orders
 WHERE status = :readyStatus
-   OR (delivery_staff_id = :deliveryStaffId AND status IN (:outStatus, :deliveredStatus))
+   OR (delivery_staff_id = :deliveryStaffId AND status IN (:outStatus, :completedStatus))
 ORDER BY created_at DESC
 LIMIT :limit OFFSET :offset
 
 -- name: countForDeliveryStaff
 SELECT COUNT(*) FROM orders
 WHERE status = :readyStatus
-   OR (delivery_staff_id = :deliveryStaffId AND status IN (:outStatus, :deliveredStatus))
+   OR (delivery_staff_id = :deliveryStaffId AND status IN (:outStatus, :completedStatus))
 
 -- name: findPageByStatusAndKitchenStaff
 SELECT id, order_code, user_id, address_id, status,

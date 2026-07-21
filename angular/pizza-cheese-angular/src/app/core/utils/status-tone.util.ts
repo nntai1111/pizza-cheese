@@ -13,12 +13,11 @@ export type StatusTone =
 
 const ORDER_STATUS_TONE: Record<OrderStatus, StatusTone> = {
   PENDING_PAYMENT: 'warning',
-  PAID: 'info',
   CONFIRMED: 'info',
   PREPARING: 'orange',
   READY: 'purple',
   OUT_FOR_DELIVERY: 'info',
-  DELIVERED: 'success',
+  COMPLETED: 'success',
   CANCELLED: 'danger',
   REFUNDED: 'neutral',
 };

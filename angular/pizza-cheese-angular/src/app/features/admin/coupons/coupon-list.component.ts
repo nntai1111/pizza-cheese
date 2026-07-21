@@ -6,6 +6,7 @@ import {
 } from '@angular/forms';
 
 import { CouponService } from '../../../core/services/coupon.service';
+import { ToastService } from '../../../core/services/toast.service';
 import {
   Coupon,
   DISCOUNT_TYPE_LABELS,
@@ -13,6 +14,17 @@ import {
 } from '../../../core/models/coupon.model';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
 import { codedEnumName } from '../../../core/utils/coded-enum.util';
+import {
+  fieldErrorMessage,
+  markFormInvalidAndMessage,
+  showFieldError,
+} from '../../../core/utils/form-validation.util';
+
+const COUPON_FIELD_LABELS: Record<string, string> = {
+  code: 'Mã coupon',
+  discountType: 'Loại giảm',
+  discountValue: 'Giá trị giảm',
+};
 
 @Component({
   selector: 'app-coupon-list',
@@ -23,6 +35,7 @@ import { codedEnumName } from '../../../core/utils/coded-enum.util';
 export class CouponListComponent {
   private readonly fb = inject(FormBuilder);
   private readonly couponService = inject(CouponService);
+  private readonly toast = inject(ToastService);
 
   readonly coupons = signal<Coupon[]>([]);
   readonly loading = signal(false);
@@ -50,6 +63,18 @@ export class CouponListComponent {
 
   constructor() {
     this.loadCoupons();
+  }
+
+  showError(name: string): boolean {
+    return showFieldError(this.form.get(name));
+  }
+
+  errorOf(name: string): string | null {
+    return fieldErrorMessage(this.form.get(name), this.messagesFor(name));
+  }
+
+  controlClass(name: string): string {
+    return this.showError(name) ? 'is-invalid' : '';
   }
 
   openCreate(): void {
@@ -97,7 +122,7 @@ export class CouponListComponent {
 
   onSubmit(): void {
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      this.toast.error(markFormInvalidAndMessage(this.form, COUPON_FIELD_LABELS));
       return;
     }
 
@@ -128,10 +153,13 @@ export class CouponListComponent {
         this.saving.set(false);
         this.showForm.set(false);
         this.loadCoupons();
+        this.toast.success(id ? 'Đã cập nhật coupon' : 'Đã tạo coupon');
       },
       error: (err) => {
         this.saving.set(false);
-        this.errorMessage.set(getHttpErrorMessage(err, 'Lưu coupon thất bại.'));
+        const message = getHttpErrorMessage(err, 'Lưu coupon thất bại.');
+        this.errorMessage.set(message);
+        this.toast.error(message);
       },
     });
   }
@@ -142,9 +170,12 @@ export class CouponListComponent {
     }
 
     this.couponService.delete(coupon.id).subscribe({
-      next: () => this.loadCoupons(),
+      next: () => {
+        this.loadCoupons();
+        this.toast.success('Đã vô hiệu hóa coupon');
+      },
       error: (err) => {
-        alert(getHttpErrorMessage(err, 'Xóa coupon thất bại.'));
+        this.toast.error(getHttpErrorMessage(err, 'Xóa coupon thất bại.'));
       },
     });
   }
@@ -173,6 +204,22 @@ export class CouponListComponent {
     if (start && end) return `${start} → ${end}`;
     if (start) return `Từ ${start}`;
     return `Đến ${end}`;
+  }
+
+  private messagesFor(name: string): Partial<Record<string, string>> {
+    if (name === 'code') {
+      return { required: 'Vui lòng nhập mã coupon' };
+    }
+    if (name === 'discountType') {
+      return { required: 'Vui lòng chọn loại giảm' };
+    }
+    if (name === 'discountValue') {
+      return {
+        required: 'Vui lòng nhập giá trị giảm',
+        min: 'Giá trị phải lớn hơn 0',
+      };
+    }
+    return {};
   }
 
   private formatDate(iso: string): string {

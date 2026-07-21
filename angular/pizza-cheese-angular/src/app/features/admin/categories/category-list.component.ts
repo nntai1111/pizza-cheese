@@ -6,12 +6,22 @@ import {
 } from '@angular/forms';
 
 import { CategoryService } from '../../../core/services/category.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Category, CreateCategoryRequest } from '../../../core/models/category.model';
 import {
   getCategoryImageUrl as resolveCategoryImageUrl,
   isCategoryActive,
 } from '../../../core/utils/category.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
+import {
+  fieldErrorMessage,
+  markFormInvalidAndMessage,
+  showFieldError,
+} from '../../../core/utils/form-validation.util';
+
+const CATEGORY_FIELD_LABELS: Record<string, string> = {
+  name: 'Tên danh mục',
+};
 
 @Component({
   selector: 'app-category-list',
@@ -22,6 +32,7 @@ import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
 export class CategoryListComponent {
   private readonly fb = inject(FormBuilder);
   private readonly categoryService = inject(CategoryService);
+  private readonly toast = inject(ToastService);
 
   readonly categories = signal<Category[]>([]);
   readonly loading = signal(false);
@@ -42,6 +53,20 @@ export class CategoryListComponent {
 
   constructor() {
     this.loadCategories();
+  }
+
+  showError(name: string): boolean {
+    return showFieldError(this.form.get(name));
+  }
+
+  errorOf(name: string): string | null {
+    return fieldErrorMessage(this.form.get(name), {
+      required: 'Vui lòng nhập tên danh mục',
+    });
+  }
+
+  controlClass(name: string): string {
+    return this.showError(name) ? 'is-invalid' : '';
   }
 
   openCreate(): void {
@@ -95,7 +120,7 @@ export class CategoryListComponent {
 
   onSubmit(): void {
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      this.toast.error(markFormInvalidAndMessage(this.form, CATEGORY_FIELD_LABELS));
       return;
     }
 
@@ -115,10 +140,13 @@ export class CategoryListComponent {
         this.saving.set(false);
         this.cancelForm();
         this.loadCategories();
+        this.toast.success(id ? 'Đã cập nhật danh mục' : 'Đã tạo danh mục');
       },
       error: (err) => {
         this.saving.set(false);
-        this.errorMessage.set(getHttpErrorMessage(err, 'Lưu danh mục thất bại.'));
+        const message = getHttpErrorMessage(err, 'Lưu danh mục thất bại.');
+        this.errorMessage.set(message);
+        this.toast.error(message);
       },
     });
   }
@@ -129,9 +157,12 @@ export class CategoryListComponent {
     }
 
     this.categoryService.delete(category.id).subscribe({
-      next: () => this.loadCategories(),
+      next: () => {
+        this.loadCategories();
+        this.toast.success('Đã xóa danh mục');
+      },
       error: (err) => {
-        alert(err?.error?.message ?? 'Xóa danh mục thất bại.');
+        this.toast.error(getHttpErrorMessage(err, 'Xóa danh mục thất bại.'));
       },
     });
   }

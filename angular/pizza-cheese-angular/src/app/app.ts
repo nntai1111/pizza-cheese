@@ -1,10 +1,15 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { ToastHostComponent } from './shared/components';
+
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  template: '<router-outlet />',
+  imports: [RouterOutlet, ToastHostComponent],
+  template: `
+    <router-outlet />
+    <app-toast-host />
+  `,
   styles: `
     :host {
       display: block;

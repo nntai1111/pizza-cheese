@@ -46,7 +46,7 @@ export class DeliveryOrderListComponent implements OnInit {
   readonly filters: { value: StatusFilter; label: string }[] = [
     { value: 'READY', label: 'Chờ giao' },
     { value: 'OUT_FOR_DELIVERY', label: 'Đang giao' },
-    { value: 'DELIVERED', label: 'Đã giao' },
+    { value: 'COMPLETED', label: 'Hoàn thành' },
     { value: 'ALL', label: 'Tất cả' },
   ];
 

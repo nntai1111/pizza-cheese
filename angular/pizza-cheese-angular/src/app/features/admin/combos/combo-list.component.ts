@@ -8,6 +8,7 @@ import {
 
 import { ComboService } from '../../../core/services/combo.service';
 import { PizzaService } from '../../../core/services/pizza.service';
+import { ToastService } from '../../../core/services/toast.service';
 import {
   Combo,
   CreateComboRequest,
@@ -21,6 +22,20 @@ import {
 } from '../../../core/utils/combo.util';
 import { getPizzaSizeLabel } from '../../../core/utils/pizza.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
+import {
+  fieldErrorMessage,
+  markFormInvalidAndMessage,
+  showFieldError,
+} from '../../../core/utils/form-validation.util';
+
+const COMBO_FIELD_LABELS: Record<string, string> = {
+  name: 'Tên combo',
+  price: 'Giá combo',
+  items: 'Pizza trong combo',
+  pizzaId: 'Pizza',
+  pizzaVariantId: 'Size',
+  quantity: 'Số lượng',
+};
 
 @Component({
   selector: 'app-combo-list',
@@ -32,6 +47,7 @@ export class ComboListComponent {
   private readonly fb = inject(FormBuilder);
   private readonly comboService = inject(ComboService);
   private readonly pizzaService = inject(PizzaService);
+  private readonly toast = inject(ToastService);
 
   readonly combos = signal<Combo[]>([]);
   readonly pizzas = signal<Pizza[]>([]);
@@ -47,7 +63,7 @@ export class ComboListComponent {
     name: ['', [Validators.required, Validators.maxLength(150)]],
     slug: ['', Validators.maxLength(150)],
     description: [''],
-    price: [0, [Validators.required, Validators.min(0.01)]],
+    price: [null as number | null, [Validators.required, Validators.min(0.01)]],
     discountPercent: [null as number | null],
     isActive: [true],
     items: this.fb.array([this.createItemGroup()]),
@@ -67,6 +83,31 @@ export class ComboListComponent {
     return this.form.controls.items;
   }
 
+  showError(name: string): boolean {
+    return showFieldError(this.form.get(name));
+  }
+
+  errorOf(name: string): string | null {
+    return fieldErrorMessage(this.form.get(name), this.messagesFor(name));
+  }
+
+  controlClass(name: string): string {
+    return this.showError(name) ? 'is-invalid' : '';
+  }
+
+  itemError(index: number, field: string): string | null {
+    return fieldErrorMessage(
+      this.itemsFormArray.at(index).get(field),
+      this.itemMessagesFor(field),
+    );
+  }
+
+  itemControlClass(index: number, field: string): string {
+    return showFieldError(this.itemsFormArray.at(index).get(field))
+      ? 'is-invalid'
+      : '';
+  }
+
   openCreate(): void {
     this.editingId.set(null);
     this.selectedImageFile.set(null);
@@ -75,7 +116,7 @@ export class ComboListComponent {
       name: '',
       slug: '',
       description: '',
-      price: 0,
+      price: null,
       discountPercent: null,
       isActive: true,
     });
@@ -139,7 +180,7 @@ export class ComboListComponent {
 
   onSubmit(): void {
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      this.toast.error(markFormInvalidAndMessage(this.form, COMBO_FIELD_LABELS));
       return;
     }
 
@@ -147,7 +188,10 @@ export class ComboListComponent {
     this.errorMessage.set(null);
     const value = this.form.getRawValue();
     const id = this.editingId();
-    const payload = this.toRequestPayload(value);
+    const payload = this.toRequestPayload({
+      ...value,
+      price: Number(value.price),
+    });
     const imageFile = this.selectedImageFile();
 
     const request$ = id
@@ -159,10 +203,13 @@ export class ComboListComponent {
         this.saving.set(false);
         this.cancelForm();
         this.loadCombos();
+        this.toast.success(id ? 'Đã cập nhật combo' : 'Đã tạo combo');
       },
       error: (err) => {
         this.saving.set(false);
-        this.errorMessage.set(getHttpErrorMessage(err, 'Lưu combo thất bại.'));
+        const message = getHttpErrorMessage(err, 'Lưu combo thất bại.');
+        this.errorMessage.set(message);
+        this.toast.error(message);
       },
     });
   }
@@ -173,9 +220,12 @@ export class ComboListComponent {
     }
 
     this.comboService.delete(combo.id).subscribe({
-      next: () => this.loadCombos(),
+      next: () => {
+        this.loadCombos();
+        this.toast.success('Đã xóa combo');
+      },
       error: (err) => {
-        alert(getHttpErrorMessage(err, 'Xóa combo thất bại.'));
+        this.toast.error(getHttpErrorMessage(err, 'Xóa combo thất bại.'));
       },
     });
   }
@@ -192,6 +242,35 @@ export class ComboListComponent {
 
   variantsForPizza(pizzaId: string): PizzaVariant[] {
     return this.pizzas().find((p) => p.id === pizzaId)?.variants ?? [];
+  }
+
+  private messagesFor(name: string): Partial<Record<string, string>> {
+    if (name === 'name') {
+      return { required: 'Vui lòng nhập tên combo' };
+    }
+    if (name === 'price') {
+      return {
+        required: 'Vui lòng nhập giá',
+        min: 'Giá phải lớn hơn 0',
+      };
+    }
+    return {};
+  }
+
+  private itemMessagesFor(field: string): Partial<Record<string, string>> {
+    if (field === 'pizzaId') {
+      return { required: 'Vui lòng chọn pizza' };
+    }
+    if (field === 'pizzaVariantId') {
+      return { required: 'Vui lòng chọn size' };
+    }
+    if (field === 'quantity') {
+      return {
+        required: 'Vui lòng nhập số lượng',
+        min: 'Số lượng tối thiểu là 1',
+      };
+    }
+    return {};
   }
 
   private createItemGroup(

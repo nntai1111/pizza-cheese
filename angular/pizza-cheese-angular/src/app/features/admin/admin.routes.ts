@@ -13,7 +13,14 @@ export const ADMIN_ROUTES: Routes = [
       ),
     canActivate: [authGuard, roleGuard(AppRole.ADMIN)],
     children: [
-      { path: '', redirectTo: 'categories', pathMatch: 'full' },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./dashboard/admin-dashboard.component').then(
+            (m) => m.AdminDashboardComponent,
+          ),
+      },
       {
         path: 'categories',
         loadComponent: () =>

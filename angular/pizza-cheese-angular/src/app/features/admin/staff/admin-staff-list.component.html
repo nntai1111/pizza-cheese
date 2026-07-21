@@ -23,42 +23,103 @@
 
   @if (showForm()) {
     <div class="form-card">
-      <h2>{{ editingId() ? 'Sửa nhân viên' : 'Thêm nhân viên' }}</h2>
+      <div class="form-card__head">
+        <div>
+          <h2>{{ editingId() ? 'Sửa nhân viên' : 'Thêm nhân viên' }}</h2>
+          <p>
+            {{
+              editingId()
+                ? 'Có thể đổi họ tên, SĐT, vai trò và mật khẩu.'
+                : 'Tạo tài khoản để đăng nhập vào hệ thống.'
+            }}
+          </p>
+        </div>
+      </div>
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="form-row">
-          <label>Username *</label>
-          <input formControlName="username" autocomplete="off" />
+        <div class="form-section">
+          <h3 class="form-section__title">Tài khoản</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Username *</label>
+              <input
+                formControlName="username"
+                autocomplete="off"
+                [class]="controlClass('username')"
+              />
+              @if (errorOf('username'); as err) {
+                <span class="field-error">{{ err }}</span>
+              }
+            </div>
+            <div class="form-row">
+              <label>Email *</label>
+              <input
+                formControlName="email"
+                type="email"
+                autocomplete="off"
+                [class]="controlClass('email')"
+              />
+              @if (errorOf('email'); as err) {
+                <span class="field-error">{{ err }}</span>
+              }
+            </div>
+            <div class="form-row">
+              <label>{{ editingId() ? 'Mật khẩu mới' : 'Mật khẩu *' }}</label>
+              <input
+                formControlName="password"
+                type="password"
+                autocomplete="new-password"
+                [placeholder]="editingId() ? 'Để trống nếu giữ nguyên' : ''"
+                [class]="controlClass('password')"
+              />
+              @if (errorOf('password'); as err) {
+                <span class="field-error">{{ err }}</span>
+              }
+            </div>
+            <div class="form-row">
+              <label>Vai trò *</label>
+              <select formControlName="role" [class]="controlClass('role')">
+                @for (role of staffRoles; track role) {
+                  <option [value]="role">{{ roleFilters.find((f) => f.value === role)?.label }}</option>
+                }
+              </select>
+              @if (errorOf('role'); as err) {
+                <span class="field-error">{{ err }}</span>
+              }
+            </div>
+          </div>
         </div>
-        <div class="form-row">
-          <label>Email *</label>
-          <input formControlName="email" type="email" autocomplete="off" />
+
+        <div class="form-section">
+          <h3 class="form-section__title">Thông tin</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Họ tên *</label>
+              <input formControlName="fullName" [class]="controlClass('fullName')" />
+              @if (errorOf('fullName'); as err) {
+                <span class="field-error">{{ err }}</span>
+              }
+            </div>
+            <div class="form-row">
+              <label>Số điện thoại *</label>
+              <input
+                formControlName="phone"
+                placeholder="09xxxxxxxx"
+                [class]="controlClass('phone')"
+              />
+              @if (errorOf('phone'); as err) {
+                <span class="field-error">{{ err }}</span>
+              }
+            </div>
+          </div>
         </div>
-        <div class="form-row">
-          <label>{{ editingId() ? 'Mật khẩu mới (để trống nếu giữ)' : 'Mật khẩu *' }}</label>
-          <input formControlName="password" type="password" autocomplete="new-password" />
-        </div>
-        <div class="form-row">
-          <label>Họ tên *</label>
-          <input formControlName="fullName" />
-        </div>
-        <div class="form-row">
-          <label>Số điện thoại *</label>
-          <input formControlName="phone" placeholder="09xxxxxxxx" />
-        </div>
-        <div class="form-row">
-          <label>Vai trò *</label>
-          <select formControlName="role">
-            @for (role of staffRoles; track role) {
-              <option [value]="role">{{ roleFilters.find((f) => f.value === role)?.label }}</option>
-            }
-          </select>
-        </div>
+
         @if (editingId()) {
           <label class="checkbox-label">
             <input type="checkbox" formControlName="active" />
             Đang hoạt động
           </label>
         }
+
         <div class="form-actions">
           <button type="button" class="btn-secondary" (click)="cancelForm()">Hủy</button>
           <button type="submit" class="btn-primary" [disabled]="saving()">

@@ -7,12 +7,11 @@ import pizza_cheese.todo.util.CodedEnums;
 public enum OrderStatus implements CodedEnum {
 
     PENDING_PAYMENT(1, "Chờ thanh toán"),
-    PAID(2, "Đã thanh toán"),
     CONFIRMED(3, "Đã xác nhận"),
     PREPARING(4, "Đang chế biến"),
     READY(5, "Sẵn sàng"),
     OUT_FOR_DELIVERY(6, "Đang giao hàng"),
-    DELIVERED(7, "Đã giao"),
+    COMPLETED(7, "Hoàn thành"),
     CANCELLED(8, "Đã hủy"),
     REFUNDED(9, "Đã hoàn tiền");
 

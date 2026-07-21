@@ -5,12 +5,11 @@ export type PaymentMethod = 'COD' | 'VNPAY' | 'MOMO' | 'STRIPE';
 
 export type OrderStatus =
   | 'PENDING_PAYMENT'
-  | 'PAID'
   | 'CONFIRMED'
   | 'PREPARING'
   | 'READY'
   | 'OUT_FOR_DELIVERY'
-  | 'DELIVERED'
+  | 'COMPLETED'
   | 'CANCELLED'
   | 'REFUNDED';
 
@@ -91,12 +90,11 @@ export interface Order {
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PENDING_PAYMENT: 'Chờ thanh toán',
-  PAID: 'Đã thanh toán',
   CONFIRMED: 'Đã xác nhận',
   PREPARING: 'Đang chế biến',
   READY: 'Sẵn sàng',
   OUT_FOR_DELIVERY: 'Đang giao',
-  DELIVERED: 'Đã giao',
+  COMPLETED: 'Hoàn thành',
   CANCELLED: 'Đã hủy',
   REFUNDED: 'Đã hoàn tiền',
 };

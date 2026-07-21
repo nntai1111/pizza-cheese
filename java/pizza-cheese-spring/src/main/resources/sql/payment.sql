@@ -57,6 +57,23 @@ WHERE id = :id
 SELECT COUNT(*)
 FROM payments p
 
+-- name: sumPaidAmountBetween
+SELECT COALESCE(SUM(p.amount), 0)
+FROM payments p
+WHERE p.status = :status
+  AND p.paid_at >= :from
+  AND p.paid_at < :to
+
+-- name: sumCollectedByDay
+SELECT CAST(p.paid_at AS DATE) AS day,
+       COALESCE(SUM(p.amount), 0) AS amount
+FROM payments p
+WHERE p.status = :status
+  AND p.paid_at >= :from
+  AND p.paid_at < :to
+GROUP BY CAST(p.paid_at AS DATE)
+ORDER BY day
+
 -- name: findPageFilteredBase
 SELECT p.id,
        p.order_id,

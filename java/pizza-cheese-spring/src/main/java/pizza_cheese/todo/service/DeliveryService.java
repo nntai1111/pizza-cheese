@@ -115,7 +115,7 @@ public class DeliveryService {
         Order order = orderDao.findById(orderId)
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy đơn hàng"));
 
-        if (order.getStatus() == OrderStatus.DELIVERED) {
+        if (order.getStatus() == OrderStatus.COMPLETED) {
             if (!isAdmin() && order.getDeliveryStaffId() != null && !staffId.equals(order.getDeliveryStaffId())) {
                 throw ApiException.forbidden("Không có quyền xem đơn của shipper khác");
             }
@@ -131,12 +131,12 @@ public class DeliveryService {
             throw ApiException.badRequest("Chỉ nhân viên đang giao đơn này mới có thể đánh dấu đã giao");
         }
 
-        if (!orderDao.updateStatusIfCurrent(orderId, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.DELIVERED)) {
+        if (!orderDao.updateStatusIfCurrent(orderId, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.COMPLETED)) {
             throw ApiException.conflict("Không thể cập nhật trạng thái đơn, vui lòng thử lại");
         }
 
-        orderDao.insertStatusHistory(orderId, OrderStatus.DELIVERED, staffId, "Shipper giao hang thanh cong");
-        order.setStatus(OrderStatus.DELIVERED);
+        orderDao.insertStatusHistory(orderId, OrderStatus.COMPLETED, staffId, "Shipper giao hang thanh cong");
+        order.setStatus(OrderStatus.COMPLETED);
         markPaymentPaidIfPending(orderId);
 
         OrderResponse response = orderResponseEnricher.toDetailResponse(order, false, true);
@@ -156,7 +156,7 @@ public class DeliveryService {
         if (status == OrderStatus.READY) {
             return orderDao.findPageByStatus(status, page, size);
         }
-        if (status == OrderStatus.OUT_FOR_DELIVERY || status == OrderStatus.DELIVERED) {
+        if (status == OrderStatus.OUT_FOR_DELIVERY || status == OrderStatus.COMPLETED) {
             return orderDao.findPageByStatusAndDeliveryStaff(status, staffId, page, size);
         }
         return List.of();
@@ -172,7 +172,7 @@ public class DeliveryService {
         if (status == OrderStatus.READY) {
             return orderDao.countByStatus(status);
         }
-        if (status == OrderStatus.OUT_FOR_DELIVERY || status == OrderStatus.DELIVERED) {
+        if (status == OrderStatus.OUT_FOR_DELIVERY || status == OrderStatus.COMPLETED) {
             return orderDao.countByStatusAndDeliveryStaff(status, staffId);
         }
         return 0L;

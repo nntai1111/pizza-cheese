@@ -70,7 +70,7 @@ public class DeliveryController {
         return ResponseEntity.ok(RestResponse.success(deliveryService.startDelivery(jwt.getSubject(), id)));
     }
 
-    @Operation(summary = "Hoàn thành giao hàng (OUT_FOR_DELIVERY → DELIVERED)")
+    @Operation(summary = "Hoàn thành giao hàng (OUT_FOR_DELIVERY → COMPLETED)")
     @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/{id}/mark-delivered")
     @PreAuthorize("hasRole('DELIVERY')")

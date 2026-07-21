@@ -7,10 +7,11 @@ import { AdminService } from '../../../core/services/admin.service';
 import { User } from '../../../core/models/auth.model';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { UserAvatarComponent } from '../../../shared/components';
 
 @Component({
   selector: 'app-admin-customer-list',
-  imports: [DatePipe, RouterLink, PaginationComponent],
+  imports: [DatePipe, RouterLink, PaginationComponent, UserAvatarComponent],
   templateUrl: './admin-customer-list.component.html',
   styleUrl: './admin-customer-list.component.scss',
 })

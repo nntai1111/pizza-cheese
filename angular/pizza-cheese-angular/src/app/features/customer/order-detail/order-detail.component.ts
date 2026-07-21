@@ -75,8 +75,6 @@ export class OrderDetailComponent {
     switch (status) {
       case 'PENDING_PAYMENT':
         return { title: 'Chờ thanh toán', subtitle: 'Hoàn tất thanh toán để cửa hàng bắt đầu xử lý đơn.' };
-      case 'PAID':
-        return { title: 'Đã thanh toán', subtitle: 'Đơn đang chờ cửa hàng xác nhận.' };
       case 'CONFIRMED':
         return { title: 'Đã xác nhận', subtitle: 'Cửa hàng đã nhận đơn và chuẩn bị đưa vào bếp.' };
       case 'PREPARING':
@@ -90,7 +88,7 @@ export class OrderDetailComponent {
         };
       case 'OUT_FOR_DELIVERY':
         return { title: 'Đang giao tới bạn', subtitle: 'Shipper đang trên đường giao đơn.' };
-      case 'DELIVERED':
+      case 'COMPLETED':
         return {
           title: pickup ? 'Đã lấy hàng' : 'Đã giao thành công',
           subtitle: 'Cảm ơn bạn — chúc ngon miệng!',
@@ -250,7 +248,6 @@ export class OrderDetailComponent {
   private stepIndex(status: OrderStatus | null): number {
     switch (status) {
       case 'PENDING_PAYMENT':
-      case 'PAID':
         return 0;
       case 'CONFIRMED':
         return 1;
@@ -259,7 +256,7 @@ export class OrderDetailComponent {
       case 'READY':
       case 'OUT_FOR_DELIVERY':
         return 3;
-      case 'DELIVERED':
+      case 'COMPLETED':
         return 4;
       default:
         return 0;

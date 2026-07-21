@@ -22,7 +22,7 @@ export function getDefaultRouteForUser(user: User | null): string {
 export function getRouteForRole(role: AppRole): string {
   switch (role) {
     case AppRole.ADMIN:
-      return '/admin/categories';
+      return '/admin/dashboard';
     case AppRole.CUSTOMER:
       return '/customer/pizzas';
     case AppRole.CASHIER:

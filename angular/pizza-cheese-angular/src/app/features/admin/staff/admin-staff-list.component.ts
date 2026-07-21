@@ -8,13 +8,28 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { AdminService } from '../../../core/services/admin.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { User } from '../../../core/models/auth.model';
 import { AppRole } from '../../../core/enums/role.enum';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
 import { codedEnumName } from '../../../core/utils/coded-enum.util';
+import {
+  fieldErrorMessage,
+  markFormInvalidAndMessage,
+  showFieldError,
+} from '../../../core/utils/form-validation.util';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 type RoleFilter = AppRole | 'ALL';
+
+const STAFF_FIELD_LABELS: Record<string, string> = {
+  username: 'Username',
+  email: 'Email',
+  password: 'Mật khẩu',
+  fullName: 'Họ tên',
+  phone: 'Số điện thoại',
+  role: 'Vai trò',
+};
 
 const STAFF_ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Quản trị',
@@ -32,6 +47,7 @@ const STAFF_ROLE_LABELS: Record<string, string> = {
 export class AdminStaffListComponent {
   private readonly fb = inject(FormBuilder);
   private readonly adminService = inject(AdminService);
+  private readonly toast = inject(ToastService);
 
   readonly staff = signal<User[]>([]);
   readonly loading = signal(true);
@@ -66,6 +82,18 @@ export class AdminStaffListComponent {
 
   constructor() {
     this.reload();
+  }
+
+  showError(name: string): boolean {
+    return showFieldError(this.form.get(name));
+  }
+
+  errorOf(name: string): string | null {
+    return fieldErrorMessage(this.form.get(name), this.messagesFor(name));
+  }
+
+  controlClass(name: string): string {
+    return this.showError(name) ? 'is-invalid' : '';
   }
 
   roleLabel(user: User): string {
@@ -131,7 +159,7 @@ export class AdminStaffListComponent {
 
   onSubmit(): void {
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      this.toast.error(markFormInvalidAndMessage(this.form, STAFF_FIELD_LABELS));
       return;
     }
 
@@ -154,10 +182,13 @@ export class AdminStaffListComponent {
             this.saving.set(false);
             this.showForm.set(false);
             this.reload();
+            this.toast.success('Đã cập nhật nhân viên');
           },
           error: (err: HttpErrorResponse) => {
             this.saving.set(false);
-            this.errorMessage.set(getHttpErrorMessage(err, 'Cập nhật nhân viên thất bại.'));
+            const message = getHttpErrorMessage(err, 'Cập nhật nhân viên thất bại.');
+            this.errorMessage.set(message);
+            this.toast.error(message);
           },
         });
       return;
@@ -177,10 +208,13 @@ export class AdminStaffListComponent {
           this.saving.set(false);
           this.showForm.set(false);
           this.reload();
+          this.toast.success('Đã tạo nhân viên');
         },
         error: (err: HttpErrorResponse) => {
           this.saving.set(false);
-          this.errorMessage.set(getHttpErrorMessage(err, 'Tạo nhân viên thất bại.'));
+          const message = getHttpErrorMessage(err, 'Tạo nhân viên thất bại.');
+          this.errorMessage.set(message);
+          this.toast.error(message);
         },
       });
   }
@@ -198,6 +232,40 @@ export class AdminStaffListComponent {
         alert(getHttpErrorMessage(err, `Không thể ${action} tài khoản.`));
       },
     });
+  }
+
+  private messagesFor(name: string): Partial<Record<string, string>> {
+    if (name === 'username') {
+      return {
+        required: 'Vui lòng nhập username',
+        minlength: 'Username tối thiểu 3 ký tự',
+      };
+    }
+    if (name === 'email') {
+      return {
+        required: 'Vui lòng nhập email',
+        email: 'Email không hợp lệ',
+      };
+    }
+    if (name === 'password') {
+      return {
+        required: 'Vui lòng nhập mật khẩu',
+        minlength: 'Mật khẩu tối thiểu 6 ký tự',
+      };
+    }
+    if (name === 'fullName') {
+      return { required: 'Vui lòng nhập họ tên' };
+    }
+    if (name === 'phone') {
+      return {
+        required: 'Vui lòng nhập số điện thoại',
+        pattern: 'Số điện thoại không hợp lệ (VD: 09xxxxxxxx)',
+      };
+    }
+    if (name === 'role') {
+      return { required: 'Vui lòng chọn vai trò' };
+    }
+    return {};
   }
 
   private reload(): void {

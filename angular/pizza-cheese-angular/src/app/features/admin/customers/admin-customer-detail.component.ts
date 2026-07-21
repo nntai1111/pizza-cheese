@@ -20,10 +20,11 @@ import {
   statusBadgeClass,
 } from '../../../core/utils/status-tone.util';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { UserAvatarComponent } from '../../../shared/components';
 
 @Component({
   selector: 'app-admin-customer-detail',
-  imports: [DatePipe, RouterLink, PaginationComponent],
+  imports: [DatePipe, RouterLink, PaginationComponent, UserAvatarComponent],
   templateUrl: './admin-customer-detail.component.html',
   styleUrl: './admin-customer-detail.component.scss',
 })

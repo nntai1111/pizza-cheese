@@ -1,6 +1,7 @@
 package pizza_cheese.todo.dao;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -111,6 +112,29 @@ public class PaymentDao {
         return count != null ? count : 0L;
     }
 
+    public BigDecimal sumPaidAmountBetween(LocalDateTime from, LocalDateTime to) {
+        BigDecimal sum = jdbc.queryForObject(
+                queries.get("sumPaidAmountBetween"),
+                new MapSqlParameterSource()
+                        .addValue("status", PaymentStatus.PAID.getCode())
+                        .addValue("from", JdbcTimeUtil.toTimestamp(from))
+                        .addValue("to", JdbcTimeUtil.toTimestamp(to)),
+                BigDecimal.class);
+        return sum != null ? sum : BigDecimal.ZERO;
+    }
+
+    public List<DailyCollectedRow> sumCollectedByDay(LocalDateTime from, LocalDateTime to) {
+        return jdbc.query(
+                queries.get("sumCollectedByDay"),
+                new MapSqlParameterSource()
+                        .addValue("status", PaymentStatus.PAID.getCode())
+                        .addValue("from", JdbcTimeUtil.toTimestamp(from))
+                        .addValue("to", JdbcTimeUtil.toTimestamp(to)),
+                (rs, rowNum) -> new DailyCollectedRow(
+                        rs.getObject("day", java.time.LocalDate.class),
+                        rs.getBigDecimal("amount")));
+    }
+
     public List<PaymentResponse> findPageFiltered(
             PaymentStatus status,
             PaymentMethod method,
@@ -177,5 +201,8 @@ public class PaymentDao {
 
     private LocalDateTime toLocalDateTime(java.sql.Timestamp timestamp) {
         return timestamp != null ? timestamp.toLocalDateTime() : null;
+    }
+
+    public record DailyCollectedRow(java.time.LocalDate day, BigDecimal amount) {
     }
 }

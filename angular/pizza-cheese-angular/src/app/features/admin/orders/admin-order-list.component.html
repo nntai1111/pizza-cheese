@@ -50,12 +50,11 @@
             <th>Thanh toán</th>
             <th>Trạng thái đơn</th>
             <th>Tổng tiền</th>
-            <th>Thao tác</th>
           </tr>
         </thead>
         <tbody>
           @for (order of orders(); track order.id) {
-            <tr>
+            <tr class="clickable-row" (click)="openOrder(order)">
               <td><strong>{{ order.orderCode }}</strong></td>
               <td class="customer-cell">
                 @if (order.customerName || order.customerEmail || order.customerPhone) {
@@ -81,9 +80,6 @@
                 <span [class]="orderBadgeClass(order)">{{ getStatusLabel(order) }}</span>
               </td>
               <td><strong>{{ formatPrice(order.finalAmount) }}</strong></td>
-              <td class="actions">
-                <a [routerLink]="['/admin/orders', order.id]" class="btn-link">Chi tiết</a>
-              </td>
             </tr>
           }
         </tbody>

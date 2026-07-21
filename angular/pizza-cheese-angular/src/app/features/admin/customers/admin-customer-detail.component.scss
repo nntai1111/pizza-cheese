@@ -34,6 +34,13 @@
     color: #111827;
   }
 
+  &__identity {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+  }
+
   &__meta {
     display: flex;
     flex-wrap: wrap;

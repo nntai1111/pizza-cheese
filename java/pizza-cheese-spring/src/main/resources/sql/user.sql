@@ -79,6 +79,20 @@ WHERE COALESCE(u.is_deleted, FALSE) = FALSE
         AND r.name = 'CUSTOMER'
   )
 
+-- name: countCustomersCreatedBetween
+SELECT COUNT(*)
+FROM users u
+WHERE COALESCE(u.is_deleted, FALSE) = FALSE
+  AND u.created_at >= :from
+  AND u.created_at < :to
+  AND EXISTS (
+      SELECT 1
+      FROM user_roles ur
+      JOIN roles r ON r.id = ur.role_id
+      WHERE ur.user_id = u.id
+        AND r.name = 'CUSTOMER'
+  )
+
 -- name: findCustomersPageBase
 SELECT u.id, u.username, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url,
        u.is_active AS active, u.created_at, u.updated_at

@@ -1,6 +1,6 @@
 <div class="admin-page">
   <div class="admin-page__header">
-    <h1>Quản lý Topping</h1>
+    <h1>Topping</h1>
     <button type="button" class="btn-primary" (click)="openCreate()">+ Thêm topping</button>
   </div>
 
@@ -10,20 +10,46 @@
 
   @if (showForm()) {
     <div class="form-card">
-      <h2>{{ editingId() ? 'Sửa topping' : 'Thêm topping' }}</h2>
+      <div class="form-card__head">
+        <div>
+          <h2>{{ editingId() ? 'Sửa topping' : 'Thêm topping' }}</h2>
+          <p>Tên và giá phụ thu khi khách chọn.</p>
+        </div>
+      </div>
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="form-row">
-          <label>Tên *</label>
-          <input formControlName="name" />
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Tên *</label>
+            <input
+              formControlName="name"
+              placeholder="VD: Phô mai thêm"
+              [class]="controlClass('name')"
+            />
+            @if (errorOf('name'); as err) {
+              <span class="field-error">{{ err }}</span>
+            }
+          </div>
+          <div class="form-row">
+            <label>Giá (VND) *</label>
+            <input
+              type="number"
+              formControlName="price"
+              min="0"
+              step="1000"
+              placeholder="0"
+              [class]="controlClass('price')"
+            />
+            @if (errorOf('price'); as err) {
+              <span class="field-error">{{ err }}</span>
+            }
+          </div>
         </div>
-        <div class="form-row">
-          <label>Giá *</label>
-          <input type="number" formControlName="price" min="0" step="1000" />
-        </div>
-        <label class="checkbox-label">
-          <input type="checkbox" formControlName="isActive" />
-          Hoạt động
-        </label>
+        @if (editingId()) {
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="isActive" />
+            Đang hoạt động
+          </label>
+        }
         <div class="form-actions">
           <button type="button" class="btn-secondary" (click)="cancelForm()">Hủy</button>
           <button type="submit" class="btn-primary" [disabled]="saving()">
