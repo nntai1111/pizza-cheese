@@ -79,8 +79,15 @@ services:
   watchtower:
     image: containrrr/watchtower
     container_name: pizza-cheese-watchtower
+    environment:
+      # Bắt buộc với Docker Desktop mới — thiếu sẽ lỗi "client version 1.25 is too old"
+      DOCKER_API_VERSION: "1.44"
+      # Login Hub để pull được image (kể cả repo private)
+      REPO_USER: ${DOCKERHUB_USERNAME}
+      REPO_PASS: ${DOCKERHUB_TOKEN:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    # Mỗi 60s kiểm tra Hub; chỉ update BE/FE có label enable
     command: --interval 60 --cleanup --label-enable
     restart: always
 
