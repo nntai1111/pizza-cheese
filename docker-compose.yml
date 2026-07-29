@@ -3,7 +3,6 @@ services:
     image: postgres:16
     container_name: pizza-cheese-db
     ports:
-      # Host 5433 avoids clashing with a local Postgres already on 5432
       - "5433:5432"
     environment:
       POSTGRES_DB: pizza_cheese
@@ -12,10 +11,78 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d pizza_cheese"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d pizza_cheese" ]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: pizza-cheese-redis
+    ports:
+      - "6379:6379"
+
+  backend:
+    # CD: Watchtower kéo image Hub (cần DOCKERHUB_USERNAME + IMAGE_TAG trong .env)
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/pizza-cheese-backend:${IMAGE_TAG:-develop}
+    build:
+      context: ./java/pizza-cheese-spring
+      dockerfile: Dockerfile
+    container_name: pizza-cheese-backend
+    ports:
+      - "8080:8080"
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+
+      # =======================================================================
+      # CẤU HÌNH DATABASE (CHỌN 1 TRONG 2 KHỐI BÊN DƯỚI):
+      # =======================================================================
+      # [LỰA CHỌN A] Dùng Postgres Docker Local
+      # DATABASE_URL: jdbc:postgresql://db:5432/pizza_cheese
+      # DB_USERNAME: postgres
+      # DB_PASSWORD: postgres
+
+      # [LỰA CHỌN B] Dùng Supabase Cloud (đang bật — lấy từ .env)
+      DATABASE_URL: ${DATABASE_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      # =======================================================================
+
+      # Override trong Docker network (ghi đè REDIS_* trong .env)
+      REDIS_ENABLED: "true"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped
+
+  frontend:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/pizza-cheese-frontend:${IMAGE_TAG:-develop}
+    build:
+      context: ./angular/pizza-cheese-angular
+      dockerfile: Dockerfile
+    container_name: pizza-cheese-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: pizza-cheese-watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 60 --cleanup --label-enable
+    restart: always
 
 volumes:
   pgdata:

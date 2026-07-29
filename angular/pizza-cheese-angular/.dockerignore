@@ -1,0 +1,9 @@
+node_modules/
+.angular/
+dist/
+.git/
+.idea/
+*.md
+.env
+.env.*
+npm-debug.log*
