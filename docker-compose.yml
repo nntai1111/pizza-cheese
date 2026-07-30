@@ -59,6 +59,8 @@ services:
       redis:
         condition: service_started
     labels:
+      - "com.docker.compose.project=pizza-cheese"
+      - "com.docker.compose.service=backend"
       - "com.centurylinklabs.watchtower.enable=true"
     restart: unless-stopped
 
@@ -73,6 +75,8 @@ services:
     depends_on:
       - backend
     labels:
+      - "com.docker.compose.project=pizza-cheese"
+      - "com.docker.compose.service=frontend"
       - "com.centurylinklabs.watchtower.enable=true"
     restart: unless-stopped
 
