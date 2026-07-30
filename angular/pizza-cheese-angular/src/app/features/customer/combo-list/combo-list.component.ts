@@ -1,8 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
 
 import { ComboService } from '../../../core/services/combo.service';
-import { ShopContextService } from '../../../core/services/shop-context.service';
 import { Combo } from '../../../core/models/combo.model';
 import {
   formatComboItemSummary,
@@ -12,21 +10,19 @@ import {
 } from '../../../core/utils/combo.util';
 import { formatVnd } from '../../../core/utils/pizza.util';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { ComboDetailComponent } from '../combo-detail/combo-detail.component';
 
 @Component({
   selector: 'app-combo-list',
-  imports: [RouterLink, PaginationComponent],
+  imports: [PaginationComponent, ComboDetailComponent],
   templateUrl: './combo-list.component.html',
   styleUrl: './combo-list.component.scss',
 })
 export class ComboListComponent {
   private readonly comboService = inject(ComboService);
-  private readonly router = inject(Router);
-  private readonly shopContext = inject(ShopContextService);
-
-  readonly shop = this.shopContext;
 
   readonly combos = signal<Combo[]>([]);
+  readonly selectedComboId = signal<string | null>(null);
   readonly page = signal(0);
   readonly totalPages = signal(0);
   readonly totalElements = signal(0);
@@ -50,7 +46,11 @@ export class ComboListComponent {
   }
 
   viewDetail(comboId: string): void {
-    this.router.navigate(this.shopContext.segments('combos', comboId));
+    this.selectedComboId.set(comboId);
+  }
+
+  closeDetail(): void {
+    this.selectedComboId.set(null);
   }
 
   private loadCombos(): void {

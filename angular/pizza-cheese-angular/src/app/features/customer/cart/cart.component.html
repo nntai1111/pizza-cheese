@@ -62,17 +62,24 @@
                 />
               </label>
 
-              <div class="cart-item__media">
+              <button
+                type="button"
+                class="cart-item__media"
+                (click)="openDetail(item)"
+                aria-label="Xem chi tiết món"
+              >
                 @if (getItemImage(item); as imageUrl) {
                   <img [src]="imageUrl" [alt]="getItemTitle(item)" />
                 } @else {
                   <div class="cart-item__placeholder">🍕</div>
                 }
-              </div>
+              </button>
 
               <div class="cart-item__body">
                 <div class="cart-item__head">
-                  <h2>{{ getItemTitle(item) }}</h2>
+                  <button type="button" class="cart-item__title" (click)="openDetail(item)">
+                    {{ getItemTitle(item) }}
+                  </button>
                   <button
                     type="button"
                     class="btn-remove"
@@ -144,3 +151,7 @@
     }
   }
 </section>
+
+@if (detailItem(); as item) {
+  <app-cart-item-detail-modal [item]="item" (closed)="closeDetail()" />
+}

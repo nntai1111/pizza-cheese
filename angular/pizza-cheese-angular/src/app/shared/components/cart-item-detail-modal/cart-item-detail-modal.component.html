@@ -1,0 +1,95 @@
+<div class="cart-item-modal" role="dialog" aria-modal="true" [attr.aria-label]="getItemTitle(item())">
+  <button
+    type="button"
+    class="cart-item-modal__backdrop"
+    aria-label="Đóng"
+    (click)="close()"
+  ></button>
+
+  <div class="cart-item-modal__panel">
+    <header class="cart-item-modal__header">
+      <div>
+        <span class="cart-item-modal__badge">{{ isPizza() ? 'Pizza' : 'Combo' }}</span>
+        <h2>{{ getItemTitle(item()) }}</h2>
+      </div>
+      <button type="button" class="cart-item-modal__close" aria-label="Đóng" (click)="close()">
+        ✕
+      </button>
+    </header>
+
+    <div class="cart-item-modal__body">
+      <div class="cart-item-modal__media">
+        @if (getItemImage(item()); as imageUrl) {
+          <img [src]="imageUrl" [alt]="getItemTitle(item())" />
+        } @else {
+          <div class="cart-item-modal__placeholder">
+            {{ isCombo() ? '🎁' : '🍕' }}
+          </div>
+        }
+      </div>
+
+      <dl class="cart-item-modal__facts">
+        @if (isPizza() && item().pizzaSize) {
+          <div>
+            <dt>Cỡ bánh</dt>
+            <dd>{{ getSizeLabel(item().pizzaSize!) }}</dd>
+          </div>
+        }
+        <div>
+          <dt>Số lượng</dt>
+          <dd>{{ item().quantity }}</dd>
+        </div>
+        <div>
+          <dt>Đơn giá</dt>
+          <dd>{{ formatPrice(item().unitPrice) }}</dd>
+        </div>
+        <div>
+          <dt>Thành tiền</dt>
+          <dd class="cart-item-modal__total">{{ formatPrice(item().lineTotal) }}</dd>
+        </div>
+      </dl>
+
+      @if (isPizza() && item().toppings.length) {
+        <section class="cart-item-modal__section">
+          <h3>Topping đã chọn</h3>
+          <ul>
+            @for (topping of item().toppings; track topping.toppingId) {
+              <li>
+                <span>{{ topping.toppingName }}</span>
+                <strong>
+                  @if (topping.price > 0) {
+                    +{{ formatPrice(topping.price) }}
+                  } @else {
+                    Miễn phí
+                  }
+                </strong>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      @if (isCombo() && item().comboLines.length) {
+        <section class="cart-item-modal__section">
+          <h3>Pizza trong combo</h3>
+          <ul>
+            @for (line of item().comboLines; track line.pizzaVariantId) {
+              <li>
+                <span>
+                  {{ line.quantity }}x {{ line.pizzaName }}
+                  @if (line.pizzaSize) {
+                    <small>({{ getSizeLabel(line.pizzaSize) }})</small>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      @if (isPizza() && !item().toppings.length) {
+        <p class="cart-item-modal__hint">Không có topping thêm.</p>
+      }
+    </div>
+  </div>
+</div>

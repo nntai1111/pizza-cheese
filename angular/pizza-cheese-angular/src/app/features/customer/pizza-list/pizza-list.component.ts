@@ -1,9 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
 
 import { CategoryService } from '../../../core/services/category.service';
 import { PizzaService } from '../../../core/services/pizza.service';
-import { ShopContextService } from '../../../core/services/shop-context.service';
 import { Category } from '../../../core/models/category.model';
 import {
   getCategoryImageUrl as resolveCategoryImageUrl,
@@ -17,24 +15,22 @@ import {
   sortPizzaVariants,
 } from '../../../core/utils/pizza.util';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { PizzaDetailComponent } from '../pizza-detail/pizza-detail.component';
 
 @Component({
   selector: 'app-pizza-list',
-  imports: [RouterLink, PaginationComponent],
+  imports: [PaginationComponent, PizzaDetailComponent],
   templateUrl: './pizza-list.component.html',
   styleUrl: './pizza-list.component.scss',
 })
 export class PizzaListComponent {
   private readonly pizzaService = inject(PizzaService);
   private readonly categoryService = inject(CategoryService);
-  private readonly router = inject(Router);
-  private readonly shopContext = inject(ShopContextService);
-
-  readonly shop = this.shopContext;
 
   readonly pizzas = signal<Pizza[]>([]);
   readonly categories = signal<Category[]>([]);
   readonly selectedCategoryId = signal<string | null>(null);
+  readonly selectedPizzaId = signal<string | null>(null);
   readonly page = signal(0);
   readonly totalPages = signal(0);
   readonly totalElements = signal(0);
@@ -48,14 +44,6 @@ export class PizzaListComponent {
   readonly getMinPrice = getPizzaMinPrice;
   readonly sortVariants = sortPizzaVariants;
   readonly getSizeLabel = getPizzaSizeLabel;
-
-  readonly selectedCategoryName = computed(() => {
-    const id = this.selectedCategoryId();
-    if (!id) {
-      return 'Tất cả';
-    }
-    return this.categories().find((c) => c.id === id)?.name ?? 'Danh mục';
-  });
 
   constructor() {
     this.loadCategories();
@@ -74,7 +62,11 @@ export class PizzaListComponent {
   }
 
   viewDetail(pizzaId: string): void {
-    this.router.navigate(this.shopContext.segments('pizzas', pizzaId));
+    this.selectedPizzaId.set(pizzaId);
+  }
+
+  closeDetail(): void {
+    this.selectedPizzaId.set(null);
   }
 
   private loadCategories(): void {

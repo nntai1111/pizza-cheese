@@ -1,6 +1,17 @@
-import { Component, computed, inject, signal } from '@angular/core';
+﻿import {
+  Component,
+  HostListener,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { map } from 'rxjs';
 
 import { PizzaService } from '../../../core/services/pizza.service';
 import { CartService } from '../../../core/services/cart.service';
@@ -28,6 +39,12 @@ export class PizzaDetailComponent {
   private readonly cartService = inject(CartService);
   private readonly shopContext = inject(ShopContextService);
 
+  /** When set (e.g. from list popup), load this id instead of the route param. */
+  readonly productId = input<string | null>(null);
+  /** Render as overlay popup instead of a full page. */
+  readonly modal = input(false);
+  readonly closed = output<void>();
+
   readonly shop = this.shopContext;
 
   readonly pizza = signal<Pizza | null>(null);
@@ -40,11 +57,17 @@ export class PizzaDetailComponent {
   readonly orderNotice = signal<string | null>(null);
   readonly addingToCart = signal(false);
   readonly buyingNow = signal(false);
+  readonly lightboxOpen = signal(false);
 
   readonly formatPrice = formatVnd;
   readonly getSizeLabel = getPizzaSizeLabel;
   readonly sortVariants = sortPizzaVariants;
   readonly isSameSize = codedEnumSame;
+
+  private readonly routeId = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get('id'))),
+    { initialValue: this.route.snapshot.paramMap.get('id') },
+  );
 
   readonly sortedImages = computed(() => {
     const current = this.pizza();
@@ -82,14 +105,115 @@ export class PizzaDetailComponent {
   readonly totalPrice = computed(() => this.unitPrice() * this.quantity());
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
-      this.loading.set(false);
-      this.errorMessage.set('Không tìm thấy pizza.');
+    effect((onCleanup) => {
+      const id = this.productId() ?? this.routeId();
+      if (!id) {
+        this.loading.set(false);
+        this.errorMessage.set('Không tìm thấy pizza.');
+        return;
+      }
+
+      this.loading.set(true);
+      this.errorMessage.set(null);
+      this.pizza.set(null);
+      this.selectedToppingIds.set(new Set());
+      this.quantity.set(1);
+      this.orderNotice.set(null);
+      this.lightboxOpen.set(false);
+
+      const sub = this.pizzaService.getById(id).subscribe({
+        next: (pizza) => {
+          this.pizza.set(pizza);
+          const variants = sortPizzaVariants(pizza.variants);
+          this.selectedVariant.set(variants[0] ?? null);
+          this.activeImageIndex.set(0);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.errorMessage.set('Không thể tải thông tin pizza.');
+          this.loading.set(false);
+        },
+      });
+
+      onCleanup(() => sub.unsubscribe());
+    });
+
+    effect((onCleanup) => {
+      if (!this.modal()) {
+        return;
+      }
+      const previous = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      onCleanup(() => {
+        document.body.style.overflow = previous;
+      });
+    });
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (document.querySelector('app-cart-item-detail-modal')) {
       return;
     }
+    if (this.lightboxOpen()) {
+      this.closeLightbox();
+      return;
+    }
+    if (this.modal()) {
+      this.close();
+    }
+  }
 
-    this.loadPizza(id);
+  @HostListener('document:keydown.arrowleft')
+  onArrowLeft(): void {
+    if (this.lightboxOpen()) {
+      this.prevLightboxImage();
+    }
+  }
+
+  @HostListener('document:keydown.arrowright')
+  onArrowRight(): void {
+    if (this.lightboxOpen()) {
+      this.nextLightboxImage();
+    }
+  }
+
+  close(): void {
+    this.closeLightbox();
+    this.closed.emit();
+  }
+
+  openLightbox(index?: number): void {
+    if (!this.activeImage() && index == null) {
+      return;
+    }
+    if (index != null) {
+      this.activeImageIndex.set(index);
+    }
+    if (!this.sortedImages().length) {
+      return;
+    }
+    this.lightboxOpen.set(true);
+  }
+
+  closeLightbox(): void {
+    this.lightboxOpen.set(false);
+  }
+
+  prevLightboxImage(): void {
+    const total = this.sortedImages().length;
+    if (total <= 1) {
+      return;
+    }
+    this.activeImageIndex.update((i) => (i - 1 + total) % total);
+  }
+
+  nextLightboxImage(): void {
+    const total = this.sortedImages().length;
+    if (total <= 1) {
+      return;
+    }
+    this.activeImageIndex.update((i) => (i + 1) % total);
   }
 
   selectImage(index: number): void {
@@ -160,6 +284,9 @@ export class PizzaDetailComponent {
       next: () => {
         busySignal.set(false);
         if (checkoutImmediately) {
+          if (this.modal()) {
+            this.close();
+          }
           void this.router.navigate(this.shopContext.segments('checkout'));
           return;
         }
@@ -173,25 +300,10 @@ export class PizzaDetailComponent {
   }
 
   goBack(): void {
+    if (this.modal()) {
+      this.close();
+      return;
+    }
     this.router.navigate(this.shopContext.segments('pizzas'));
-  }
-
-  private loadPizza(id: string): void {
-    this.loading.set(true);
-    this.errorMessage.set(null);
-
-    this.pizzaService.getById(id).subscribe({
-      next: (pizza) => {
-        this.pizza.set(pizza);
-        const variants = sortPizzaVariants(pizza.variants);
-        this.selectedVariant.set(variants[0] ?? null);
-        this.activeImageIndex.set(0);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.errorMessage.set('Không thể tải thông tin pizza.');
-        this.loading.set(false);
-      },
-    });
   }
 }

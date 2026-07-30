@@ -40,6 +40,46 @@
   color: var(--pc-danger);
 }
 
+.checkout-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.95rem 1.1rem;
+  border: 1.5px solid rgba(193, 18, 31, 0.28);
+  border-radius: var(--pc-radius-sm);
+  background: rgba(193, 18, 31, 0.08);
+  color: var(--pc-danger);
+
+  &__icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background: var(--pc-danger);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  strong {
+    display: block;
+    margin-bottom: 0.15rem;
+    font-size: 0.9375rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--pc-crust);
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+}
+
 .checkout-empty {
   @include customer-theme.pc-card;
   padding: 2rem;
@@ -74,13 +114,25 @@
   flex-direction: column;
   gap: 1rem;
 
+  &__heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  &__hint {
+    margin: 0;
+    color: var(--pc-crust-muted);
+    font-size: 0.8125rem;
+  }
+
   h2 {
     margin: 0.5rem 0 0;
     color: var(--pc-crust);
     font-size: 1.125rem;
   }
 
-  label {
+  .field {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
@@ -99,12 +151,35 @@
       font: inherit;
       color: var(--pc-crust);
       background: var(--pc-white);
+      transition: border-color 0.15s, box-shadow 0.15s;
 
       &:focus {
         outline: none;
         border-color: var(--pc-yellow);
+        box-shadow: 0 0 0 3px rgba(251, 176, 52, 0.2);
       }
     }
+
+    &--invalid {
+      input,
+      textarea {
+        border-color: var(--pc-danger);
+        background: rgba(193, 18, 31, 0.03);
+
+        &:focus {
+          border-color: var(--pc-danger);
+          box-shadow: 0 0 0 3px rgba(193, 18, 31, 0.12);
+        }
+      }
+    }
+  }
+
+  .field__error {
+    margin: 0;
+    color: var(--pc-danger);
+    font-size: 0.8125rem;
+    font-style: normal;
+    font-weight: 600;
   }
 
   &__row {
@@ -122,6 +197,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+
+  &--invalid .payment-option {
+    border-color: rgba(193, 18, 31, 0.45);
+  }
 }
 
 .payment-option {
@@ -216,6 +295,17 @@
     @include customer-theme.pc-btn-outline;
     width: 100%;
     text-decoration: none;
+  }
+
+  &__tip {
+    margin: 0 0 0.75rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: var(--pc-radius-sm);
+    background: rgba(251, 176, 52, 0.16);
+    border: 1px solid rgba(229, 154, 26, 0.35);
+    color: var(--pc-crust);
+    font-size: 0.8125rem;
+    line-height: 1.45;
   }
 }
 

@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { CartItem } from '../../../core/models/cart.model';
 import { CartService } from '../../../core/services/cart.service';
@@ -11,11 +12,11 @@ import {
 import { formatVnd, getPizzaSizeLabel } from '../../../core/utils/pizza.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
 import { enumEquals } from '../../../core/utils/coded-enum.util';
-import { HttpErrorResponse } from '@angular/common/http';
+import { CartItemDetailModalComponent } from '../../../shared/components';
 
 @Component({
   selector: 'app-cart',
-  imports: [RouterLink],
+  imports: [RouterLink, CartItemDetailModalComponent],
   templateUrl: './cart.component.html',
   styleUrl: './cart.component.scss',
 })
@@ -33,9 +34,9 @@ export class CartComponent {
   readonly selectedCount = computed(() => this.cartService.selectedItems().length);
   readonly errorMessage = signal<string | null>(null);
   readonly actionItemId = signal<string | null>(null);
+  readonly detailItem = signal<CartItem | null>(null);
 
   readonly formatPrice = formatVnd;
-  readonly getSizeLabel = getPizzaSizeLabel;
   readonly getItemTitle = getCartItemTitle;
   readonly getItemImage = getCartItemImage;
   readonly isComboItem = (item: CartItem) => enumEquals(item.itemType, 'COMBO');
@@ -47,6 +48,14 @@ export class CartComponent {
         this.errorMessage.set(getHttpErrorMessage(err, 'Không thể tải giỏ hàng.'));
       },
     });
+  }
+
+  openDetail(item: CartItem): void {
+    this.detailItem.set(item);
+  }
+
+  closeDetail(): void {
+    this.detailItem.set(null);
   }
 
   decreaseQuantity(item: CartItem): void {

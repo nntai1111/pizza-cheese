@@ -3,7 +3,11 @@ import { Router, RouterLink } from '@angular/router';
 
 import { APP_ROLES, AppRole } from '../../../core/enums/role.enum';
 import { AuthService } from '../../../core/services/auth.service';
-import { getRouteForRole, userHasRole } from '../../../core/utils/role.util';
+import {
+  getDefaultRouteForUser,
+  getRouteForRole,
+  userHasRole,
+} from '../../../core/utils/role.util';
 import { UserAvatarComponent } from '../../../shared/components';
 
 interface RoleOption {
@@ -20,11 +24,7 @@ interface RoleOption {
   templateUrl: './role-select.component.html',
   styleUrl: './role-select.component.scss',
 })
-
-
 export class RoleSelectComponent {
-  //   ActivatedRoute: lấy thông tin route hiện tại (param, query param, data...)
-  // Router: điều hướng trang
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -42,6 +42,13 @@ export class RoleSelectComponent {
       }),
     );
   });
+
+  constructor() {
+    const route = getDefaultRouteForUser(this.authService.currentUser());
+    if (route !== '/dashboard') {
+      void this.router.navigateByUrl(route);
+    }
+  }
 
   logout(): void {
     this.authService.logout();

@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,12 +17,16 @@ import {
 } from '../../../core/models/coupon.model';
 import { formatVnd } from '../../../core/utils/pizza.util';
 import { getHttpErrorMessage } from '../../../core/utils/http-error.util';
-import {
-  getCartItemImage,
-  getCartItemTitle,
-} from '../../../core/utils/cart-display.util';
+import { getCartItemTitle } from '../../../core/utils/cart-display.util';
 
 const PENDING_ORDER_KEY = 'pizza_cheese_pending_order_id';
+
+const FIELD_LABELS: Record<string, string> = {
+  recipientName: 'Họ tên người nhận',
+  phone: 'Số điện thoại',
+  addressLine1: 'Địa chỉ giao hàng',
+  paymentMethod: 'Phương thức thanh toán',
+};
 
 @Component({
   selector: 'app-checkout',
@@ -44,6 +49,7 @@ export class CheckoutComponent {
   readonly selectedSubtotal = this.cartService.selectedSubtotal;
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly submitted = signal(false);
   readonly appliedCoupon = signal<ValidateCouponResponse | null>(null);
   readonly couponPanelOpen = signal(false);
   readonly availableCoupons = signal<AvailableCoupon[]>([]);
@@ -53,7 +59,6 @@ export class CheckoutComponent {
 
   readonly formatPrice = formatVnd;
   readonly getItemTitle = getCartItemTitle;
-  readonly getItemImage = getCartItemImage;
 
   readonly form = this.fb.nonNullable.group({
     recipientName: ['', [Validators.required, Validators.maxLength(100)]],
@@ -65,6 +70,11 @@ export class CheckoutComponent {
       Validators.required,
     ],
   });
+
+  readonly checkoutTotal = computed(
+    () => this.appliedCoupon()?.finalAmount ?? this.selectedSubtotal(),
+  );
+  readonly checkoutDiscount = computed(() => this.appliedCoupon()?.discountAmount ?? 0);
 
   constructor() {
     this.cartService.loadCart().subscribe({
@@ -85,10 +95,42 @@ export class CheckoutComponent {
       this.form.controls.phone.updateValueAndValidity();
       this.form.controls.addressLine1.updateValueAndValidity();
     }
+
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      if (this.submitted() && this.errorMessage()) {
+        this.errorMessage.set(null);
+      }
+    });
   }
 
-  readonly checkoutTotal = () => this.appliedCoupon()?.finalAmount ?? this.selectedSubtotal();
-  readonly checkoutDiscount = () => this.appliedCoupon()?.discountAmount ?? 0;
+  showFieldError(controlName: string): boolean {
+    const control = this.form.get(controlName);
+    if (!control || control.valid) {
+      return false;
+    }
+    return control.touched || this.submitted();
+  }
+
+  fieldError(controlName: string): string | null {
+    if (!this.showFieldError(controlName)) {
+      return null;
+    }
+
+    const control = this.form.get(controlName);
+    if (!control?.errors) {
+      return null;
+    }
+
+    const label = FIELD_LABELS[controlName] ?? 'Trường này';
+    if (control.hasError('required')) {
+      return `Vui lòng nhập ${label.toLowerCase()}.`;
+    }
+    if (control.hasError('maxlength')) {
+      const max = control.getError('maxlength')?.requiredLength;
+      return `${label} không được vượt quá ${max} ký tự.`;
+    }
+    return `${label} không hợp lệ.`;
+  }
 
   toggleCouponPanel(): void {
     const nextOpen = !this.couponPanelOpen();
@@ -123,8 +165,12 @@ export class CheckoutComponent {
   }
 
   submit(): void {
+    this.submitted.set(true);
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.errorMessage.set(this.buildValidationMessage());
+      this.scrollToDeliveryForm();
       return;
     }
 
@@ -184,6 +230,34 @@ export class CheckoutComponent {
         this.loading.set(false);
         this.errorMessage.set(getHttpErrorMessage(err, 'Không thể tạo đơn hàng.'));
       },
+    });
+  }
+
+  private buildValidationMessage(): string {
+    const missing = (['recipientName', 'phone', 'addressLine1', 'paymentMethod'] as const)
+      .filter((name) => this.form.get(name)?.invalid)
+      .map((name) => FIELD_LABELS[name]);
+
+    if (!missing.length) {
+      return 'Vui lòng kiểm tra lại thông tin đặt hàng.';
+    }
+
+    if (missing.length === 1) {
+      return `Vui lòng điền ${missing[0].toLowerCase()} để tiếp tục đặt hàng.`;
+    }
+
+    return `Vui lòng điền đầy đủ: ${missing.join(', ')}.`;
+  }
+
+  private scrollToDeliveryForm(): void {
+    queueMicrotask(() => {
+      const firstInvalid = document.querySelector<HTMLElement>(
+        '.checkout-form .field--invalid input, .checkout-form .field--invalid textarea, #checkout-delivery',
+      );
+      firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (firstInvalid instanceof HTMLInputElement || firstInvalid instanceof HTMLTextAreaElement) {
+        firstInvalid.focus({ preventScroll: true });
+      }
     });
   }
 

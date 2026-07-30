@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { authGuard } from '../core/guards/auth.guard';
+import { authGuard, homeRedirectGuard } from '../core/guards/auth.guard';
 import { AUTH_ROUTES } from '../features/auth/auth.routes';
 import { ADMIN_ROUTES } from '../features/admin/admin.routes';
 import { CUSTOMER_ROUTES } from '../features/customer/customer.routes';
@@ -12,8 +12,8 @@ import { ROLES_ROUTES } from '../features/roles/roles.routes';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'dashboard',
-    pathMatch: 'full',
+    canActivate: [homeRedirectGuard],
+    children: [],
   },
   ...AUTH_ROUTES,
   {
@@ -32,6 +32,7 @@ export const routes: Routes = [
   ...ROLES_ROUTES,
   {
     path: '**',
-    redirectTo: 'dashboard',
+    canActivate: [homeRedirectGuard],
+    children: [],
   },
 ];

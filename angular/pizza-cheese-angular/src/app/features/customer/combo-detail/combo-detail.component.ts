@@ -1,6 +1,17 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { map } from 'rxjs';
 
 import { ComboService } from '../../../core/services/combo.service';
 import { CartService } from '../../../core/services/cart.service';
@@ -27,6 +38,10 @@ export class ComboDetailComponent {
   private readonly cartService = inject(CartService);
   private readonly shopContext = inject(ShopContextService);
 
+  readonly productId = input<string | null>(null);
+  readonly modal = input(false);
+  readonly closed = output<void>();
+
   readonly shop = this.shopContext;
 
   readonly combo = signal<Combo | null>(null);
@@ -36,11 +51,17 @@ export class ComboDetailComponent {
   readonly orderNotice = signal<string | null>(null);
   readonly addingToCart = signal(false);
   readonly buyingNow = signal(false);
+  readonly lightboxOpen = signal(false);
 
   readonly formatPrice = formatComboPrice;
   readonly formatVnd = formatVnd;
   readonly getImageUrl = getComboImageUrl;
   readonly getSizeLabel = getPizzaSizeLabel;
+
+  private readonly routeId = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get('id'))),
+    { initialValue: this.route.snapshot.paramMap.get('id') },
+  );
 
   readonly discountedPrice = computed(() => {
     const current = this.combo();
@@ -57,16 +78,83 @@ export class ComboDetailComponent {
   });
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
-      this.loading.set(false);
-      this.errorMessage.set('Không tìm thấy combo.');
+    effect((onCleanup) => {
+      const id = this.productId() ?? this.routeId();
+      if (!id) {
+        this.loading.set(false);
+        this.errorMessage.set('Không tìm thấy combo.');
+        return;
+      }
+
+      this.loading.set(true);
+      this.errorMessage.set(null);
+      this.combo.set(null);
+      this.quantity.set(1);
+      this.orderNotice.set(null);
+      this.lightboxOpen.set(false);
+
+      const sub = this.comboService.getById(id).subscribe({
+        next: (combo) => {
+          this.combo.set(combo);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.errorMessage.set('Không thể tải thông tin combo.');
+        },
+      });
+
+      onCleanup(() => sub.unsubscribe());
+    });
+
+    effect((onCleanup) => {
+      if (!this.modal()) {
+        return;
+      }
+      const previous = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      onCleanup(() => {
+        document.body.style.overflow = previous;
+      });
+    });
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (document.querySelector('app-cart-item-detail-modal')) {
       return;
     }
-    this.loadCombo(id);
+    if (this.lightboxOpen()) {
+      this.closeLightbox();
+      return;
+    }
+    if (this.modal()) {
+      this.close();
+    }
+  }
+
+  close(): void {
+    this.closeLightbox();
+    this.closed.emit();
+  }
+
+  openLightbox(): void {
+    const combo = this.combo();
+    if (!combo || !getComboImageUrl(combo)) {
+      return;
+    }
+    this.lightboxOpen.set(true);
+  }
+
+  closeLightbox(): void {
+    this.lightboxOpen.set(false);
   }
 
   goBack(): void {
+    if (this.modal()) {
+      this.close();
+      return;
+    }
     this.router.navigate(this.shopContext.segments('combos'));
   }
 
@@ -108,6 +196,9 @@ export class ComboDetailComponent {
       next: () => {
         busySignal.set(false);
         if (checkoutImmediately) {
+          if (this.modal()) {
+            this.close();
+          }
           void this.router.navigate(this.shopContext.segments('checkout'));
           return;
         }
@@ -116,19 +207,6 @@ export class ComboDetailComponent {
       error: (err: HttpErrorResponse) => {
         busySignal.set(false);
         this.orderNotice.set(getHttpErrorMessage(err, 'Không thể thêm vào giỏ hàng.'));
-      },
-    });
-  }
-
-  private loadCombo(id: string): void {
-    this.comboService.getById(id).subscribe({
-      next: (combo) => {
-        this.combo.set(combo);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.errorMessage.set('Không thể tải thông tin combo.');
       },
     });
   }
