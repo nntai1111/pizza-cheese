@@ -1,0 +1,23 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <span class="logo">🔐</span>
+      <h1>Xác thực email</h1>
+      @if (loading()) {
+      <p>Đang xác thực tài khoản của bạn...</p>
+      } @else if (success()) {
+      <p>Xác thực thành công. Đang chuyển tới trang đăng nhập...</p>
+      } @else {
+      <p>{{ errorMessage() }}</p>
+      }
+    </div>
+
+    @if (!loading() && errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+    <a routerLink="/register" class="btn-primary btn-link">Đăng ký lại</a>
+    <p class="auth-footer">
+      <a routerLink="/login">Quay lại đăng nhập</a>
+    </p>
+    }
+  </div>
+</div>

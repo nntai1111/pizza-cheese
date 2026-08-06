@@ -7,6 +7,8 @@ export const AUTH_ENDPOINTS = {
   register: `${API_BASE_URL}/auth/register`,
   logout: `${API_BASE_URL}/auth/logout`,
   refresh: `${API_BASE_URL}/auth/refresh`,
+  verifyEmail: `${API_BASE_URL}/auth/verify-email`,
+  resendVerification: `${API_BASE_URL}/auth/resend-verification`,
 } as const;
 
 export const DEFAULT_AVATAR_URL = '/assets/images/avatar/default-avatar.svg';

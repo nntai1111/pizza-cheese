@@ -78,7 +78,7 @@ public class SecurityConfiguration {
         return provider;
     }
 
-    // Cấu hình AuthenticationManager để có thể inject vào AuthController
+    // AuthenticationConfiguration sẽ quét tất cả các AuthenticationProvider
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
@@ -164,7 +164,9 @@ public class SecurityConfiguration {
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/logout",
-                                "/api/v1/auth/refresh")
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/verify-email",
+                                "/api/v1/auth/resend-verification")
                         .permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",

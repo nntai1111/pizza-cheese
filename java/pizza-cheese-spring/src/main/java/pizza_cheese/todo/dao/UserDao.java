@@ -104,12 +104,17 @@ public class UserDao {
                     .addValue("phone", user.getPhone())
                     .addValue("avatarUrl", user.getAvatarUrl())
                     .addValue("active", user.isActive())
+                    .addValue("emailVerified", user.isEmailVerified())
                     .addValue("updatedAt", JdbcTimeUtil.toTimestamp(user.getUpdatedAt())));
             jdbc.update(queries.get("deleteRolesByUserId"), Map.of("userId", user.getId()));
         }
 
         saveRoles(user.getId(), user.getRoles());
         return user;
+    }
+
+    public void deleteById(UUID id) {
+        jdbc.update(queries.get("deleteById"), Map.of("id", id));
     }
 
     public long countStaff(Role role) {
@@ -180,6 +185,7 @@ public class UserDao {
                 .addValue("phone", user.getPhone())
                 .addValue("avatarUrl", user.getAvatarUrl())
                 .addValue("active", user.isActive())
+                .addValue("emailVerified", user.isEmailVerified())
                 .addValue("createdAt", JdbcTimeUtil.toTimestamp(user.getCreatedAt()))
                 .addValue("updatedAt", JdbcTimeUtil.toTimestamp(user.getUpdatedAt())));
     }

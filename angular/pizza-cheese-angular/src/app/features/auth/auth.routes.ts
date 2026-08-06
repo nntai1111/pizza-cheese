@@ -15,4 +15,20 @@ export const AUTH_ROUTES: Routes = [
       import('./register/register.component').then((m) => m.RegisterComponent),
     canActivate: [guestGuard],
   },
+  {
+    path: 'check-email',
+    loadComponent: () =>
+      import('./check-email/check-email.component').then(
+        (m) => m.CheckEmailComponent,
+      ),
+    canActivate: [guestGuard],
+  },
+  {
+    path: 'verify-email',
+    loadComponent: () =>
+      import('./verify-email/verify-email.component').then(
+        (m) => m.VerifyEmailComponent,
+      ),
+    canActivate: [guestGuard],
+  },
 ];

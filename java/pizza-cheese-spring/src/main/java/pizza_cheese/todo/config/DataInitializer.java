@@ -76,6 +76,8 @@ public class DataInitializer implements CommandLineRunner {
         user.setAvatarUrl(defaultAvatarUrl);
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
         user.setRoles(roles);
+        user.setEmailVerified(true);
+        user.setActive(true);
         userDao.save(user);
     }
 

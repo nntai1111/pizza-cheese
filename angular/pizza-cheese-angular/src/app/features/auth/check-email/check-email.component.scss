@@ -1,0 +1,15 @@
+@import '../login/login.component.scss';
+
+.login-header p {
+  line-height: 1.5;
+}
+
+.login-header strong {
+  color: #1a1a2e;
+  word-break: break-all;
+}
+
+.alert-success {
+  background: #ecfdf5;
+  color: #047857;
+}

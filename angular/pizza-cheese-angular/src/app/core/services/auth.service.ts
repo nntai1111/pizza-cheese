@@ -18,7 +18,9 @@ import {
   ApiResponse,
   AuthData,
   LoginRequest,
+  MessageResponse,
   RefreshTokenRequest,
+  RegisterPendingResponse,
   RegisterRequest,
   User,
 } from '../models/auth.model';
@@ -36,7 +38,10 @@ export class AuthService {
       .pipe(map((response) => this.persistAuth(response.data)));
   }
 
-  register(payload: RegisterRequest, avatarFile?: File | null): Observable<AuthData> {
+  register(
+    payload: RegisterRequest,
+    avatarFile?: File | null,
+  ): Observable<RegisterPendingResponse> {
     if (avatarFile) {
       const formData = new FormData();
       formData.append(
@@ -46,13 +51,29 @@ export class AuthService {
       formData.append('avatar', avatarFile, avatarFile.name);
 
       return this.http
-        .post<ApiResponse<AuthData>>(AUTH_ENDPOINTS.register, formData)
-        .pipe(map((response) => this.persistAuth(response.data)));
+        .post<ApiResponse<RegisterPendingResponse>>(AUTH_ENDPOINTS.register, formData)
+        .pipe(map((response) => response.data));
     }
 
     return this.http
-      .post<ApiResponse<AuthData>>(AUTH_ENDPOINTS.register, payload)
-      .pipe(map((response) => this.persistAuth(response.data)));
+      .post<ApiResponse<RegisterPendingResponse>>(AUTH_ENDPOINTS.register, payload)
+      .pipe(map((response) => response.data));
+  }
+
+  verifyEmail(token: string): Observable<MessageResponse> {
+    return this.http
+      .get<ApiResponse<MessageResponse>>(AUTH_ENDPOINTS.verifyEmail, {
+        params: { token },
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  resendVerification(email: string): Observable<MessageResponse> {
+    return this.http
+      .post<ApiResponse<MessageResponse>>(AUTH_ENDPOINTS.resendVerification, {
+        email,
+      })
+      .pipe(map((response) => response.data));
   }
 
   refreshAccessToken(): Observable<AuthData> {

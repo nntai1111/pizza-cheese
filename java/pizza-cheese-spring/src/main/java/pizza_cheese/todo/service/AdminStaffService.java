@@ -70,6 +70,7 @@ public class AdminStaffService {
         user.setPhone(request.getPhone().trim());
         user.setRoles(Set.of(request.getRole()));
         user.setActive(true);
+        user.setEmailVerified(true);
         userDao.save(user);
         return UserProfileResponse.from(userDao.findById(user.getId()).orElse(user));
     }

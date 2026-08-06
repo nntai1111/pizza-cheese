@@ -8,7 +8,6 @@ import { Router, RouterLink } from '@angular/router';
 
 import { DEFAULT_AVATAR_URL } from '../../../core/constants/api.constants';
 import { AuthService } from '../../../core/services/auth.service';
-import { getDefaultRouteForUser } from '../../../core/utils/role.util';
 
 const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
@@ -95,7 +94,9 @@ export class RegisterComponent {
       .subscribe({
         next: (data) => {
           this.loading.set(false);
-          void this.router.navigateByUrl(getDefaultRouteForUser(data.user));
+          void this.router.navigate(['/check-email'], {
+            queryParams: { email: data.email },
+          });
         },
         error: (err) => {
           this.loading.set(false);

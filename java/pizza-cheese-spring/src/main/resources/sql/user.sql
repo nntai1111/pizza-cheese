@@ -1,24 +1,24 @@
 -- name: findByEmail
 SELECT id, username, email, password_hash, full_name, phone, avatar_url,
-       is_active AS active, created_at, updated_at
+       is_email_verified AS email_verified, is_active AS active, created_at, updated_at
 FROM users
-WHERE email = :email
+WHERE LOWER(email) = LOWER(:email)
 
 -- name: findByUsername
 SELECT id, username, email, password_hash, full_name, phone, avatar_url,
-       is_active AS active, created_at, updated_at
+       is_email_verified AS email_verified, is_active AS active, created_at, updated_at
 FROM users
 WHERE LOWER(username) = LOWER(:username)
 
 -- name: findByEmailOrUsername
 SELECT id, username, email, password_hash, full_name, phone, avatar_url,
-       is_active AS active, created_at, updated_at
+       is_email_verified AS email_verified, is_active AS active, created_at, updated_at
 FROM users
-WHERE email = :login OR LOWER(username) = LOWER(:login)
+WHERE LOWER(email) = LOWER(:login) OR LOWER(username) = LOWER(:login)
 
 -- name: findById
 SELECT id, username, email, password_hash, full_name, phone, avatar_url,
-       is_active AS active, created_at, updated_at
+       is_email_verified AS email_verified, is_active AS active, created_at, updated_at
 FROM users
 WHERE id = :id
 
@@ -34,7 +34,7 @@ JOIN roles r ON r.id = ur.role_id
 WHERE ur.user_id = :userId
 
 -- name: existsByEmail
-SELECT EXISTS (SELECT 1 FROM users WHERE email = :email)
+SELECT EXISTS (SELECT 1 FROM users WHERE LOWER(email) = LOWER(:email))
 
 -- name: existsByUsername
 SELECT EXISTS (SELECT 1 FROM users WHERE LOWER(username) = LOWER(:username))
@@ -56,7 +56,7 @@ WHERE COALESCE(u.is_deleted, FALSE) = FALSE
 
 -- name: findStaffPageBase
 SELECT u.id, u.username, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url,
-       u.is_active AS active, u.created_at, u.updated_at
+       u.is_email_verified AS email_verified, u.is_active AS active, u.created_at, u.updated_at
 FROM users u
 WHERE COALESCE(u.is_deleted, FALSE) = FALSE
   AND EXISTS (
@@ -95,7 +95,7 @@ WHERE COALESCE(u.is_deleted, FALSE) = FALSE
 
 -- name: findCustomersPageBase
 SELECT u.id, u.username, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url,
-       u.is_active AS active, u.created_at, u.updated_at
+       u.is_email_verified AS email_verified, u.is_active AS active, u.created_at, u.updated_at
 FROM users u
 WHERE COALESCE(u.is_deleted, FALSE) = FALSE
   AND EXISTS (
@@ -107,8 +107,8 @@ WHERE COALESCE(u.is_deleted, FALSE) = FALSE
   )
 
 -- name: insert
-INSERT INTO users (id, username, email, password_hash, full_name, phone, avatar_url, is_active, created_at, updated_at)
-VALUES (:id, :username, :email, :passwordHash, :fullName, :phone, :avatarUrl, :active, :createdAt, :updatedAt)
+INSERT INTO users (id, username, email, password_hash, full_name, phone, avatar_url, is_active, is_email_verified, created_at, updated_at)
+VALUES (:id, :username, :email, :passwordHash, :fullName, :phone, :avatarUrl, :active, :emailVerified, :createdAt, :updatedAt)
 
 -- name: update
 UPDATE users
@@ -118,8 +118,12 @@ SET email = :email,
     phone = :phone,
     avatar_url = :avatarUrl,
     is_active = :active,
+    is_email_verified = :emailVerified,
     updated_at = :updatedAt
 WHERE id = :id
+
+-- name: deleteById
+DELETE FROM users WHERE id = :id
 
 -- name: deleteRolesByUserId
 DELETE FROM user_roles WHERE user_id = :userId

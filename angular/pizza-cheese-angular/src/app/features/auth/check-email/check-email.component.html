@@ -1,0 +1,34 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <span class="logo">📧</span>
+      <h1>Kiểm tra email</h1>
+      <p>
+        Chúng tôi đã gửi link xác thực đến
+        <strong>{{ email() }}</strong>. Vui lòng mở email và bấm link để kích
+        hoạt tài khoản (hiệu lực 24 giờ).
+      </p>
+    </div>
+
+    @if (successMessage()) {
+    <div class="alert alert-success">{{ successMessage() }}</div>
+    }
+    @if (errorMessage()) {
+    <div class="alert">{{ errorMessage() }}</div>
+    }
+
+    <button
+      type="button"
+      class="btn-primary"
+      [disabled]="loading()"
+      (click)="resend()"
+    >
+      {{ loading() ? 'Đang gửi lại...' : 'Gửi lại email xác thực' }}
+    </button>
+
+    <p class="auth-footer">
+      Đã xác thực?
+      <a routerLink="/login">Đăng nhập</a>
+    </p>
+  </div>
+</div>

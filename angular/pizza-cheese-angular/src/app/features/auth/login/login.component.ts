@@ -1,10 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { getDefaultRouteForUser } from '../../../core/utils/role.util';
@@ -15,18 +15,28 @@ import { getDefaultRouteForUser } from '../../../core/utils/role.util';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly successMessage = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     login: ['user', [Validators.required]],
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
+
+  ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('verified') === '1') {
+      this.successMessage.set(
+        'Xác thực email thành công. Vui lòng đăng nhập.',
+      );
+    }
+  }
 
   onSubmit(): void {
     if (this.form.invalid) {
@@ -46,7 +56,9 @@ export class LoginComponent {
       error: (err) => {
         this.loading.set(false);
         const message =
-          err?.error?.message ?? 'Đăng nhập thất bại. Vui lòng thử lại.';
+          err?.error?.error ??
+          err?.error?.message ??
+          'Đăng nhập thất bại. Vui lòng thử lại.';
         this.errorMessage.set(message);
       },
     });

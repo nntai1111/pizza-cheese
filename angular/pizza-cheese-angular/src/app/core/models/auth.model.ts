@@ -48,3 +48,12 @@ export interface AuthData {
   refreshExpiresAt: string;
   user: User;
 }
+
+export interface RegisterPendingResponse {
+  email: string;
+  message: string;
+}
+
+export interface MessageResponse {
+  message: string;
+}

@@ -13,6 +13,8 @@ const AUTH_URLS = [
   AUTH_ENDPOINTS.register,
   AUTH_ENDPOINTS.logout,
   AUTH_ENDPOINTS.refresh,
+  AUTH_ENDPOINTS.verifyEmail,
+  AUTH_ENDPOINTS.resendVerification,
 ];
 
 

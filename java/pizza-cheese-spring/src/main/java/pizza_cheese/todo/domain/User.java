@@ -19,6 +19,7 @@ public class User {
     private String fullName;
     private String phone;
     private String avatarUrl;
+    private boolean emailVerified = false;
     private boolean active = true;
     private Set<Role> roles = new HashSet<>();
     private LocalDateTime createdAt;
