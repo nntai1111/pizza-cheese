@@ -45,6 +45,25 @@ public class EmailService {
         }
     }
 
+    public void sendPasswordResetOtpEmail(String toEmail, String fullName, String otp, int validityMinutes) {
+        if (fromAddress.isBlank()) {
+            throw ApiException.badRequest("Chưa cấu hình email gửi (MAIL_FROM / MAIL_USERNAME)");
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(toEmail);
+            helper.setSubject("Mã OTP đặt lại mật khẩu Pizza Cheese");
+            helper.setText(buildPasswordResetOtpBody(fullName, otp, validityMinutes), true);
+            mailSender.send(message);
+        } catch (MessagingException | MailException ex) {
+            log.error("Failed to send password reset OTP email to {}", toEmail, ex);
+            throw ApiException.badRequest("Không gửi được email OTP. Vui lòng thử lại sau.");
+        }
+    }
+
     private String buildVerificationBody(String fullName, String verificationUrl) {
         String name = (fullName == null || fullName.isBlank()) ? "bạn" : fullName.trim();
         return """
@@ -65,5 +84,21 @@ public class EmailService {
                   <p>Nếu bạn không đăng ký tài khoản này, hãy bỏ qua email.</p>
                 </div>
                 """.formatted(name, verificationUrl, verificationUrl);
+    }
+
+    private String buildPasswordResetOtpBody(String fullName, String otp, int validityMinutes) {
+        String name = (fullName == null || fullName.isBlank()) ? "bạn" : fullName.trim();
+        return """
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1a1a2e;">
+                  <h2>Đặt lại mật khẩu Pizza Cheese</h2>
+                  <p>Xin chào %s,</p>
+                  <p>Bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu. Mã OTP của bạn là:</p>
+                  <p style="margin: 28px 0; text-align: center;">
+                    <span style="font-size: 32px; letter-spacing: 8px; font-weight: 700; color: #e94560;">%s</span>
+                  </p>
+                  <p>Mã có hiệu lực trong <strong>%d phút</strong>. Không chia sẻ mã này với bất kỳ ai.</p>
+                  <p>Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.</p>
+                </div>
+                """.formatted(name, otp, validityMinutes);
     }
 }

@@ -19,15 +19,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import pizza_cheese.todo.dto.request.ForgotPasswordRequest;
 import pizza_cheese.todo.dto.request.LoginRequest;
 import pizza_cheese.todo.dto.request.RefreshTokenRequest;
 import pizza_cheese.todo.dto.request.RegisterRequest;
 import pizza_cheese.todo.dto.request.ResendVerificationRequest;
+import pizza_cheese.todo.dto.request.ResetPasswordRequest;
+import pizza_cheese.todo.dto.request.VerifyResetOtpRequest;
+import pizza_cheese.todo.dto.response.ForgotPasswordResponse;
 import pizza_cheese.todo.dto.response.LoginResponse;
 import pizza_cheese.todo.dto.response.MessageResponse;
 import pizza_cheese.todo.dto.response.RegisterPendingResponse;
 import pizza_cheese.todo.dto.response.RestResponse;
 import pizza_cheese.todo.dto.response.UserProfileResponse;
+import pizza_cheese.todo.dto.response.VerifyResetOtpResponse;
 import pizza_cheese.todo.service.AuthService;
 
 @Tag(name = "Auth", description = "Đăng ký, đăng nhập và quản lý phiên")
@@ -72,6 +77,31 @@ public class AuthController {
     public ResponseEntity<RestResponse<MessageResponse>> resendVerification(
             @Valid @RequestBody ResendVerificationRequest request) {
         return ResponseEntity.ok(RestResponse.success(authService.resendVerification(request.getEmail())));
+    }
+
+    @Operation(
+            summary = "Quên mật khẩu — gửi OTP qua email",
+            description = "Luôn trả về thông báo chung để không lộ email có trong hệ thống hay không.")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<RestResponse<ForgotPasswordResponse>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(RestResponse.success(authService.forgotPassword(request.getEmail())));
+    }
+
+    @Operation(summary = "Xác thực OTP đặt lại mật khẩu")
+    @PostMapping("/verify-reset-otp")
+    public ResponseEntity<RestResponse<VerifyResetOtpResponse>> verifyResetOtp(
+            @Valid @RequestBody VerifyResetOtpRequest request) {
+        return ResponseEntity.ok(RestResponse.success(
+                authService.verifyResetOtp(request.getEmail(), request.getOtp())));
+    }
+
+    @Operation(summary = "Đặt mật khẩu mới bằng reset token")
+    @PostMapping("/reset-password")
+    public ResponseEntity<RestResponse<MessageResponse>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        return ResponseEntity.ok(RestResponse.success(
+                authService.resetPassword(request.getResetToken(), request.getNewPassword())));
     }
 
     @Operation(summary = "Đăng nhập bằng email hoặc tên đăng nhập")

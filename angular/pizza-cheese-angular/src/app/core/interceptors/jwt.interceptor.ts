@@ -15,6 +15,9 @@ const AUTH_URLS = [
   AUTH_ENDPOINTS.refresh,
   AUTH_ENDPOINTS.verifyEmail,
   AUTH_ENDPOINTS.resendVerification,
+  AUTH_ENDPOINTS.forgotPassword,
+  AUTH_ENDPOINTS.verifyResetOtp,
+  AUTH_ENDPOINTS.resetPassword,
 ];
 
 

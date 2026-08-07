@@ -9,6 +9,9 @@ export const AUTH_ENDPOINTS = {
   refresh: `${API_BASE_URL}/auth/refresh`,
   verifyEmail: `${API_BASE_URL}/auth/verify-email`,
   resendVerification: `${API_BASE_URL}/auth/resend-verification`,
+  forgotPassword: `${API_BASE_URL}/auth/forgot-password`,
+  verifyResetOtp: `${API_BASE_URL}/auth/verify-reset-otp`,
+  resetPassword: `${API_BASE_URL}/auth/reset-password`,
 } as const;
 
 export const DEFAULT_AVATAR_URL = '/assets/images/avatar/default-avatar.svg';
@@ -20,4 +23,6 @@ export const STORAGE_KEYS = {
   expiresAt: 'pc_expires_at',
   refreshExpiresAt: 'pc_refresh_expires_at',
   user: 'pc_user',
+  passwordResetToken: 'pc_password_reset_token',
+  passwordResetEmail: 'pc_password_reset_email',
 } as const;

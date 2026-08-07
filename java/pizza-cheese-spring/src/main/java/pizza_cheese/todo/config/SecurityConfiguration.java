@@ -166,7 +166,10 @@ public class SecurityConfiguration {
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/verify-email",
-                                "/api/v1/auth/resend-verification")
+                                "/api/v1/auth/resend-verification",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/verify-reset-otp",
+                                "/api/v1/auth/reset-password")
                         .permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",

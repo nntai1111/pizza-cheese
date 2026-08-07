@@ -19,6 +19,8 @@ public class AppProperties {
 	private Cors cors = new Cors();
 	private Mail mail = new Mail();
 	private long emailVerificationTokenValidityInSeconds = 86400;
+	private long passwordResetOtpValidityInSeconds = 600;
+	private long passwordResetTokenValidityInSeconds = 900;
 
 	@Getter
 	@Setter

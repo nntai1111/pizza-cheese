@@ -27,18 +27,22 @@ import org.springframework.web.multipart.MultipartFile;
 
 import pizza_cheese.todo.config.AppProperties;
 import pizza_cheese.todo.dao.EmailVerificationTokenDao;
+import pizza_cheese.todo.dao.PasswordResetTokenDao;
 import pizza_cheese.todo.dao.RefreshTokenDao;
 import pizza_cheese.todo.dao.UserDao;
 import pizza_cheese.todo.domain.EmailVerificationToken;
+import pizza_cheese.todo.domain.PasswordResetToken;
 import pizza_cheese.todo.domain.RefreshToken;
 import pizza_cheese.todo.domain.Role;
 import pizza_cheese.todo.domain.User;
 import pizza_cheese.todo.dto.request.LoginRequest;
 import pizza_cheese.todo.dto.request.RegisterRequest;
+import pizza_cheese.todo.dto.response.ForgotPasswordResponse;
 import pizza_cheese.todo.dto.response.LoginResponse;
 import pizza_cheese.todo.dto.response.MessageResponse;
 import pizza_cheese.todo.dto.response.RegisterPendingResponse;
 import pizza_cheese.todo.dto.response.UserProfileResponse;
+import pizza_cheese.todo.dto.response.VerifyResetOtpResponse;
 import pizza_cheese.todo.exception.ApiException;
 import pizza_cheese.todo.util.SecurityUtil;
 
@@ -48,6 +52,8 @@ public class AuthService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final ZoneId APP_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final long RESEND_COOLDOWN_SECONDS = 60;
+    private static final int MAX_OTP_ATTEMPTS = 5;
+    private static final String FORGOT_PASSWORD_GENERIC_MESSAGE = "Nếu email tồn tại trong hệ thống, chúng tôi đã gửi mã OTP. Vui lòng kiểm tra hộp thư.";
 
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
@@ -55,12 +61,15 @@ public class AuthService {
     private final UserDao userDao;
     private final RefreshTokenDao refreshTokenDao;
     private final EmailVerificationTokenDao emailVerificationTokenDao;
+    private final PasswordResetTokenDao passwordResetTokenDao;
     private final CloudinaryService cloudinaryService;
     private final EmailService emailService;
     private final AppProperties appProperties;
     private final long accessTokenExpiration;
     private final long refreshTokenExpiration;
     private final long emailVerificationTokenExpiration;
+    private final long passwordResetOtpExpiration;
+    private final long passwordResetTokenExpiration;
     private final String defaultAvatarUrl;
 
     public AuthService(
@@ -70,6 +79,7 @@ public class AuthService {
             UserDao userDao,
             RefreshTokenDao refreshTokenDao,
             EmailVerificationTokenDao emailVerificationTokenDao,
+            PasswordResetTokenDao passwordResetTokenDao,
             CloudinaryService cloudinaryService,
             EmailService emailService,
             AppProperties appProperties) {
@@ -79,12 +89,15 @@ public class AuthService {
         this.userDao = userDao;
         this.refreshTokenDao = refreshTokenDao;
         this.emailVerificationTokenDao = emailVerificationTokenDao;
+        this.passwordResetTokenDao = passwordResetTokenDao;
         this.cloudinaryService = cloudinaryService;
         this.emailService = emailService;
         this.appProperties = appProperties;
         this.accessTokenExpiration = appProperties.getJwt().getAccessTokenValidityInSeconds();
         this.refreshTokenExpiration = appProperties.getJwt().getRefreshTokenValidityInSeconds();
         this.emailVerificationTokenExpiration = appProperties.getEmailVerificationTokenValidityInSeconds();
+        this.passwordResetOtpExpiration = appProperties.getPasswordResetOtpValidityInSeconds();
+        this.passwordResetTokenExpiration = appProperties.getPasswordResetTokenValidityInSeconds();
         this.defaultAvatarUrl = appProperties.getUser().getDefaultAvatarUrl();
     }
 
@@ -258,6 +271,132 @@ public class AuthService {
         return userDao.findByEmail(email)
                 .map(UserProfileResponse::from)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user với email: " + email));
+    }
+
+    @Transactional
+    public ForgotPasswordResponse forgotPassword(String emailRaw) {
+        String email = normalizeEmail(emailRaw);
+
+        userDao.findByEmail(email).ifPresent(user -> {
+            if (!user.isEmailVerified()) {
+                return;
+            }
+
+            boolean inCooldown = passwordResetTokenDao.findLatestByUserId(user.getId())
+                    .map(latest -> latest.getCreatedAt() != null
+                            && latest.getCreatedAt()
+                                    .isAfter(LocalDateTime.now().minusSeconds(RESEND_COOLDOWN_SECONDS)))
+                    .orElse(false);
+
+            if (inCooldown) {
+                return;
+            }
+
+            sendPasswordResetOtp(user);
+        });
+
+        return new ForgotPasswordResponse(email, FORGOT_PASSWORD_GENERIC_MESSAGE);
+    }
+
+    @Transactional
+    public VerifyResetOtpResponse verifyResetOtp(String emailRaw, String otpRaw) {
+        String email = normalizeEmail(emailRaw);
+        String otp = otpRaw == null ? "" : otpRaw.trim();
+
+        User user = userDao.findByEmail(email)
+                .orElseThrow(() -> ApiException.badRequest("Mã OTP không hợp lệ hoặc đã hết hạn"));
+
+        if (!user.isEmailVerified()) {
+            throw ApiException.badRequest("Mã OTP không hợp lệ hoặc đã hết hạn");
+        }
+
+        PasswordResetToken resetToken = passwordResetTokenDao.findLatestByUserId(user.getId())
+                .orElseThrow(() -> ApiException.badRequest("Mã OTP không hợp lệ hoặc đã hết hạn"));
+
+        if (resetToken.isUsed() || resetToken.getToken() != null) {
+            throw ApiException.badRequest("Mã OTP không hợp lệ hoặc đã hết hạn");
+        }
+
+        if (resetToken.isExpired()) {
+            throw ApiException.badRequest("Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.");
+        }
+
+        if (resetToken.getAttempts() >= MAX_OTP_ATTEMPTS) {
+            throw ApiException.badRequest("Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu mã mới.");
+        }
+
+        if (resetToken.getOtpHash() == null || !passwordEncoder.matches(otp, resetToken.getOtpHash())) {
+            passwordResetTokenDao.incrementAttempts(resetToken);
+            int remaining = MAX_OTP_ATTEMPTS - resetToken.getAttempts();
+            if (remaining <= 0) {
+                throw ApiException.badRequest("Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu mã mới.");
+            }
+            throw ApiException.badRequest("Mã OTP không đúng. Còn " + remaining + " lần thử.");
+        }
+
+        Instant expiresAt = Instant.now().plus(passwordResetTokenExpiration, ChronoUnit.SECONDS);
+        resetToken.setToken(generateSecureToken());
+        resetToken.setExpiresAt(LocalDateTime.ofInstant(expiresAt, APP_ZONE));
+        passwordResetTokenDao.updateAfterOtpVerified(resetToken);
+
+        return new VerifyResetOtpResponse(
+                resetToken.getToken(),
+                passwordResetTokenExpiration,
+                expiresAt,
+                "Xác thực OTP thành công. Vui lòng đặt mật khẩu mới.");
+    }
+
+    @Transactional
+    public MessageResponse resetPassword(String resetTokenValue, String newPassword) {
+        if (resetTokenValue == null || resetTokenValue.isBlank()) {
+            throw ApiException.badRequest("Token đặt lại mật khẩu không hợp lệ");
+        }
+
+        PasswordResetToken resetToken = passwordResetTokenDao.findByToken(resetTokenValue.trim())
+                .orElseThrow(() -> ApiException.badRequest("Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn"));
+
+        if (resetToken.isUsed()) {
+            throw ApiException.badRequest("Token đặt lại mật khẩu đã được sử dụng");
+        }
+
+        if (resetToken.isExpired()) {
+            throw ApiException.badRequest("Token đặt lại mật khẩu đã hết hạn. Vui lòng thực hiện lại từ đầu.");
+        }
+
+        User user = resetToken.getUser();
+        if (user == null) {
+            throw ApiException.badRequest("Token đặt lại mật khẩu không hợp lệ");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userDao.save(user);
+        passwordResetTokenDao.markUsed(resetToken);
+        refreshTokenDao.deleteByUser(user);
+
+        return new MessageResponse("Đặt lại mật khẩu thành công. Vui lòng đăng nhập.");
+    }
+
+    private void sendPasswordResetOtp(User user) {
+        passwordResetTokenDao.deleteByUser(user);
+
+        String otp = generateOtp();
+        Instant expiresAt = Instant.now().plus(passwordResetOtpExpiration, ChronoUnit.SECONDS);
+
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setUser(user);
+        resetToken.setOtpHash(passwordEncoder.encode(otp));
+        resetToken.setExpiresAt(LocalDateTime.ofInstant(expiresAt, APP_ZONE));
+        resetToken.setUsed(false);
+        resetToken.setAttempts(0);
+        passwordResetTokenDao.save(resetToken);
+
+        int validityMinutes = (int) Math.max(1, passwordResetOtpExpiration / 60);
+        emailService.sendPasswordResetOtpEmail(user.getEmail(), user.getFullName(), otp, validityMinutes);
+    }
+
+    private String generateOtp() {
+        int value = SECURE_RANDOM.nextInt(1_000_000);
+        return String.format("%06d", value);
     }
 
     private void sendVerificationEmail(User user) {

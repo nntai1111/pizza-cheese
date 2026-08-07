@@ -1,0 +1,63 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <span class="logo">✉️</span>
+      <h1>Nhập mã OTP</h1>
+      <p>
+        Mã gồm 6 chữ số đã được gửi tới
+        <strong>{{ email() }}</strong> (hiệu lực 10 phút).
+      </p>
+    </div>
+
+    @if (infoMessage()) {
+    <div class="alert alert-info">{{ infoMessage() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="otp">Mã OTP</label>
+        <input
+          id="otp"
+          type="text"
+          inputmode="numeric"
+          maxlength="6"
+          formControlName="otp"
+          placeholder="000000"
+          autocomplete="one-time-code"
+        />
+        @if (form.controls.otp.touched && form.controls.otp.errors?.['required']) {
+        <span class="error">Mã OTP là bắt buộc</span>
+        }
+        @if (form.controls.otp.touched && form.controls.otp.errors?.['pattern']) {
+        <span class="error">Mã OTP phải gồm 6 chữ số</span>
+        }
+      </div>
+
+      @if (successMessage()) {
+      <div class="alert alert-success">{{ successMessage() }}</div>
+      }
+      @if (errorMessage()) {
+      <div class="alert">{{ errorMessage() }}</div>
+      }
+
+      <button type="submit" class="btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Đang xác thực...' : 'Xác nhận OTP' }}
+      </button>
+    </form>
+
+    <button
+      type="button"
+      class="btn-secondary"
+      [disabled]="resendLoading()"
+      (click)="resend()"
+    >
+      {{ resendLoading() ? 'Đang gửi lại...' : 'Gửi lại mã OTP' }}
+    </button>
+
+    <p class="auth-footer">
+      <a routerLink="/forgot-password">Đổi email khác</a>
+      ·
+      <a routerLink="/login">Đăng nhập</a>
+    </p>
+  </div>
+</div>

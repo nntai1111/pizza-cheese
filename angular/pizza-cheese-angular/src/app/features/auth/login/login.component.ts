@@ -36,6 +36,11 @@ export class LoginComponent implements OnInit {
         'Xác thực email thành công. Vui lòng đăng nhập.',
       );
     }
+    if (this.route.snapshot.queryParamMap.get('reset') === '1') {
+      this.successMessage.set(
+        'Đặt lại mật khẩu thành công. Vui lòng đăng nhập.',
+      );
+    }
   }
 
   onSubmit(): void {

@@ -57,3 +57,29 @@ export interface RegisterPendingResponse {
 export interface MessageResponse {
   message: string;
 }
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  email: string;
+  message: string;
+}
+
+export interface VerifyResetOtpRequest {
+  email: string;
+  otp: string;
+}
+
+export interface VerifyResetOtpResponse {
+  resetToken: string;
+  expiresIn: number;
+  expiresAt: string;
+  message: string;
+}
+
+export interface ResetPasswordRequest {
+  resetToken: string;
+  newPassword: string;
+}

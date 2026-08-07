@@ -1,0 +1,38 @@
+@import '../login/login.component.scss';
+
+.login-header p {
+  line-height: 1.5;
+}
+
+.login-header strong {
+  color: #1a1a2e;
+  word-break: break-all;
+}
+
+.alert-info {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.btn-secondary {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.875rem;
+  background: transparent;
+  color: #e94560;
+  border: 1px solid #e94560;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) {
+    background: rgba(233, 69, 96, 0.08);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}

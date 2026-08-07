@@ -17,12 +17,17 @@ import {
 import {
   ApiResponse,
   AuthData,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
   LoginRequest,
   MessageResponse,
   RefreshTokenRequest,
   RegisterPendingResponse,
   RegisterRequest,
+  ResetPasswordRequest,
   User,
+  VerifyResetOtpRequest,
+  VerifyResetOtpResponse,
 } from '../models/auth.model';
 
 @Injectable({ providedIn: 'root' })
@@ -74,6 +79,58 @@ export class AuthService {
         email,
       })
       .pipe(map((response) => response.data));
+  }
+
+  forgotPassword(email: string): Observable<ForgotPasswordResponse> {
+    const body: ForgotPasswordRequest = { email };
+    return this.http
+      .post<ApiResponse<ForgotPasswordResponse>>(AUTH_ENDPOINTS.forgotPassword, body)
+      .pipe(map((response) => response.data));
+  }
+
+  verifyResetOtp(
+    email: string,
+    otp: string,
+  ): Observable<VerifyResetOtpResponse> {
+    const body: VerifyResetOtpRequest = { email, otp };
+    return this.http
+      .post<ApiResponse<VerifyResetOtpResponse>>(
+        AUTH_ENDPOINTS.verifyResetOtp,
+        body,
+      )
+      .pipe(
+        map((response) => {
+          const data = response.data;
+          sessionStorage.setItem(STORAGE_KEYS.passwordResetToken, data.resetToken);
+          sessionStorage.setItem(STORAGE_KEYS.passwordResetEmail, email);
+          return data;
+        }),
+      );
+  }
+
+  resetPassword(resetToken: string, newPassword: string): Observable<MessageResponse> {
+    const body: ResetPasswordRequest = { resetToken, newPassword };
+    return this.http
+      .post<ApiResponse<MessageResponse>>(AUTH_ENDPOINTS.resetPassword, body)
+      .pipe(
+        map((response) => {
+          this.clearPasswordResetSession();
+          return response.data;
+        }),
+      );
+  }
+
+  getPasswordResetToken(): string | null {
+    return sessionStorage.getItem(STORAGE_KEYS.passwordResetToken);
+  }
+
+  getPasswordResetEmail(): string | null {
+    return sessionStorage.getItem(STORAGE_KEYS.passwordResetEmail);
+  }
+
+  clearPasswordResetSession(): void {
+    sessionStorage.removeItem(STORAGE_KEYS.passwordResetToken);
+    sessionStorage.removeItem(STORAGE_KEYS.passwordResetEmail);
   }
 
   refreshAccessToken(): Observable<AuthData> {

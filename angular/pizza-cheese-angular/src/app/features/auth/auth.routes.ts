@@ -31,4 +31,28 @@ export const AUTH_ROUTES: Routes = [
       ),
     canActivate: [guestGuard],
   },
+  {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('./forgot-password/forgot-password.component').then(
+        (m) => m.ForgotPasswordComponent,
+      ),
+    canActivate: [guestGuard],
+  },
+  {
+    path: 'verify-reset-otp',
+    loadComponent: () =>
+      import('./verify-reset-otp/verify-reset-otp.component').then(
+        (m) => m.VerifyResetOtpComponent,
+      ),
+    canActivate: [guestGuard],
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./reset-password/reset-password.component').then(
+        (m) => m.ResetPasswordComponent,
+      ),
+    canActivate: [guestGuard],
+  },
 ];
