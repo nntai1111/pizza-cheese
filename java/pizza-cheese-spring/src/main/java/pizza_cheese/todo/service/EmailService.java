@@ -5,12 +5,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import pizza_cheese.todo.config.AppProperties;
-import pizza_cheese.todo.exception.ApiException;
 
 @Service
 public class EmailService {
@@ -26,9 +26,11 @@ public class EmailService {
         this.fromAddress = configuredFrom != null ? configuredFrom.trim() : "";
     }
 
+    @Async("mailTaskExecutor")
     public void sendVerificationEmail(String toEmail, String fullName, String verificationUrl) {
         if (fromAddress.isBlank()) {
-            throw ApiException.badRequest("Chưa cấu hình email gửi (MAIL_FROM / MAIL_USERNAME)");
+            log.error("Skip verification email to {}: MAIL_FROM / MAIL_USERNAME is not configured", toEmail);
+            return;
         }
 
         try {
@@ -39,15 +41,17 @@ public class EmailService {
             helper.setSubject("Xác thực tài khoản Pizza Cheese");
             helper.setText(buildVerificationBody(fullName, verificationUrl), true);
             mailSender.send(message);
+            log.info("Verification email sent to {}", toEmail);
         } catch (MessagingException | MailException ex) {
             log.error("Failed to send verification email to {}", toEmail, ex);
-            throw ApiException.badRequest("Không gửi được email xác thực. Vui lòng thử lại sau.");
         }
     }
 
+    @Async("mailTaskExecutor")
     public void sendPasswordResetOtpEmail(String toEmail, String fullName, String otp, int validityMinutes) {
         if (fromAddress.isBlank()) {
-            throw ApiException.badRequest("Chưa cấu hình email gửi (MAIL_FROM / MAIL_USERNAME)");
+            log.error("Skip password reset OTP email to {}: MAIL_FROM / MAIL_USERNAME is not configured", toEmail);
+            return;
         }
 
         try {
@@ -58,9 +62,9 @@ public class EmailService {
             helper.setSubject("Mã OTP đặt lại mật khẩu Pizza Cheese");
             helper.setText(buildPasswordResetOtpBody(fullName, otp, validityMinutes), true);
             mailSender.send(message);
+            log.info("Password reset OTP email sent to {}", toEmail);
         } catch (MessagingException | MailException ex) {
             log.error("Failed to send password reset OTP email to {}", toEmail, ex);
-            throw ApiException.badRequest("Không gửi được email OTP. Vui lòng thử lại sau.");
         }
     }
 

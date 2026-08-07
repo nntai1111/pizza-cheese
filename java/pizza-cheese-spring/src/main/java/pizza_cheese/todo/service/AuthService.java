@@ -23,6 +23,8 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import pizza_cheese.todo.config.AppProperties;
@@ -391,7 +393,9 @@ public class AuthService {
         passwordResetTokenDao.save(resetToken);
 
         int validityMinutes = (int) Math.max(1, passwordResetOtpExpiration / 60);
-        emailService.sendPasswordResetOtpEmail(user.getEmail(), user.getFullName(), otp, validityMinutes);
+        String toEmail = user.getEmail();
+        String fullName = user.getFullName();
+        runAfterCommit(() -> emailService.sendPasswordResetOtpEmail(toEmail, fullName, otp, validityMinutes));
     }
 
     private String generateOtp() {
@@ -410,7 +414,23 @@ public class AuthService {
         emailVerificationTokenDao.save(token);
 
         String verificationUrl = appProperties.emailVerificationUrl(token.getToken());
-        emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), verificationUrl);
+        String toEmail = user.getEmail();
+        String fullName = user.getFullName();
+        runAfterCommit(() -> emailService.sendVerificationEmail(toEmail, fullName, verificationUrl));
+    }
+
+    /** Queue work only after the surrounding transaction commits (same pattern as realtime publish). */
+    private void runAfterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+            return;
+        }
+        action.run();
     }
 
     private LoginResponse buildTokenResponse(Authentication authentication, User user) {
